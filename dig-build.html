@@ -1,0 +1,398 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>DIG BUILD</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:monospace;color:#fff}
+#c{width:100%;height:100%;display:block}
+#cross{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:24px;pointer-events:none}
+#hotbar{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:4px}
+#hotbar div{width:54px;height:54px;border:2px solid #7b8580;background-color:#26342d!important;font-size:11px;text-align:center;position:relative;text-shadow:1px 1px #000;box-shadow:0 2px 8px #0008;border-radius:3px;color:#fff}
+#hotbar div.sel{border-color:#ffe08a;box-shadow:0 0 0 2px #000,0 0 12px #ffe08a}#hotbar span{position:absolute;right:3px;bottom:1px}
+#hud{position:fixed;top:8px;left:8px;font-size:12px;text-shadow:1px 1px #000}
+#menu{position:fixed;inset:0;background:linear-gradient(135deg,rgba(10,22,28,.86),rgba(20,42,28,.78));backdrop-filter:blur(3px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+#menu h1{font-size:64px;letter-spacing:8px;text-shadow:4px 4px #000;margin:0 0 10px}
+#menu input,#menu select,#menu button{padding:8px 14px;font:inherit}#auth{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+
+#hud{color:#fff;background:#101b18a8;padding:6px 9px;border-radius:4px;font-size:13px}#menu h1{color:#fff;text-shadow:4px 4px #172018}#menu p{background:#101b18a8;padding:8px 12px;border-radius:4px;text-align:center;max-width:90vw}#previewTag{position:fixed;top:10px;right:12px;z-index:5;background:#8d4b12;color:#fff;padding:7px 11px;border:1px solid #ffc36a;border-radius:4px;font-weight:bold;letter-spacing:1px;display:none}
+
+#uw{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .25s;z-index:2;background:radial-gradient(ellipse at center,rgba(70,170,240,.26),rgba(20,90,190,.5))}
+#uw.on{opacity:1}#uw.pulse{opacity:1;background:rgba(210,240,255,.55)}
+#mineUI{display:none;position:fixed;top:calc(50% + 28px);left:50%;transform:translateX(-50%);text-align:center;font-size:13px;pointer-events:none;text-shadow:1px 1px #000;z-index:3}
+#mineBar{width:140px;height:10px;border:2px solid #000;background:#0009;margin-top:3px;border-radius:2px}#mineFill{height:100%;width:0;background:linear-gradient(90deg,#ffd35a,#ff7a2e)}
+
+/* ---- Stage 3: inventory / workbench ---- */
+.slot{width:var(--s,48px);height:var(--s,48px);box-sizing:border-box;background:#0f1815;border:2px solid #3b4a43;position:relative;display:flex;align-items:center;justify-content:center}
+.slot:hover{border-color:#ffe08a}.slot img{width:80%;height:80%;image-rendering:pixelated;pointer-events:none}
+.slot .n{position:absolute;right:2px;bottom:0;font-size:12px;font-weight:bold;text-shadow:1px 1px #000,-1px -1px #000;pointer-events:none}
+.slot .bar{position:absolute;left:3px;right:3px;bottom:3px;height:4px;background:#000b;pointer-events:none}.slot .bar b{display:block;height:100%}
+#inv{position:fixed;z-index:6;left:50%;top:50%;transform:translate(-50%,-50%);max-height:96vh;max-width:96vw;overflow:auto;box-sizing:border-box;background:linear-gradient(#26342d,#18221d);border:3px solid #0b110e;outline:2px solid #7b8580;border-radius:6px;padding:10px 14px;box-shadow:0 8px 40px #000c;--s:clamp(30px,5.2vw,48px);color:#fff;font-family:monospace}
+#inv .ttl{font-size:18px;letter-spacing:4px;margin-bottom:8px;text-shadow:2px 2px #000}#inv .lbl{font-size:12px;margin:8px 0 3px;opacity:.85}
+#inv .g9{display:grid;grid-template-columns:repeat(9,var(--s));gap:3px}#inv .cgrid{display:grid;gap:3px}#inv .crow{display:flex;align-items:center;gap:14px}#inv .arrow{font-size:24px;opacity:.8}
+#inv .hint{font-size:11px;opacity:.65;margin-top:8px}#inv .pal{max-height:22vh;overflow:auto}
+#held{position:fixed;display:none;pointer-events:none;z-index:9;width:40px;height:40px}#held img{width:100%;height:100%;image-rendering:pixelated}#held .n{position:absolute;right:0;bottom:0;font-size:12px;font-weight:bold;text-shadow:1px 1px #000}
+#tip{position:fixed;z-index:10;display:none;background:#0b120ff0;border:1px solid #7b8580;padding:5px 8px;font:12px monospace;color:#fff;pointer-events:none;white-space:pre}
+#hotbar .slot{padding:0}#hotbar img{width:36px;height:36px;image-rendering:pixelated;margin-top:6px}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#101b18e8;border:1px solid #ffc36a;padding:6px 12px;border-radius:4px;color:#fff;font:13px monospace;z-index:8;opacity:0;transition:opacity .25s;pointer-events:none}
+#inv .fcol{display:flex;flex-direction:column;align-items:center}#inv .flame{width:16px;height:22px;background:#000a;border:1px solid #3b4a43;position:relative;margin:3px 0}#inv .flame b{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(#ffd45a,#ff5a1a)}
+#inv .parrow{width:70px;height:16px;background:#000a;border:2px solid #3b4a43;margin:0 6px}#inv .parrow b{display:block;height:100%;width:0;background:linear-gradient(90deg,#9fe870,#3fb83f)}#inv .fhint{font-size:11px;opacity:.7;margin-left:10px;line-height:1.5}
+#specHelp{display:none;position:fixed;left:8px;bottom:8px;background:#101b18c8;border:1px solid #3b4a43;border-radius:4px;padding:6px 10px;font:12px/1.6 monospace;color:#fff;pointer-events:none;z-index:3}#specHelp b{color:#9fe8ff;letter-spacing:2px}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script></head>
+<body><canvas id="c"></canvas><div id="specHelp"><b>SPECTATOR</b><br>WASD Move &middot; Space Up &middot; Shift Down<br>Mouse Look &middot; X Toggle X-ray</div><div id="uw"></div><div id="cross">+</div><div id="mineUI"><div id="mineName"></div><div id="mineBar"><div id="mineFill"></div></div></div><div id="hotbar"></div><div id="hud"></div>
+<div id="menu"><h1>DIG BUILD</h1>
+<div id="auth"><input id="email" placeholder="email"><input id="pw" type="password" placeholder="password">
+<button id="login">Log in</button><button id="signup">Register</button><button id="logout">Log out</button><div id="who"></div></div>
+<input id="seed" placeholder="World seed (optional)"><select id="mode"><option value="survival">Survival</option><option value="creative">Creative</option><option value="spectator">Spectator</option></select>
+<button id="play">Play / Continue</button><p>WASD move · Space jump · Shift sprint · LMB break · RMB place · 1-9 hotbar · F fly (creative) · Spectator: free-fly, X toggles ore X-ray (view only)</p></div>
+<script type="module">
+// Public values only (anon/publishable key is safe in the browser; RLS protects data). NEVER put a service-role key here.
+const SUPABASE_URL = '';      // e.g. https://xxxx.supabase.co
+const SUPABASE_ANON_KEY = ''; // anon / publishable key
+const GEN_VERSION = 3;        // generation used for NEW worlds (v2 = more water, v3 = caves + ores). Saved worlds keep their own gen_version (v1 stays identical).
+const SAVE_FORMAT = 3;        // bump + add a migration in save.js when save shape changes
+
+const open=()=>new Promise((res,rej)=>{const r=indexedDB.open('digbuild',1);r.onupgradeneeded=()=>r.result.createObjectStore('worlds');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+async function localSave(id,data){const db=await open();return new Promise((res,rej)=>{const t=db.transaction('worlds','readwrite');t.objectStore('worlds').put(data,id);t.oncomplete=res;t.onerror=()=>rej(t.error)})}
+async function localLoad(id){const db=await open();return new Promise((res,rej)=>{const r=db.transaction('worlds').objectStore('worlds').get(id);r.onsuccess=()=>res(r.result?migrate(r.result):null);r.onerror=()=>rej(r.error)})}
+// Versioned save migrations: add a step per format bump, never drop old steps.
+// format 1 -> 2: inventory became 36 slots ({id,n,d}); the old {blockId:count} object is converted into stacks. Nothing is ever deleted.
+function legacySlots(inv){const a=Array(36).fill(null);let k=0;for(const [id,n] of Object.entries(inv||{})){let r=+n||0;while(r>0&&k<36){const m=Math.min(64,r);a[k++]={id:+id,n:m};r-=m}}return a}
+function migrate(s){s.format=s.format||1;if(s.format<2){if(!Array.isArray(s.slots))s.slots=legacySlots(s.inv);s.craft=s.craft||Array(9).fill(null);s.held=s.held||null;s.format=2}
+ if(s.format<3){s.furnaces=s.furnaces||{};s.format=3}
+ if(!Array.isArray(s.slots)||s.slots.length!==36){const a=Array(36).fill(null);(s.slots||[]).slice(0,36).forEach((x,i)=>a[i]=x);s.slots=a}return s}
+const pack=(w,p,extra)=>({format:SAVE_FORMAT,...extra,pos:p,mods:[...w.mods]});
+
+let sb=null;
+async function initCloud(){if(!SUPABASE_URL||!SUPABASE_ANON_KEY)return null;const {createClient}=await import('https://esm.sh/@supabase/supabase-js@2.45.0');sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true}});return sb}
+const user=async()=>sb?(await sb.auth.getUser()).data.user:null;
+const signUp=(e,p)=>sb.auth.signUp({email:e,password:p});
+const signIn=(e,p)=>sb.auth.signInWithPassword({email:e,password:p});
+const signOut=()=>sb.auth.signOut();
+const resetPw=e=>sb.auth.resetPasswordForEmail(e);
+async function cloudSave(w){const u=await user();if(!u)return false;const {error}=await sb.from('worlds').upsert({...w,user_id:u.id,last_played:new Date().toISOString()},{onConflict:'user_id,name'});if(error)throw error;return true}
+async function cloudLoad(name){const u=await user();if(!u)return null;const {data,error}=await sb.from('worlds').select('*').eq('name',name).maybeSingle();if(error)throw error;return data}
+
+const B={AIR:0,GRASS:1,DIRT:2,STONE:3,SAND:4,SNOW:5,LOG:6,LEAVES:7,WATER:8,PLANKS:9,BEDROCK:10,COBBLE:11,GLASS:12,BRICK:13,FLOWING_WATER:14,WORKBENCH:15,COAL_ORE:16,IRON_ORE:17,GOLD_ORE:18,DIAMOND_ORE:19,FURNACE:20};
+const isWater=id=>id===B.WATER||id===B.FLOWING_WATER;
+const INFO={1:['Grass',[84,150,58]],2:['Dirt',[120,84,52]],3:['Stone',[125,125,128]],4:['Sand',[218,205,150]],5:['Snow',[240,244,250]],6:['Log',[98,72,40]],7:['Leaves',[48,120,40]],8:['Water',[60,160,240]],9:['Planks',[170,132,80]],10:['Bedrock',[45,45,48]],11:['Cobble',[100,100,104]],12:['Glass',[190,225,235]],13:['Bricks',[150,70,58]],14:['Water',[60,160,240]],15:['Workbench',[150,105,58]],16:['Coal Ore',[40,40,44]],17:['Iron Ore',[222,176,146]],18:['Gold Ore',[252,214,60]],19:['Diamond Ore',[96,236,236]],20:['Furnace',[112,112,116]]};
+const NT=21,S=16,H=64,SEA=22;
+const solid=id=>id!==0&&!isWater(id);
+const see=id=>id===0||isWater(id)||id===7||id===12;
+function makeAtlas(){const c=document.createElement('canvas');c.width=NT*16;c.height=16;const g=c.getContext('2d');let r=12345;const rnd=()=>(r=(r*16807)%2147483647)/2147483647;
+ for(let i=1;i<NT;i++){const col=INFO[i][1];for(let y=0;y<16;y++)for(let x=0;x<16;x++){const v=.8+rnd()*.4;g.fillStyle=`rgb(${col.map(k=>Math.min(255,k*v|0))})`;g.fillRect(i*16+x,y,1,1);}}
+ {const o=15*16;g.fillStyle='rgb(150,105,58)';g.fillRect(o,0,16,16);g.fillStyle='rgb(108,72,36)';for(let k=0;k<16;k+=5)g.fillRect(o,k,16,1);g.fillRect(o,0,1,16);g.fillRect(o+15,0,1,16);g.fillStyle='rgb(70,70,78)';g.fillRect(o+3,3,7,3);g.fillStyle='rgb(205,60,50)';g.fillRect(o+10,9,3,4);g.fillStyle='rgb(225,225,230)';g.fillRect(o+3,10,5,1)}
+ for(const [id,col] of [[16,[28,28,32]],[17,[222,176,146]],[18,[252,214,60]],[19,[96,236,236]]]){const o=id*16;for(let y=0;y<16;y++)for(let x=0;x<16;x++){const v=.82+rnd()*.34;g.fillStyle=`rgb(${[125,125,128].map(k=>k*v|0)})`;g.fillRect(o+x,y,1,1)}
+  for(let n=0;n<7;n++){const bx=1+rnd()*12|0,by=1+rnd()*12|0;for(const [dx,dy] of [[0,0],[1,0],[0,1],[1,1]]){const v=.85+rnd()*.3;g.fillStyle=`rgb(${col.map(k=>Math.min(255,k*v|0))})`;g.fillRect(o+bx+dx,by+dy,1,1)}g.fillStyle='rgba(255,255,255,.35)';g.fillRect(o+bx,by,1,1)}}
+ {const o=20*16;for(let y=0;y<16;y++)for(let x=0;x<16;x++){const v=.8+rnd()*.3;g.fillStyle=`rgb(${[112,112,116].map(k=>k*v|0)})`;g.fillRect(o+x,y,1,1)}g.fillStyle='#2a2a2e';g.fillRect(o+3,6,10,7);g.fillStyle='#ff9a2e';g.fillRect(o+5,9,6,3);g.fillStyle='#ffd45a';g.fillRect(o+6,10,4,1);g.fillStyle='#3d3d42';g.fillRect(o+2,2,12,2)}
+ const t=new THREE.CanvasTexture(c);t.magFilter=t.minFilter=THREE.NearestFilter;t.colorSpace=THREE.SRGBColorSpace;return t}
+// Water has its own 2-tile texture (source | flowing) that wraps vertically so it can scroll for a subtle wave effect.
+function makeWaterTex(){const c=document.createElement('canvas');c.width=16;c.height=16;const g=c.getContext('2d'),TP=Math.PI*2;
+ const mix=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t|0);
+ // One tile for ALL water (source + flowing). Every term repeats exactly across 16px so it tiles and scrolls seamlessly.
+ for(let y=0;y<16;y++)for(let x=0;x<16;x++){
+  const a=Math.sin(TP*(x/16+y/8))*.5+.5,b=Math.sin(TP*(x/8-y/16))*.5+.5,w=Math.pow(a*b,1.4);
+  g.fillStyle=`rgb(${mix([48,142,236],[132,210,255],Math.min(1,w*1.6))})`;g.fillRect(x,y,1,1)}
+ g.fillStyle='rgba(215,242,255,.8)';for(const [x,y] of [[3,2],[11,6],[6,11],[14,13],[1,8]])g.fillRect(x,y,1,1);
+ const t=new THREE.CanvasTexture(c);t.magFilter=t.minFilter=THREE.NearestFilter;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;return t}
+const XC={16:{core:[.16,.16,.18],edge:[.78,.8,.88]},17:{core:[.82,.4,.12],edge:[1,.62,.28],glow:[.9,.4,.08]},18:{core:[1,.84,.12],edge:[1,.96,.55],glow:[.95,.75,.05]},19:{core:[.15,.95,1],edge:[.85,1,1],glow:[.05,.8,1]}};
+function cube(a,x,y,z,h,col,lines){const b=a.p.length/3;for(const [dx,dy,dz] of [[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]]){a.p.push(x+dx*h,y+dy*h,z+dz*h);a.c.push(col[0],col[1],col[2])}
+ a.i.push(...(lines?[0,1,1,2,2,3,3,0,4,5,5,6,6,7,7,4,0,4,1,5,2,6,3,7]:[0,2,1,0,3,2,4,5,6,4,6,7,0,1,5,0,5,4,2,3,7,2,7,6,0,4,7,0,7,3,1,2,6,1,6,5]).map(v=>v+b))}
+const N4=[[1,0],[-1,0],[0,1],[0,-1]],TUBE=.0016,CAV=.76,PT=.68,POOLY=10;
+function hash3(x,y,z,s){let h=(x*374761393+y*668265263+z*2147483629+s*982451653)|0;h=(h^(h>>>13))*1274126177|0;return((h^(h>>>16))>>>0)/4294967295}
+// lattice value noise (trilinear) cached for one chunk (+1 block border). f(wx,y,wz) is identical no matter which chunk builds it.
+function field(seed,sp,spy,cx,cz){const x0=Math.floor((cx*S-1)/sp),z0=Math.floor((cz*S-1)/sp),nx=Math.floor((cx*S+S)/sp)-x0+2,nz=Math.floor((cz*S+S)/sp)-z0+2,ny=Math.floor(H/spy)+2,o=nx*ny,v=new Float32Array(nx*nz*ny);
+ for(let k=0;k<nz;k++)for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)v[(k*ny+j)*nx+i]=hash3(x0+i,j,z0+k,seed);
+ return (wx,y,wz)=>{const fx=wx/sp-x0,fy=y/spy,fz=wz/sp-z0,i=fx|0,j=fy|0,k=fz|0,tx=sm(fx-i),ty=sm(fy-j),tz=sm(fz-k),b=(k*ny+j)*nx+i;
+  const l=(p,q,t)=>p+(q-p)*t,c00=l(v[b],v[b+1],tx),c10=l(v[b+nx],v[b+nx+1],tx),c01=l(v[b+o],v[b+o+1],tx),c11=l(v[b+o+nx],v[b+o+nx+1],tx);return l(l(c00,c10,ty),l(c01,c11,ty),tz)}}
+// ore veins: rare seed cells grow into small clusters. [block, max height, seed chance, salt] - rarest first, deeper = rarer.
+const ORES=[[B.DIAMOND_ORE,13,.0007,11],[B.GOLD_ORE,24,.0022,22],[B.IRON_ORE,46,.0045,33],[B.COAL_ORE,56,.0065,44]],NB=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+function oreAt(x,y,z,seed){for(const [id,ymax,p,salt] of ORES){if(y>ymax)continue;const s=seed+salt*7919;
+  if(hash3(x,y,z,s)<p)return id;for(const [dx,dy,dz] of NB)if(hash3(x+dx,y+dy,z+dz,s)<p&&hash3(x,y,z,s+500)<.45)return id}return 0}
+function hash(x,z,s){let h=(x*374761393+z*668265263+s*982451653)|0;h=(h^(h>>>13))*1274126177|0;return((h^(h>>>16))>>>0)/4294967295}
+const sm=t=>t*t*(3-2*t);
+function vnoise(x,z,s){const xi=Math.floor(x),zi=Math.floor(z),fx=sm(x-xi),fz=sm(z-zi);const a=hash(xi,zi,s),b=hash(xi+1,zi,s),c=hash(xi,zi+1,s),d=hash(xi+1,zi+1,s);return a+(b-a)*fx+(c-a)*fz+(a-b-c+d)*fx*fz}
+function fbm(x,z,s){return vnoise(x,z,s)*.55+vnoise(x*2,z*2,s+1)*.28+vnoise(x*4,z*4,s+2)*.17}
+const F=[[[1,0,0],[[1,0,1],[1,0,0],[1,1,0],[1,1,1]],.8],[[-1,0,0],[[0,0,0],[0,0,1],[0,1,1],[0,1,0]],.8],[[0,1,0],[[0,1,1],[1,1,1],[1,1,0],[0,1,0]],1],[[0,-1,0],[[0,0,0],[1,0,0],[1,0,1],[0,0,1]],.5],[[0,0,1],[[0,0,1],[1,0,1],[1,1,1],[0,1,1]],.7],[[0,0,-1],[[1,0,0],[0,0,0],[0,1,0],[1,1,0]],.7]];
+class World{
+ constructor(seed,scene,gen=1){this.genVersion=gen;this.sea=gen>=2?25:SEA;this.seed=seed|0;this.scene=scene;this.chunks=new Map();this.mods=new Map();this.furnaces=new Map();this.dirty=new Set();
+  this.atlas=makeAtlas();this.fluidQueue=[];this.fluidSeen=new Set();this.flowDistance=new Map();this.mat=new THREE.MeshBasicMaterial({map:this.atlas,vertexColors:true,alphaTest:.1});
+  this.wtex=makeWaterTex();this.wmat=new THREE.MeshBasicMaterial({map:this.wtex,vertexColors:true,transparent:true,opacity:.8,depthWrite:false,side:THREE.DoubleSide});this.xray=false;
+  // X-ray overlay materials: drawn after everything else with depth testing OFF, so ores show through any number of blocks.
+  this.xmat={core:new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,opacity:.95,depthTest:false,depthWrite:false,fog:false,side:THREE.DoubleSide}),glow:new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,opacity:.26,depthTest:false,depthWrite:false,fog:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide}),line:new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:.95,depthTest:false,depthWrite:false,fog:false})}}
+ key(x,z){return x+','+z}
+ clearX(c){if(c.xm){for(const m of c.xm)this.scene.remove(m),m.geometry.dispose();c.xm=null}}
+ // X-ray markers are built only from the ore blocks that really exist in the chunk (c.ores comes straight from the voxel data). Nothing in the world data is touched.
+ buildXray(c){this.clearX(c);if(!this.xray||!c.ores||!c.ores.length)return;const K={core:{p:[],c:[],i:[]},glow:{p:[],c:[],i:[]},line:{p:[],c:[],i:[]}};
+  for(let n=0;n<c.ores.length;n+=4){const x=c.ores[n]+.5,y=c.ores[n+1]+.5,z=c.ores[n+2]+.5,xc=XC[c.ores[n+3]];cube(K.core,x,y,z,.3,xc.core,false);cube(K.line,x,y,z,.505,xc.edge,true);if(xc.glow)cube(K.glow,x,y,z,.62,xc.glow,false)}
+  c.xm=[];for(const [k,mat,ord] of [['core',this.xmat.core,10],['glow',this.xmat.glow,11],['line',this.xmat.line,12]]){const a=K[k];if(!a.p.length)continue;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(a.p,3));g.setAttribute('color',new THREE.Float32BufferAttribute(a.c,3));g.setIndex(a.i);const m=k==='line'?new THREE.LineSegments(g,mat):new THREE.Mesh(g,mat);m.renderOrder=ord;m.frustumCulled=false;this.scene.add(m);c.xm.push(m)}}
+ // terrain turns dark + semi-transparent (material properties only; textures and voxel data are never changed), water keeps its own material.
+ setXray(on){this.xray=on;const m=this.mat;m.transparent=on;m.opacity=on?.34:1;m.depthWrite=!on;m.color.setRGB(on?.32:1,on?.38:1,on?.46:1);m.needsUpdate=true;for(const c of this.chunks.values())this.buildXray(c)}
+ height(wx,wz){const m=Math.max(0,fbm(wx/220,wz/220,this.seed+7)-.5)*2;return Math.min(H-8,Math.floor(18+fbm(wx/70,wz/70,this.seed)*20+m*m*40))}
+ // ---- generation v3: caves, caverns, cave pools and ores. Everything is a pure function of world coordinates + seed, so chunk borders always line up and reloading never changes anything. ----
+ cavesCtx(cx,cz){const s=this.seed,hs=new Int16Array(18*18);for(let z=-1;z<=16;z++)for(let x=-1;x<=16;x++)hs[(z+1)*18+x+1]=this.height(cx*S+x,cz*S+z);
+  return {hs,A:field(s+1001,14,10,cx,cz),Bf:field(s+2002,16,8,cx,cz),C:field(s+3003,22,14,cx,cz),P:field(s+4004,18,H,cx,cz)}}
+ carve(d,c,cx,cz,x,z,h){const sea=this.sea,wx=cx*S+x,wz=cz*S+z,at=(dx,dz)=>c.hs[(z+dz+1)*18+x+dx+1];
+  let lim=h>sea+4?h:h-4;for(const [dx,dz] of N4){const hn=at(dx,dz);if(hn<=sea)lim=Math.min(lim,hn-3)}   // never open into lakes/rivers: keep rock between caves and surface water
+  const I=y=>(y*S+z)*S+x,pm=c.P(wx,0,wz)>PT;let wall=false;if(!pm)for(const [dx,dz] of N4)if(c.P(wx+dx,0,wz+dz)>PT)wall=true;
+  for(let y=4;y<=lim;y++){const a=c.A(wx,y,wz)-.5,b=c.Bf(wx,y,wz)-.5;if(a*a+b*b>=TUBE&&c.C(wx,y,wz)<=CAV)continue;
+   if(y<=POOLY){if(pm){d[I(y)]=B.WATER;continue}if(wall)continue}   // pools are walled in so water never touches open air sideways
+   d[I(y)]=0}
+  for(let y=1,top=Math.min(h-4,56);y<=top;y++)if(d[I(y)]===B.STONE){const o=oreAt(wx,y,wz,this.seed);if(o)d[I(y)]=o}}
+ gen(cx,cz){const sea=this.sea,d=new Uint8Array(S*H*S);const I=(x,y,z)=>(y*S+z)*S+x;const g3=this.genVersion>=3?this.cavesCtx(cx,cz):null;
+  for(let x=0;x<S;x++)for(let z=0;z<S;z++){const wx=cx*S+x,wz=cz*S+z;
+   const m=Math.max(0,fbm(wx/220,wz/220,this.seed+7)-.5)*2;const h=Math.min(H-8,Math.floor(18+fbm(wx/70,wz/70,this.seed)*20+m*m*40));
+   for(let y=0;y<=h;y++){let b=B.STONE;if(y===0)b=B.BEDROCK;else if(y>h-4)b=B.DIRT;
+    if(y===h)b=h<=sea+1?B.SAND:h>46?B.SNOW:B.GRASS;d[I(x,y,z)]=b}
+   for(let y=h+1;y<=sea;y++)d[I(x,y,z)]=B.WATER;
+   if(g3)this.carve(d,g3,cx,cz,x,z,h);
+   if(h>sea+1&&h<40&&(!g3||d[I(x,h,z)])&&x>2&&x<13&&z>2&&z<13&&hash(wx,wz,this.seed+99)<.012){for(let t=1;t<=5;t++)d[I(x,h+t,z)]=B.LOG;
+    for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)for(let dy=3;dy<=6;dy++)if(!(Math.abs(dx)==2&&Math.abs(dz)==2)&&!d[I(x+dx,h+dy,z+dz)])d[I(x+dx,h+dy,z+dz)]=B.LEAVES}}
+  for(const [k,v] of this.mods){const [mx,my,mz]=k.split(',').map(Number);if(Math.floor(mx/S)===cx&&Math.floor(mz/S)===cz)d[I(mx-cx*S,my,mz-cz*S)]=v}
+  return d}
+ get(x,y,z){if(y<0||y>=H)return 0;const c=this.chunks.get(this.key(Math.floor(x/S),Math.floor(z/S)));if(!c)return 0;return c.d[((y*S)+(z-c.cz*S))*S+(x-c.cx*S)]}
+ set(x,y,z,id){if(y<0||y>=H)return;const cx=Math.floor(x/S),cz=Math.floor(z/S),c=this.chunks.get(this.key(cx,cz));if(!c)return;
+  c.d[((y*S)+(z-cz*S))*S+(x-cx*S)]=id;this.mods.set(x+','+y+','+z,id);this.dirty.add(c);
+  const key=x+','+y+','+z;if(isWater(id)){if(id===B.WATER)this.flowDistance.set(key,0);if(!this.fluidSeen.has(key)){this.fluidQueue.push([x,y,z]);this.fluidSeen.add(key)}}
+  if(id===0){for(const [dx,dy,dz] of [[0,1,0],[0,-1,0],[1,0,0],[-1,0,0],[0,0,1],[0,0,-1]]){const nx=x+dx,ny=y+dy,nz=z+dz;if(isWater(this.get(nx,ny,nz))){const nk=nx+','+ny+','+nz;if(!this.fluidSeen.has(nk)){this.fluidQueue.push([nx,ny,nz]);this.fluidSeen.add(nk)}}}}
+  const lx=x-cx*S,lz=z-cz*S;for(const [dx,dz,t] of [[-1,0,lx===0],[1,0,lx===S-1],[0,-1,lz===0],[0,1,lz===S-1]])if(t){const n=this.chunks.get(this.key(cx+dx,cz+dz));if(n)this.dirty.add(n)}}
+ mesh(c){for(const m of c.meshes)this.scene.remove(m),m.geometry.dispose();c.meshes=[];const ores=[];const out=[{p:[],u:[],c:[],i:[]},{p:[],u:[],c:[],i:[]}];
+  for(let y=0;y<H;y++)for(let z=0;z<S;z++)for(let x=0;x<S;x++){const id=c.d[(y*S+z)*S+x];if(!id)continue;if(id>=16&&id<=19)ores.push(c.cx*S+x,y,c.cz*S+z,id);const wat=isWater(id),o=out[wat?1:0],wx=c.cx*S+x,wz=c.cz*S+z;
+   for(const [d,cs,sh] of F){const n=this.get(wx+d[0],y+d[1],wz+d[2]);if(!see(n)||(n===id&&id!==7)||(wat&&isWater(n)))continue;
+    const b=o.p.length/3,T=wat?0:id,N=wat?1:NT,u0=T/N,u1=(T+1)/N;cs.forEach((q,k)=>{o.p.push(wx+q[0],y+q[1],wz+q[2]);o.u.push(k===0||k===3?u0:u1,k<2?0:1);{const v=wat?.88+sh*.12:sh;o.c.push(v,v,v)}});o.i.push(b,b+1,b+2,b,b+2,b+3)}}
+  out.forEach((o,k)=>{if(!o.p.length)return;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(o.p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(o.u,2));g.setAttribute('color',new THREE.Float32BufferAttribute(o.c,3));g.setIndex(o.i);
+   const m=new THREE.Mesh(g,k?this.wmat:this.mat);if(k)m.renderOrder=2;this.scene.add(m);c.meshes.push(m)});c.ores=ores;this.buildXray(c)}
+ update(px,pz,rd){const pcx=Math.floor(px/S),pcz=Math.floor(pz/S);let made=0;
+  for(let r=0;r<=rd&&made<2;r++)for(let dx=-r;dx<=r&&made<2;dx++)for(let dz=-r;dz<=r&&made<2;dz++){if(Math.max(Math.abs(dx),Math.abs(dz))!==r)continue;const k=this.key(pcx+dx,pcz+dz);
+    if(!this.chunks.has(k)){const c={cx:pcx+dx,cz:pcz+dz,meshes:[]};c.d=this.gen(c.cx,c.cz);this.chunks.set(k,c);this.dirty.add(c);for(const [a,b] of [[1,0],[-1,0],[0,1],[0,-1]]){const n=this.chunks.get(this.key(c.cx+a,c.cz+b));if(n)this.dirty.add(n)}made++}}
+  let m=0;for(const c of [...this.dirty]){this.mesh(c);this.dirty.delete(c);if(++m>=2)break}
+  for(const [k,c] of this.chunks)if(Math.max(Math.abs(c.cx-pcx),Math.abs(c.cz-pcz))>rd+2){this.clearX(c);for(const q of c.meshes)this.scene.remove(q),q.geometry.dispose();this.chunks.delete(k);this.dirty.delete(c)}}
+ stepWater(limit=10){let done=0;while(this.fluidQueue.length&&done<limit){const [x,y,z]=this.fluidQueue.shift(),key=x+','+y+','+z;this.fluidSeen.delete(key);const id=this.get(x,y,z);if(!isWater(id)){done++;continue}
+   const dist=this.flowDistance.get(key)??(id===B.WATER?0:4);
+   // Gravity has priority. Flowing water falls freely, then spreads a short distance sideways.
+   if(y>1&&this.get(x,y-1,z)===B.AIR){this.set(x,y-1,z,B.FLOWING_WATER);this.flowDistance.set(x+','+(y-1)+','+z,dist);done++;continue}
+   if(dist<4){for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,nz=z+dz;if(this.get(nx,y,nz)===B.AIR){this.set(nx,y,nz,B.FLOWING_WATER);this.flowDistance.set(nx+','+y+','+nz,dist+1)}}}
+   done++;
+  }}
+ surface(x,z){for(let y=H-1;y>0;y--)if(this.get(x,y,z))return y+1;return 40}
+ ground(x,z){for(let y=H-1;y>0;y--)if(solid(this.get(x,y,z)))return y+1;return 40}
+}
+
+// ---- item registry. Blocks use their block id (1..99). Materials 100+. Tools 200+ (200 + type*10 + tier). Slots are {id,n,d?}. ----
+const MAXSTACK=64,MAT={STICK:100,IRON:101,GOLD:102,DIAMOND:103,COAL:104};
+const TYPES=['Pickaxe','Axe','Shovel','Sword'],TIERS=['Wooden','Stone','Iron','Gold','Diamond'];
+const TIER={speed:[2,3.5,5,7,8],dur:[59,131,250,32,1561]};   // gold: fast but fragile; diamond: best overall
+const toolId=(t,r)=>200+t*10+r,isTool=id=>id>=200;
+const toolInfo=id=>isTool(id)?{type:Math.floor((id-200)/10),tier:(id-200)%10}:null;
+const maxDur=id=>isTool(id)?TIER.dur[toolInfo(id).tier]:0,stackMax=id=>isTool(id)?1:MAXSTACK;
+const isBlockItem=id=>id>0&&id<100&&id!==B.WATER&&id!==B.FLOWING_WATER;
+const MATN={100:'Stick',101:'Iron Ingot',102:'Gold Ingot',103:'Diamond',104:'Coal'};
+const itemName=id=>isTool(id)?TIERS[toolInfo(id).tier]+' '+TYPES[toolInfo(id).type]:MATN[id]||(INFO[id]&&INFO[id][0])||'Item';
+const allItems=()=>{const a=[];for(let i=1;i<100;i++)if(isBlockItem(i)&&INFO[i])a.push(i);a.push(100,101,102,103,104);for(let t=0;t<4;t++)for(let r=0;r<5;r++)a.push(toolId(t,r));return a};
+const EFFECT=[[B.STONE,B.COBBLE,B.BRICK,B.COAL_ORE,B.IRON_ORE,B.GOLD_ORE,B.DIAMOND_ORE,B.FURNACE],[B.LOG,B.PLANKS,B.WORKBENCH],[B.DIRT,B.GRASS,B.SAND,B.SNOW],[]];
+const toolSpeed=(id,block)=>{if(!id||!isTool(id))return 1;const i=toolInfo(id);return EFFECT[i.type].includes(block)?TIER.speed[i.tier]:.8};
+const DROPS={[B.GRASS]:B.DIRT,[B.STONE]:B.COBBLE,[B.COAL_ORE]:MAT.COAL,[B.DIAMOND_ORE]:MAT.DIAMOND};   // iron/gold ore drop themselves (smelt them in a furnace)
+const dropOf=b=>DROPS[b]||b;
+const NEED={[B.COAL_ORE]:0,[B.IRON_ORE]:1,[B.GOLD_ORE]:2,[B.DIAMOND_ORE]:2};   // minimum pickaxe tier (0 wood .. 4 diamond)
+const needTier=b=>NEED[b];
+const canMine=(b,toolId)=>{const n=NEED[b];if(n===undefined)return true;if(!toolId||!isTool(toolId))return false;const i=toolInfo(toolId);return i.type===0&&i.tier>=n};
+const needMsg=b=>`Needs a ${TIERS[NEED[b]].toLowerCase()} pickaxe or better`;
+function describe(s){if(!s)return '';let t=itemName(s.id);if(isTool(s.id)){const i=toolInfo(s.id);t+=`\nDurability ${s.d}/${maxDur(s.id)}\nMining speed x${TIER.speed[i.tier]} on ${['stone & bricks','wood','dirt, sand & snow','(sword: for future combat)'][i.type]}`}else if(s.id===MAT.STICK)t+='\nCrafting material';else if(s.id>=100)t+='\nCrafting material';else if(s.id===B.WORKBENCH)t+='\nPlace it, then right-click to craft';else if(s.id===B.FURNACE)t+='\nPlace it, then right-click to smelt';else if(NEED[s.id]!==undefined)t+=`\nNeeds a ${TIERS[NEED[s.id]].toLowerCase()} pickaxe or better`;else if(s.id===MAT.COAL)t+='\nFurnace fuel (smelts 8 items)';else t+='\nBlock';return t}
+const newStack=(id,n=1,d)=>isTool(id)?{id,n:1,d:d==null?maxDur(id):d}:{id,n};
+const same=(a,b)=>!!a&&!!b&&a.id===b.id&&!isTool(a.id);
+// ---- inventory: 36 slots, 0-8 hotbar, 9-35 backpack ----
+const newInv=()=>Array(36).fill(null);
+function addItem(inv,id,n=1,dry=false,d){if(dry)inv=inv.map(s=>s&&{...s});let left=n;const t=isTool(id);
+ if(!t)for(let i=0;i<inv.length&&left>0;i++){const s=inv[i];if(s&&s.id===id&&s.n<MAXSTACK){const m=Math.min(MAXSTACK-s.n,left);s.n+=m;left-=m}}
+ for(let i=0;i<inv.length&&left>0;i++)if(!inv[i]){const m=t?1:Math.min(MAXSTACK,left);inv[i]=newStack(id,m,d);left-=m}
+ return left}
+const canAdd=(inv,id,n=1)=>addItem(inv,id,n,true)===0;
+// Mouse click on slot arr[i] while holding `held` (cursor stack). Returns the new held stack.
+function click(arr,i,held,right){const s=arr[i];
+ if(!held){if(!s)return null;if(right&&s.n>1){const h=Math.ceil(s.n/2);arr[i]={...s,n:s.n-h};return {...s,n:h}}arr[i]=null;return s}
+ if(!s){if(right){arr[i]={...held,n:1};return held.n>1?{...held,n:held.n-1}:null}arr[i]=held;return null}
+ if(same(s,held)){const room=stackMax(s.id)-s.n,m=right?Math.min(1,room):Math.min(room,held.n);s.n+=m;const r=held.n-m;return r>0?{...held,n:r}:null}
+ arr[i]=held;return s}
+function wearTool(inv,i,creative,amt=1){const s=inv[i];if(creative||!s||!isTool(s.id))return false;s.d-=amt;if(s.d<=0){inv[i]=null;return true}return false}
+// ---- recipes (modular: call addRecipe from anywhere). pat = rows of ids (0 = empty); shaped recipes match anywhere in the grid, mirrored too ----
+const RECIPES=[];
+const addRecipe=(out,n,pat,shapeless=false)=>RECIPES.push({out,n,pat,shapeless});
+(function(){const L=B.LOG,PL=B.PLANKS,ST=MAT.STICK;
+ addRecipe(PL,4,[[L]]);addRecipe(ST,4,[[PL],[PL]]);addRecipe(B.WORKBENCH,1,[PL,PL,PL,PL],true);
+ [PL,B.COBBLE,MAT.IRON,MAT.GOLD,MAT.DIAMOND].forEach((M,t)=>{addRecipe(toolId(0,t),1,[[M,M,M],[0,ST,0],[0,ST,0]]);addRecipe(toolId(1,t),1,[[M,M],[M,ST],[0,ST]]);addRecipe(toolId(2,t),1,[[M],[ST],[ST]]);addRecipe(toolId(3,t),1,[[M],[M],[ST]])})})();
+addRecipe(B.FURNACE,1,[[B.COBBLE,B.COBBLE,B.COBBLE],[B.COBBLE,0,B.COBBLE],[B.COBBLE,B.COBBLE,B.COBBLE]]);
+// ---- furnace: {s:[input,fuel,output], prog, burn, burnMax}. Fuel is only burned while something is actually smelting. ----
+const SMELT={[B.IRON_ORE]:MAT.IRON,[B.GOLD_ORE]:MAT.GOLD},FUEL={[MAT.COAL]:48},SMELT_TIME=6;
+const newFurnace=()=>({s:[null,null,null],prog:0,burn:0,burnMax:0});
+function furnaceTick(f,dt){const [inp,fuel,out]=f.s,res=inp&&SMELT[inp.id],ok=res&&(!out||(out.id===res&&out.n<MAXSTACK));
+ if(!ok){const had=f.prog>0;f.prog=0;return had}
+ if(f.burn<=0){if(fuel&&FUEL[fuel.id]){f.burnMax=f.burn=FUEL[fuel.id];if(--fuel.n<=0)f.s[1]=null}else{const had=f.prog>0;f.prog=Math.max(0,f.prog-dt*2);return had}}
+ f.burn=Math.max(0,f.burn-dt);f.prog+=dt;
+ if(f.prog>=SMELT_TIME){f.prog-=SMELT_TIME;if(--inp.n<=0)f.s[0]=null;if(out)out.n++;else f.s[2]={id:res,n:1}}
+ return true}
+function findRecipe(g){const rows=g.map(r=>r.some(Boolean)),r0=rows.indexOf(true);if(r0<0)return null;
+ const cols=g[0].map((_,c)=>g.some(r=>r[c])),r1=rows.lastIndexOf(true),c0=cols.indexOf(true),c1=cols.lastIndexOf(true);
+ const sub=g.slice(r0,r1+1).map(r=>r.slice(c0,c1+1)),flat=sub.flat().filter(Boolean).sort().join();
+ for(const R of RECIPES){if(R.shapeless){if(R.pat.slice().sort().join()===flat)return R;continue}
+  if(R.pat.length!==sub.length||R.pat[0].length!==sub[0].length)continue;const eq=m=>m.every((row,y)=>row.every((v,x)=>v===sub[y][x]));
+  if(eq(R.pat)||eq(R.pat.map(r=>[...r].reverse())))return R}return null}
+const gridIds=(craft,n)=>Array.from({length:n},(_,r)=>Array.from({length:n},(_,c)=>{const s=craft[r*3+c];return s?s.id:0}));
+function craftTake(craft,cells,creative){if(creative)return;for(const k of cells){const s=craft[k];if(s&&--s.n<=0)craft[k]=null}}
+
+// ---- game modes: what each mode is allowed to do. main.js gates every interaction through this table. ----
+const MODES={
+ survival:{mine:true,place:true,interact:true,collect:true,wear:true,inventory:true,saveWorld:true},
+ creative:{mine:true,place:true,interact:true,collect:false,wear:false,inventory:true,saveWorld:true},
+ spectator:{mine:false,place:false,interact:false,collect:false,wear:false,inventory:false,saveWorld:false}};
+
+// Player physics, kept separate from main.js so swimming / water-exit can be unit-tested.
+const WALK=4.3,SPRINT=7,SWIM_SCALE=.5,GRAV=25,JUMP=8.5,HW=.3,HGT=1.79,EYE=1.62;
+const fl=Math.floor;
+function collides(w,x,y,z){for(let i=fl(x-HW);i<=fl(x+HW);i++)for(let j=fl(y);j<=fl(y+HGT);j++)for(let k=fl(z-HW);k<=fl(z+HW);k++)if(solid(w.get(i,j,k)))return true;return false}
+// Lowest height (<=1.7) the player could be lifted to so the body fits just ahead (i.e. the top of the ledge in front).
+function ledgeHeight(P,w){const m=Math.hypot(P.vx,P.vz);if(m<1e-3)return null;const px=P.x+P.vx/m*.5,pz=P.z+P.vz/m*.5;for(let h=.1;h<=1.701;h+=.1)if(!collides(w,px,P.y+h,pz))return h;return null}
+// inp: {fx:strafe(-1..1), fz:back(+1)/forward(-1), space, sprint, down, fly, yaw}. Returns {swim,headW}
+function stepPlayer(P,w,inp,dt){
+ const fly=!!inp.fly,moving=inp.fx!==0||inp.fz!==0;
+ const feetW=isWater(w.get(fl(P.x),fl(P.y+.2),fl(P.z))),bodyW=isWater(w.get(fl(P.x),fl(P.y+.9),fl(P.z))),headW=isWater(w.get(fl(P.x),fl(P.y+EYE),fl(P.z)));
+ const swim=!fly&&(feetW||bodyW);
+ let sp=(inp.sprint?SPRINT:WALK)*(fly?2:1);if(swim)sp=WALK*SWIM_SCALE;   // swimming is always slower than walking
+ const l=Math.hypot(inp.fx,inp.fz)||1,fx=inp.fx/l,fz=inp.fz/l,c=Math.cos(inp.yaw),s=Math.sin(inp.yaw);
+ P.vx=(fx*c+fz*s)*sp;P.vz=(-fx*s+fz*c)*sp;P.leap=Math.max(0,(P.leap||0)-dt);
+ if(fly)P.vy=((inp.space?1:0)-(inp.sprint?1:0))*sp;
+ else if(swim){
+  if(P.leap>0)P.vy-=GRAV*dt;                                           // after a leap/climb: normal gravity so we can clear the edge
+  else if(inp.space&&P.ground&&!headW){P.vy=JUMP;P.leap=.3}            // wading in shallows: ordinary jump
+  else{const target=inp.space?3.6:inp.down?-3:-1.6;P.vy+=(target-P.vy)*Math.min(1,8*dt)}  // buoyancy: swim up / sink gently
+ }else{P.vy-=GRAV*dt;if(inp.space&&P.ground)P.vy=JUMP}
+ // Water exit / climb assist: pushing into a ledge we can reach (top within 1.7 blocks of our feet) lifts us over it: Space, or simply swimming into it.
+ if(!fly&&P.blocked&&((inp.space&&(swim||P.leap>0))||(moving&&swim))){const h=ledgeHeight(P,w);if(h!==null){P.vy=Math.max(P.vy,Math.sqrt(2*GRAV*(h+.15)));P.leap=.5}}
+ P.ground=false;P.blocked=false;
+ for(const [a,v] of [['x',P.vx],['y',P.vy],['z',P.vz]]){const o=P[a];P[a]+=v*dt;if(collides(w,P.x,P.y,P.z)){P[a]=o;if(a==='y'){if(P.vy<0)P.ground=true;P.vy=0}else P.blocked=true}}
+ if(P.y<-20){P.y=w.ground(fl(P.x),fl(P.z))+1;P.vy=0}
+ return {swim,headW}}
+
+// Spectator: free flight. No gravity, no collision (passes through every block), no water drag. Smoothly accelerates to SPEC_SPEED.
+const SPEC_SPEED=16;
+function stepSpectator(P,inp,dt){const l=Math.hypot(inp.fx,inp.fz)||1,fx=inp.fx/l,fz=inp.fz/l,c=Math.cos(inp.yaw),s=Math.sin(inp.yaw),k=Math.min(1,10*dt);
+ const tx=(fx*c+fz*s)*SPEC_SPEED,tz=(-fx*s+fz*c)*SPEC_SPEED,ty=((inp.up?1:0)-(inp.down?1:0))*SPEC_SPEED*.75;
+ P.vx+=(tx-P.vx)*k;P.vy+=(ty-P.vy)*k;P.vz+=(tz-P.vz)*k;P.x+=P.vx*dt;P.y=Math.max(-8,Math.min(110,P.y+P.vy*dt));P.z+=P.vz*dt;P.ground=false;P.blocked=false;P.leap=0;return {swim:false}}
+
+const ICONS=new Map();let ATLAS_CANVAS=null;
+function setAtlas(c){ATLAS_CANVAS=c;ICONS.clear()}
+const TCOL=['#a67c46','#8a8a90','#dcdce2','#f6d23c','#52e6e6'];
+const HEAD=[[[5,3],[6,2],[7,2],[8,2],[9,2],[10,3],[11,4],[12,5],[12,6],[6,3],[10,4]],[[7,2],[8,2],[9,2],[10,3],[11,4],[10,5],[9,5],[8,5],[8,4],[9,4],[9,3]],[[10,2],[11,2],[12,3],[11,3],[10,3],[11,4],[10,4],[12,4],[11,5]],[[12,1],[11,2],[10,3],[9,4],[8,5],[7,6],[6,7],[5,8],[12,2],[11,3],[10,4],[9,5],[8,6],[7,7]]];
+function iconURL(id){let u=ICONS.get(id);if(u)return u;const c=document.createElement('canvas');c.width=c.height=32;const g=c.getContext('2d');g.imageSmoothingEnabled=false;
+ const px=(x,y,col)=>{g.fillStyle=col;g.fillRect(x*2,y*2,2,2)};
+ if(isTool(id)){const i=toolInfo(id),n=i.type===3?4:10;for(let k=0;k<n;k++)px(2+k,13-k,'#6b4a26');if(i.type===3){px(3,10,'#444');px(4,11,'#444');px(5,12,'#444')}for(const [x,y] of HEAD[i.type])px(x,y,TCOL[i.tier]);for(const [x,y] of HEAD[i.type].slice(0,3))px(x,y+0,'#ffffff55')}
+ else if(id===104){for(const [x,y] of [[5,5],[6,5],[7,5],[8,5],[4,6],[5,6],[6,6],[7,6],[8,6],[9,6],[5,7],[6,7],[7,7],[8,7],[9,7],[6,8],[7,8],[8,8]])px(x,y+1,'#26262a');for(const [x,y] of [[6,6],[7,6],[8,7]])px(x,y+1,'#555560')}
+ else if(id===100){for(let k=0;k<10;k++)px(3+k,12-k,'#8a6430')}
+ else if(id===101||id===102){const col=id===101?'#d8d8dc':'#f2c630';for(let y=6;y<10;y++)for(let x=3;x<13;x++)px(x,y,y===6?'#fff8':col)}
+ else if(id===103){for(const [x,y] of [[8,2],[7,3],[8,3],[9,3],[6,4],[7,4],[8,4],[9,4],[10,4],[7,5],[8,5],[9,5],[8,6],[8,7],[7,6],[9,6]])px(x,y+2,'#52e6e6');px(7,5,'#d6ffff')}
+ else if(ATLAS_CANVAS){g.drawImage(ATLAS_CANVAS,id*16,0,16,16,0,0,32,32);g.strokeStyle='#0008';g.strokeRect(.5,.5,31,31)}
+ u=c.toDataURL();ICONS.set(id,u);return u}
+function slotHTML(s,hideCount){if(!s)return '';const t=isTool(s.id),m=maxDur(s.id);
+ let h=`<img src="${iconURL(s.id)}" draggable="false">`;if(!t&&!hideCount&&s.n>1)h+=`<span class="n">${s.n}</span>`;
+ if(t&&!hideCount&&s.d<m){const p=Math.max(0,s.d/m*100);h+=`<i class="bar"><b style="width:${p}%;background:hsl(${p*1.2},85%,48%)"></b></i>`}return h}
+
+// Inventory, Workbench and Furnace screens. IS={inv[36],craft[9],held}. hooks:{mode(),change(),furnace(key),onOpen(),onClose()}
+function createInvUI(IS,hooks){
+ const root=document.createElement('div');root.id='inv';root.style.display='none';document.body.appendChild(root);
+ const heldEl=document.createElement('div');heldEl.id='held';document.body.appendChild(heldEl);const tip=document.createElement('div');tip.id='tip';document.body.appendChild(tip);
+ let kind='inv',down=null,open=false,fur=null,acc=0;const size=()=>kind==='bench'?3:2,cells=()=>size()===3?[0,1,2,3,4,5,6,7,8]:[0,1,3,4],creative=()=>hooks.mode()==='creative';
+ const recipe=()=>findRecipe(gridIds(IS.craft,size())),result=()=>{const R=recipe();return R?newStack(R.out,R.n):null};
+ const sl=(a,i)=>`<div class="slot" data-a="${a}" data-i="${i}"></div>`,range=(a,b)=>Array.from({length:b-a},(_,k)=>a+k);
+ const stackAt=(a,i)=>a==='i'?IS.inv[i]:a==='c'?IS.craft[i]:a==='f'?fur.s[i]:a==='r'?result():newStack(i);
+ function top(){if(kind==='furnace')return `<div class="ttl">FURNACE</div><div class="crow"><div class="fcol"><div class="lbl">Input</div>${sl('f',0)}<div class="flame" title="Fuel left"><b id="fburn"></b></div>${sl('f',1)}<div class="lbl">Fuel</div></div><div class="parrow" title="Smelting progress"><b id="fprog"></b></div><div class="fcol"><div class="lbl">Output</div>${sl('f',2)}</div><div class="fhint">Smelts iron ore and gold ore.<br>Fuel: coal (1 coal = 8 items).<br>Right-click the furnace to reopen.</div></div>`;
+  const n=size();return `<div class="ttl">${kind==='bench'?'WORKBENCH':'INVENTORY'}</div><div class="crow"><div class="cgrid" style="grid-template-columns:repeat(${n},var(--s))">${cells().map(i=>sl('c',i)).join('')}</div><div class="arrow">&#10140;</div>${sl('r',0)}</div>`}
+ function build(){root.innerHTML=top()+`<div class="lbl">Backpack</div><div class="g9">${range(9,36).map(i=>sl('i',i)).join('')}</div><div class="lbl">Hotbar</div><div class="g9">${range(0,9).map(i=>sl('i',i)).join('')}</div>${creative()?`<div class="lbl">Creative items &mdash; click to pick up, click while holding to discard</div><div class="g9 pal">${allItems().map(i=>sl('p',i)).join('')}</div>`:''}<div class="hint">E / Esc to close &middot; left click: pick up / place / swap &middot; right click: take half / place one &middot; you can also drag</div>`;render()}
+ function bars(){if(!fur)return;const b=root.querySelector('#fburn'),p=root.querySelector('#fprog');if(b)b.style.height=(fur.burnMax&&fur.burn>0?fur.burn/fur.burnMax*100:0)+'%';if(p)p.style.width=Math.min(100,fur.prog/SMELT_TIME*100)+'%'}
+ function render(){for(const el of root.querySelectorAll('.slot')){const a=el.dataset.a;el.innerHTML=slotHTML(stackAt(a,+el.dataset.i),creative()&&a!=='r'&&a!=='f')}
+  heldEl.innerHTML=slotHTML(IS.held,true)+(IS.held&&IS.held.n>1&&!creative()?`<span class="n">${IS.held.n}</span>`:'');bars()}
+ function act(a,i,right){if(a==='p')IS.held=IS.held?null:newStack(i,isTool(i)?1:MAXSTACK);
+  else if(a==='r'){const out=result();if(!out||(IS.held&&!(same(IS.held,out)&&IS.held.n+out.n<=stackMax(out.id))))return;IS.held=IS.held?{...IS.held,n:IS.held.n+out.n}:out;craftTake(IS.craft,cells(),creative())}
+  else if(a==='f'){const s=fur.s;
+   if(i===2){const o=s[2];if(!o)return;if(!IS.held){IS.held=o;s[2]=null}else if(same(IS.held,o)){const m=Math.min(stackMax(o.id)-IS.held.n,o.n);if(m<=0)return;IS.held={...IS.held,n:IS.held.n+m};o.n-=m;if(o.n<=0)s[2]=null}else return}   // output: take only
+   else{if(IS.held&&!(i===0?SMELT[IS.held.id]:FUEL[IS.held.id]))return;IS.held=click(s,i,IS.held,right)}}                                  // input: smeltable ores only; fuel: coal only
+  else IS.held=click(a==='c'?IS.craft:IS.inv,i,IS.held,right);hooks.change();render()}
+ root.addEventListener('mousedown',e=>{const el=e.target.closest('.slot');if(!el)return;e.preventDefault();act(el.dataset.a,+el.dataset.i,e.button===2);down=e.button===0&&IS.held?el:null});
+ root.addEventListener('contextmenu',e=>e.preventDefault());
+ addEventListener('mouseup',e=>{if(!open||!down)return;const el=e.target.closest&&e.target.closest('.slot');const d=down;down=null;if(el&&el!==d&&IS.held)act(el.dataset.a,+el.dataset.i,false)});
+ addEventListener('mousemove',e=>{if(!open)return;heldEl.style.left=e.clientX-20+'px';heldEl.style.top=e.clientY-20+'px';const el=e.target.closest&&e.target.closest('.slot'),s=el&&stackAt(el.dataset.a,+el.dataset.i);
+  if(s){tip.textContent=describe(s);tip.style.display='block';tip.style.left=e.clientX+14+'px';tip.style.top=e.clientY+14+'px'}else tip.style.display='none'});
+ function close(){if(!open)return;open=false;
+  for(let k=0;k<9;k++){const s=IS.craft[k];if(s&&addItem(IS.inv,s.id,s.n,false,s.d)===0)IS.craft[k]=null}     // ingredients go back to the backpack; anything that doesn't fit stays in the grid
+  if(IS.held&&!creative()){const h=IS.held,left=addItem(IS.inv,h.id,h.n,false,h.d);IS.held=left>0?{...h,n:left}:null}else if(creative())IS.held=null;
+  root.style.display='none';tip.style.display='none';heldEl.style.display='none';fur=null;hooks.change();hooks.onClose()}
+ // called every frame while open: keeps furnace bars / slots live while it smelts
+ function tick(dt){if(!open||kind!=='furnace')return;bars();acc+=dt;if(acc>.25){acc=0;render()}}
+ return {open(k,key){kind=k;fur=k==='furnace'?hooks.furnace(key):null;open=true;build();root.style.display='block';heldEl.style.display='block';hooks.onOpen()},close,tick,isOpen:()=>open,render}}
+
+const $=id=>document.getElementById(id);
+const renderer=new THREE.WebGLRenderer({canvas:$('c'),antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x9bc9e8);scene.fog=new THREE.Fog(0x9bc9e8,75,180);
+scene.add(new THREE.HemisphereLight(0xd9efff,0x59613c,1.15));
+const sun=new THREE.DirectionalLight(0xfff2d8,1.15);sun.position.set(-40,80,30);scene.add(sun);
+const cam=new THREE.PerspectiveCamera(75,1,.1,300);
+const resize=()=>{renderer.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()};addEventListener('resize',resize);resize();
+const sel=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.006,1.006,1.006)),new THREE.LineBasicMaterial({color:0x101010}));sel.visible=false;scene.add(sel);
+const crackTex=(()=>{let r=4242;const rnd=()=>(r=(r*16807)%2147483647)/2147483647;const segs=[];
+ for(let n=0;n<14;n++){let x=2+rnd()*12,y=2+rnd()*12;const pts=[[x,y]];for(let k=0;k<4;k++){x+=(rnd()-.5)*8;y+=(rnd()-.5)*8;pts.push([x,y])}segs.push(pts)}
+ return Array.from({length:10},(_,s)=>{const c=document.createElement('canvas');c.width=c.height=16;const g=c.getContext('2d');
+  g.fillStyle=`rgba(0,0,0,${.05+s*.04})`;g.fillRect(0,0,16,16);const n=Math.min(segs.length,Math.ceil((s+1)*1.4));
+  for(let i=0;i<n;i++){const p=segs[i];for(const [col,o] of [['rgba(255,255,255,.4)',1],['rgba(0,0,0,.95)',0]]){g.strokeStyle=col;g.lineWidth=1;g.beginPath();p.forEach(([a,b],j)=>j?g.lineTo(a+o,b+o):g.moveTo(a+o,b+o));g.stroke()}}
+  const t=new THREE.CanvasTexture(c);t.magFilter=t.minFilter=THREE.NearestFilter;return t})})();
+const crack=new THREE.Mesh(new THREE.BoxGeometry(1.008,1.008,1.008),new THREE.MeshBasicMaterial({map:crackTex[0],transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));crack.visible=false;crack.renderOrder=3;scene.add(crack);
+let world,mode='survival',name='world',playing=false,slot=0,fly=false,dirty=false,wid,status='-',mine=null,holding=false,uwOn=false,denyKey='',xray=true,readOnly=false;const caps=()=>MODES[mode]||MODES.survival;
+const P={x:8,y:50,z:8,vx:0,vy:0,vz:0,yaw:0,pitch:0,ground:false};
+const IS={inv:newInv(),craft:Array(9).fill(null),held:null};let uiOpen=false;const CREATIVE_START=[B.GRASS,B.DIRT,B.STONE,B.PLANKS,B.LOG,B.COBBLE,B.GLASS,B.BRICK,B.WORKBENCH];
+const mineTime={[B.GRASS]:.55,[B.DIRT]:.5,[B.SAND]:.45,[B.SNOW]:.3,[B.LEAVES]:.25,[B.GLASS]:.25,[B.PLANKS]:1.0,[B.LOG]:1.3,[B.BRICK]:2.0,[B.STONE]:2.0,[B.WORKBENCH]:1.2,[B.COAL_ORE]:2.6,[B.IRON_ORE]:3.0,[B.GOLD_ORE]:3.2,[B.DIAMOND_ORE]:3.6,[B.FURNACE]:2.2,[B.COBBLE]:2.3,[B.BEDROCK]:Infinity};
+const keys={};addEventListener('keydown',e=>{keys[e.code]=true;if(e.code.startsWith('Digit')&&e.code!=='Digit0'&&caps().inventory){slot=+e.code.slice(5)-1;finishMine();ui()}if(e.code==='KeyF'&&mode==='creative')fly=!fly});
+addEventListener('keyup',e=>keys[e.code]=false);
+function ui(){const h=$('hotbar');h.style.display=caps().inventory?'':'none';h.innerHTML='';for(let i=0;i<9;i++){const d=document.createElement('div');d.className='slot'+(i===slot?' sel':'');d.innerHTML=slotHTML(IS.inv[i],mode==='creative');h.appendChild(d)}}
+function setXray(on){xray=on;world.setXray(on);const c=on?0x0b1420:0x9bc9e8;scene.background.set(c);scene.fog.color.set(c);toast(on?'X-ray ON':'X-ray OFF')}
+function specInit(){xray=true;$('specHelp').style.display=mode==='spectator'?'block':'none';if(mode==='spectator'){world.setXray(true);scene.background.set(0x0b1420);scene.fog.color.set(0x0b1420)}ui()}
+addEventListener('keydown',e=>{if(e.code==='KeyX'&&playing&&mode==='spectator')setXray(!xray)});
+function toast(m){let t=$('toast');if(!t){t=document.createElement('div');t.id='toast';document.body.appendChild(t)}t.textContent=m;t.style.opacity=1;clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.opacity=0,1800)}
+let AC=null,muted=false;
+function sfx(k){if(muted)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type=k==='break'?'square':'triangle';o.frequency.setValueAtTime(k==='break'?150:210+Math.random()*60,t);o.frequency.exponentialRampToValueAtTime(60,t+.12);g.gain.setValueAtTime(.07,t);g.gain.exponentialRampToValueAtTime(.001,t+.14);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+.15)}catch(e){}}
+addEventListener('keydown',e=>{if(e.code==='KeyM'&&playing){muted=!muted;toast(muted?'Sound off':'Sound on')}});
+function breakBlock(x,y,z,b){sfx('break');const d=dropOf(b),k=x+','+y+','+z,fr=b===B.FURNACE?world.furnaces.get(k):null;
+ if(mode==='survival'){const items=[{id:d,n:1},...(fr?fr.s.filter(Boolean):[])],t=IS.inv.map(s=>s&&{...s});
+  if(items.some(it=>addItem(t,it.id,it.n,false,it.d)>0)){toast('Inventory full - make room first');finishMine();return}      // nothing is ever lost: refuse to break instead
+  world.set(x,y,z,0);items.forEach(it=>addItem(IS.inv,it.id,it.n,false,it.d));if(wearTool(IS.inv,slot,false))toast('Your tool broke!')}
+ else world.set(x,y,z,0);
+ world.furnaces.delete(k);dirty=true;ui();finishMine()}
+const invUI=createInvUI(IS,{mode:()=>mode,change(){dirty=true;ui()},furnace:k=>{let f=world.furnaces.get(k);if(!f){f=newFurnace();world.furnaces.set(k,f)}return f},onOpen(){uiOpen=true;holding=false;finishMine();for(const k in keys)keys[k]=false;document.exitPointerLock()},onClose(){uiOpen=false;ui();if(playing)$('c').requestPointerLock()}});
+addEventListener('keydown',e=>{if(!playing)return;if(e.code==='KeyE'&&caps().inventory){e.preventDefault();invUI.isOpen()?invUI.close():invUI.open('inv')}else if(e.code==='Escape'&&invUI.isOpen())invUI.close()});
+$('c').addEventListener('click',()=>{if(playing&&!uiOpen&&!document.pointerLockElement)$('c').requestPointerLock()});
+const seedNum=s=>{let h=0;for(const ch of String(s))h=(h*31+ch.charCodeAt(0))|0;return h||1};
+const hits=(x,y,z)=>{for(let i=Math.floor(x-.3);i<=Math.floor(x+.3);i++)for(let j=Math.floor(y);j<=Math.floor(y+1.79);j++)for(let k=Math.floor(z-.3);k<=Math.floor(z+.3);k++)if(solid(world.get(i,j,k)))return true;return false};
+function ray(){const dir=new THREE.Vector3();cam.getWorldDirection(dir);let prev=null;for(let t=0;t<6;t+=.04){const x=Math.floor(cam.position.x+dir.x*t),y=Math.floor(cam.position.y+dir.y*t),z=Math.floor(cam.position.z+dir.z*t);if(solid(world.get(x,y,z)))return {hit:[x,y,z],prev};if(!prev||prev[0]!==x||prev[1]!==y||prev[2]!==z)prev=[x,y,z]}return null}
+function beginMine(){if(!playing||!document.pointerLockElement||!caps().mine)return;const r=ray();if(!r)return;const b=world.get(...r.hit);if(b===B.BEDROCK)return;if(mode==='survival'&&!canMine(b,IS.inv[slot]&&IS.inv[slot].id)){const k=r.hit.join(',');if(denyKey!==k){denyKey=k;toast(needMsg(b))}return}mine={pos:r.hit.join(','),hit:r.hit,elapsed:0,required:mode==='creative'?.12:(mineTime[b]||.7)/toolSpeed(IS.inv[slot]&&IS.inv[slot].id,b),block:b}}
+function finishMine(){mine=null;crack.visible=false;$('mineUI').style.display='none'}
+function showMine(p){$('mineUI').style.display='block';$('mineName').textContent=INFO[mine.block][0];$('mineFill').style.width=(p*100).toFixed(0)+'%'}
+function camInWater(){return isWater(world.get(Math.floor(cam.position.x),Math.floor(cam.position.y),Math.floor(cam.position.z)))}
+function setUnder(on){const el=$('uw');el.classList.toggle('on',on);el.classList.add('pulse');setTimeout(()=>el.classList.remove('pulse'),220);const c=on?0x2f86c8:0x9bc9e8;scene.fog.color.set(c);scene.fog.near=on?1:75;scene.fog.far=on?70:180;scene.background.set(c)}
+addEventListener('mousedown',e=>{if(e.button===0&&!uiOpen&&caps().mine){holding=true;beginMine()}if(e.button===2&&playing&&!uiOpen&&caps().interact&&document.pointerLockElement){const r=ray();if(!r)return;{const hb=world.get(r.hit[0],r.hit[1],r.hit[2]);if(hb===B.WORKBENCH){invUI.open('bench');return}if(hb===B.FURNACE){invUI.open('furnace',r.hit.join(','));return}}if(!r.prev)return;const [x,y,z]=r.prev,sl=IS.inv[slot];if(!sl||!isBlockItem(sl.id))return;world.set(x,y,z,sl.id);if(hits(P.x,P.y,P.z)){world.set(x,y,z,0);return}if(mode==='survival'&&--sl.n<=0)IS.inv[slot]=null;dirty=true;ui()}});
+addEventListener('mouseup',e=>{if(e.button===0){holding=false;denyKey='';finishMine()}});
+addEventListener('contextmenu',e=>e.preventDefault());
+addEventListener('mousemove',e=>{if(document.pointerLockElement){P.yaw-=e.movementX*.0022;P.pitch=Math.max(-1.55,Math.min(1.55,P.pitch-e.movementY*.0022))}});
+async function persist(){if(readOnly)return;const data=pack(world,[P.x,P.y,P.z],{seed:world.seed,mode,name,gen_version:world.genVersion,slots:IS.inv,craft:IS.craft,held:IS.held,furnaces:Object.fromEntries(world.furnaces),health:20,hunger:20});await localSave(wid,data);try{if(sb&&await user())await cloudSave({name,seed:String(world.seed),mode,gen_version:world.genVersion,save_format:SAVE_FORMAT,data});dirty=false;status='saved'}catch(e){status='offline: local backup kept, retrying'}}
+setInterval(()=>{if(playing&&dirty)persist()},15000);
+async function start(){const seed=$('seed').value||'dig';mode=$('mode').value;const wantSpec=mode==='spectator';name='world-'+seed;wid=name;IS.inv=newInv();IS.craft=Array(9).fill(null);IS.held=null;if(world)for(const c of world.chunks.values()){c.meshes.forEach(m=>scene.remove(m));(c.xm||[]).forEach(m=>scene.remove(m))};let s=await localLoad(wid);try{if(sb&&await user()){const r=await cloudLoad(name);if(r)s=migrate(r.data)}}catch(e){}
+ world=new World(seedNum(seed),scene,s?(s.gen_version||1):GEN_VERSION);if(s){world.mods=new Map(s.mods);IS.inv=s.slots;IS.craft=s.craft||Array(9).fill(null);IS.held=s.held||null;world.furnaces=new Map(Object.entries(s.furnaces||{}));mode=(s.mode&&s.mode!=='spectator')?s.mode:mode;[P.x,P.y,P.z]=s.pos}else{P.x=8.5;P.z=8.5;P.y=70}
+ readOnly=false;if(wantSpec&&s&&s.mode!=='spectator'){mode='spectator';readOnly=true}   // viewing someone's survival/creative world: nothing is ever written back
+ for(let i=0;i<40;i++)world.update(P.x,P.z,5);if(!s){let sx=8,sz=8;out:for(let r=0;r<40;r+=2)for(let a=0;a<8;a++){const x=Math.floor(8+Math.cos(a*.785)*r),z=Math.floor(8+Math.sin(a*.785)*r),t=world.surface(x,z),b=world.get(x,t-1,z);if(!isWater(b)&&b!==B.LEAVES){sx=x;sz=z;break out}}P.x=sx+.5;P.z=sz+.5;P.y=world.surface(sx,sz)+(mode==='spectator'?8:.1)}uwOn=false;setUnder(false);setAtlas(world.atlas.image);specInit();if(mode==='creative'&&IS.inv.slice(0,9).every(x=>!x))CREATIVE_START.forEach((id,i)=>IS.inv[i]={id,n:64});uiOpen=false;$('menu').style.display='none';playing=true;ui();$('c').requestPointerLock();if(!s&&mode==='spectator')persist()}
+$('play').onclick=start;
+document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockElement&&playing&&!uiOpen){playing=false;holding=false;finishMine();persist();$('menu').style.display='flex'}});
+await initCloud();$('auth').style.display=sb?'flex':'none';
+if(sb){$('login').onclick=async()=>{const r=await signIn($('email').value,$('pw').value);$('who').textContent=r.error?r.error.message:'Logged in'};$('signup').onclick=async()=>{const r=await signUp($('email').value,$('pw').value);$('who').textContent=r.error?r.error.message:'Check your email to confirm'};$('logout').onclick=async()=>{await signOut();$('who').textContent='Logged out'};const u=await user();if(u)$('who').textContent=u.email}
+let last=performance.now(),fps=60;
+(function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000)||.016;last=t;fps=fps*.9+.1/dt;if(world){world.wtex.offset.set((t*.00004)%1,(t*.00011)%1);world.wmat.opacity=.8+Math.sin(t*.0014)*.03}
+ if(world&&playing){if(mode!=='spectator')for(const f of world.furnaces.values())if(furnaceTick(f,dt))dirty=true;invUI.tick(dt);if(world.xray)world.xmat.glow.opacity=.2+Math.sin(t*.004)*.08}
+ if(playing){world.update(P.x,P.z,6);const st=uiOpen?{swim:false}:mode==='spectator'?stepSpectator(P,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),up:!!keys.Space,down:!!(keys.ShiftLeft||keys.ShiftRight),yaw:P.yaw},dt):stepPlayer(P,world,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),space:!!keys.Space,sprint:!!keys.ShiftLeft,down:!!(keys.ControlLeft||keys.ControlRight),fly,yaw:P.yaw},dt),inW=st.swim;
+  cam.position.set(P.x,P.y+1.62,P.z);cam.rotation.set(P.pitch,P.yaw,0,'YXZ');{const cw=mode!=='spectator'&&camInWater();if(cw!==uwOn){uwOn=cw;setUnder(cw)}}const r=ray();sel.visible=!!r;if(r)sel.position.set(r.hit[0]+.5,r.hit[1]+.5,r.hit[2]+.5);
+  if(mine){const current=ray(),same=current&&current.hit.join(',')===mine.pos;if(!same||world.get(...mine.hit)!==mine.block)finishMine();else{mine.elapsed+=dt;mine.snd=(mine.snd||0)+dt;if(mine.snd>.22){mine.snd=0;sfx('hit')}const progress=Math.min(1,mine.elapsed/mine.required);crack.visible=true;crack.position.set(mine.hit[0]+.5,mine.hit[1]+.5,mine.hit[2]+.5);crack.material.map=crackTex[Math.min(9,Math.floor(progress*10))];showMine(progress);if(progress>=1){const [x,y,z]=mine.hit,b=mine.block;breakBlock(x,y,z,b)}}}
+  if(!mine&&holding)beginMine();if(mode!=='spectator')world.stepWater(10);
+  $('hud').textContent=`DIG BUILD · ${mode==='spectator'?'SPECTATOR · X-RAY '+(xray?'ON':'OFF'):mode} · seed ${world.seed} · ${P.x|0},${P.y|0},${P.z|0} · ${fps|0}fps · save: ${status}${uwOn?' · UNDERWATER':inW?' · SWIMMING':''}`}
+ renderer.render(scene,cam)})(last);
+
+</script></body></html>

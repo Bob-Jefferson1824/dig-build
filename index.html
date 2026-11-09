@@ -1,0 +1,10 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>DIG BUILD</title>
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script></head>
+<body><div id="previewTag">PREVIEW BUILD · NOT LIVE</div><canvas id="c"></canvas><div id="specHelp"><b>SPECTATOR</b><br>WASD Move &middot; Space Up &middot; Shift Down<br>Mouse Look &middot; X Toggle X-ray</div><div id="uw"></div><div id="cross">+</div><div id="mineUI"><div id="mineName"></div><div id="mineBar"><div id="mineFill"></div></div></div><div id="hotbar"></div><div id="hud"></div>
+<div id="menu"><h1>DIG BUILD</h1>
+<div id="auth"><input id="email" placeholder="email"><input id="pw" type="password" placeholder="password">
+<button id="login">Log in</button><button id="signup">Register</button><button id="logout">Log out</button><div id="who"></div></div>
+<input id="seed" placeholder="World seed (optional)"><select id="mode"><option value="survival">Survival</option><option value="creative">Creative</option><option value="spectator">Spectator</option></select>
+<button id="play">Play / Continue</button><p>WASD move · Space jump · Shift sprint · LMB break · RMB place · 1-9 hotbar · F fly (creative) · Spectator: free-fly, X toggles ore X-ray (view only)</p></div>
+<script>if(new URLSearchParams(location.search).has("preview"))document.getElementById("previewTag").style.display="block";</script><script type="module" src="js/main.js"></script></body></html>
