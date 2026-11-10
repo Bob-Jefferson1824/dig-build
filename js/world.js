@@ -40,6 +40,12 @@ const sm=t=>t*t*(3-2*t);
 function vnoise(x,z,s){const xi=Math.floor(x),zi=Math.floor(z),fx=sm(x-xi),fz=sm(z-zi);const a=hash(xi,zi,s),b=hash(xi+1,zi,s),c=hash(xi,zi+1,s),d=hash(xi+1,zi+1,s);return a+(b-a)*fx+(c-a)*fz+(a-b-c+d)*fx*fz}
 function fbm(x,z,s){return vnoise(x,z,s)*.55+vnoise(x*2,z*2,s+1)*.28+vnoise(x*4,z*4,s+2)*.17}
 const F=[[[1,0,0],[[1,0,1],[1,0,0],[1,1,0],[1,1,1]],.8],[[-1,0,0],[[0,0,0],[0,0,1],[0,1,1],[0,1,0]],.8],[[0,1,0],[[0,1,1],[1,1,1],[1,1,0],[0,1,0]],1],[[0,-1,0],[[0,0,0],[1,0,0],[1,0,1],[0,0,1]],.5],[[0,0,1],[[0,0,1],[1,0,1],[1,1,1],[0,1,1]],.7],[[0,0,-1],[[1,0,0],[0,0,0],[0,1,0],[1,1,0]],.7]];
+export function heightAt(seed,wx,wz){const m=Math.max(0,fbm(wx/220,wz/220,seed+7)-.5)*2;return Math.min(H-8,Math.floor(18+fbm(wx/70,wz/70,seed)*20+m*m*40))}
+// small top-down terrain thumbnail (colours by height) drawn straight from the seed: used on world cards and the create-world screen
+export function drawPreview(cv,seed,gen,cx=0,cz=0,N=40,step=4){cv.width=cv.height=N;const g=cv.getContext('2d'),sea=gen>=2?25:22;
+ for(let j=0;j<N;j++)for(let i=0;i<N;i++){const h=heightAt(seed|0,Math.floor(cx+(i-N/2)*step),Math.floor(cz+(j-N/2)*step));let c;
+  if(h<=sea){const d=Math.min(1,(sea-h)/10);c=[40-d*20|0,110-d*40|0,200-d*50|0]}else if(h<=sea+1)c=[216,200,140];else if(h>46)c=[240,244,250];else if(h>38)c=[125,125,130];else{const s=.75+(h-sea)/60;c=[70*s|0,150*s|0,60*s|0]}
+  g.fillStyle=`rgb(${c})`;g.fillRect(i,j,1,1)}g.fillStyle='#fff';g.fillRect(N/2-1,N/2-1,2,2)}
 export class World{
  constructor(seed,scene,gen=1){this.genVersion=gen;this.sea=gen>=2?25:SEA;this.seed=seed|0;this.scene=scene;this.chunks=new Map();this.mods=new Map();this.furnaces=new Map();this.dirty=new Set();
   this.atlas=makeAtlas();this.fluidQueue=[];this.fluidSeen=new Set();this.flowDistance=new Map();this.mat=new THREE.MeshBasicMaterial({map:this.atlas,vertexColors:true,alphaTest:.1});
@@ -54,7 +60,7 @@ export class World{
   c.xm=[];for(const [k,mat,ord] of [['core',this.xmat.core,10],['glow',this.xmat.glow,11],['line',this.xmat.line,12]]){const a=K[k];if(!a.p.length)continue;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(a.p,3));g.setAttribute('color',new THREE.Float32BufferAttribute(a.c,3));g.setIndex(a.i);const m=k==='line'?new THREE.LineSegments(g,mat):new THREE.Mesh(g,mat);m.renderOrder=ord;m.frustumCulled=false;this.scene.add(m);c.xm.push(m)}}
  // terrain turns dark + semi-transparent (material properties only; textures and voxel data are never changed), water keeps its own material.
  setXray(on){this.xray=on;const m=this.mat;m.transparent=on;m.opacity=on?.34:1;m.depthWrite=!on;m.color.setRGB(on?.32:1,on?.38:1,on?.46:1);m.needsUpdate=true;for(const c of this.chunks.values())this.buildXray(c)}
- height(wx,wz){const m=Math.max(0,fbm(wx/220,wz/220,this.seed+7)-.5)*2;return Math.min(H-8,Math.floor(18+fbm(wx/70,wz/70,this.seed)*20+m*m*40))}
+ height(wx,wz){return heightAt(this.seed,wx,wz)}
  // ---- generation v3: caves, caverns, cave pools and ores. Everything is a pure function of world coordinates + seed, so chunk borders always line up and reloading never changes anything. ----
  cavesCtx(cx,cz){const s=this.seed,hs=new Int16Array(18*18);for(let z=-1;z<=16;z++)for(let x=-1;x<=16;x++)hs[(z+1)*18+x+1]=this.height(cx*S+x,cz*S+z);
   return {hs,A:field(s+1001,14,10,cx,cz),Bf:field(s+2002,16,8,cx,cz),C:field(s+3003,22,14,cx,cz),P:field(s+4004,18,H,cx,cz)}}

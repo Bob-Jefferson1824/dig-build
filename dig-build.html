@@ -33,31 +33,110 @@
 #inv .fcol{display:flex;flex-direction:column;align-items:center}#inv .flame{width:16px;height:22px;background:#000a;border:1px solid #3b4a43;position:relative;margin:3px 0}#inv .flame b{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(#ffd45a,#ff5a1a)}
 #inv .parrow{width:70px;height:16px;background:#000a;border:2px solid #3b4a43;margin:0 6px}#inv .parrow b{display:block;height:100%;width:0;background:linear-gradient(90deg,#9fe870,#3fb83f)}#inv .fhint{font-size:11px;opacity:.7;margin-left:10px;line-height:1.5}
 #specHelp{display:none;position:fixed;left:8px;bottom:8px;background:#101b18c8;border:1px solid #3b4a43;border-radius:4px;padding:6px 10px;font:12px/1.6 monospace;color:#fff;pointer-events:none;z-index:3}#specHelp b{color:#9fe8ff;letter-spacing:2px}
+
+/* ---- Stage 5: world management screens ---- */
+#menu{overflow:auto;padding:16px;box-sizing:border-box;justify-content:flex-start}#menu .scr{display:flex;flex-direction:column;align-items:center;gap:10px;width:min(920px,100%);margin:auto 0}#menu .scr[hidden],#menu [hidden]{display:none!important}
+#menu h2{margin:0;font-size:30px;letter-spacing:6px;text-shadow:3px 3px #000}#menu .menubtns{display:flex;flex-direction:column;gap:8px;width:min(420px,100%)}
+#menu button{background:#26342d;color:#fff;border:2px solid #7b8580;border-radius:4px;cursor:pointer;letter-spacing:1px;box-shadow:0 3px 0 #0b110e}#menu button:hover{border-color:#ffe08a}#menu button:disabled{opacity:.5;cursor:wait}
+#menu button.big{background:linear-gradient(#3f7a3a,#2c5a2a);border-color:#9fe870;font-weight:bold;padding:11px 16px;font-size:15px}#menu button.danger{background:#6b2424;border-color:#d66}#menu .bar{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+#worldList{width:100%;max-height:56vh;overflow:auto;display:flex;flex-direction:column;gap:10px;padding:2px}.wcard{display:flex;gap:12px;background:linear-gradient(#26342d,#18221d);border:2px solid #0b110e;outline:1px solid #7b8580;border-radius:6px;padding:10px;text-align:left}
+.wcard .thumb{width:96px;height:96px;image-rendering:pixelated;border:2px solid #0b110e;flex:none;background:#0f1815}.winfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}.wname{font-size:18px;font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wmeta{font-size:12px;opacity:.85}.wmeta code{background:#0008;padding:0 4px;border-radius:3px}.wmeta.saved{opacity:.65}.badge{padding:1px 6px;border-radius:3px;font-size:11px;font-weight:bold}.badge.sv{background:#8a4b12}.badge.cr{background:#1c6aa0}
+.wbtns{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}.wbtns button{padding:5px 10px;font-size:12px}.empty{padding:28px;background:#101b18a8;border-radius:6px;opacity:.9;line-height:1.7}
+#menu .form{display:flex;flex-direction:column;gap:10px;width:min(520px,100%);text-align:left;background:#101b18c8;padding:14px;border-radius:6px}#menu .form label,#menu .form .lab{display:flex;flex-direction:column;gap:4px;font-size:12px}#menu .form .row{display:flex;gap:6px}#menu .form .row input{flex:1}
+#menu .seg{display:flex}#menu .seg button{flex:1;padding:9px}#menu .seg button.on{background:#3f7a3a;border-color:#9fe870}.pv{display:flex;gap:12px;align-items:center}.pv .thumb{width:96px;height:96px;image-rendering:pixelated;border:2px solid #0b110e}#newSummary{font-size:13px}
+.dlg{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:20}.dlg .box{background:linear-gradient(#26342d,#18221d);border:3px solid #0b110e;outline:2px solid #7b8580;border-radius:6px;padding:18px;width:min(440px,92vw);display:flex;flex-direction:column;gap:10px}.dlg h3{margin:0}.dlg .note{font-size:12px;opacity:.75;margin:0}
+@media(max-width:560px){.wcard{flex-direction:column;align-items:center}.wcard .thumb{width:80px;height:80px}#menu h1{font-size:40px;letter-spacing:4px}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script></head>
 <body><canvas id="c"></canvas><div id="specHelp"><b>SPECTATOR</b><br>WASD Move &middot; Space Up &middot; Shift Down<br>Mouse Look &middot; X Toggle X-ray</div><div id="uw"></div><div id="cross">+</div><div id="mineUI"><div id="mineName"></div><div id="mineBar"><div id="mineFill"></div></div></div><div id="hotbar"></div><div id="hud"></div>
-<div id="menu"><h1>DIG BUILD</h1>
-<div id="auth"><input id="email" placeholder="email"><input id="pw" type="password" placeholder="password">
-<button id="login">Log in</button><button id="signup">Register</button><button id="logout">Log out</button><div id="who"></div></div>
-<input id="seed" placeholder="World seed (optional)"><select id="mode"><option value="survival">Survival</option><option value="creative">Creative</option><option value="spectator">Spectator</option></select>
-<button id="play">Play / Continue</button><p>WASD move · Space jump · Shift sprint · LMB break · RMB place · 1-9 hotbar · F fly (creative) · Spectator: free-fly, X toggles ore X-ray (view only)</p></div>
+<div id="menu">
+ <div id="scrMain" class="scr"><h1>DIG BUILD</h1>
+  <div id="auth"><input id="email" placeholder="email"><input id="pw" type="password" placeholder="password"><button id="login">Log in</button><button id="signup">Register</button><button id="logout">Log out</button><div id="who"></div></div>
+  <div class="menubtns"><button id="btnResume" class="big" hidden>RESUME</button><button id="btnPlay" class="big">PLAY &mdash; SELECT WORLD</button><button id="btnCreateMain" class="big">CREATE NEW WORLD</button></div>
+  <p>WASD move &middot; Space jump &middot; Shift sprint &middot; LMB break &middot; RMB place &middot; 1-9 hotbar &middot; E inventory &middot; F fly (creative) &middot; Spectator: free-fly, X toggles ore X-ray (view only)</p></div>
+ <div id="scrWorlds" class="scr" hidden><h2>SELECT WORLD</h2><div class="bar"><button id="btnCreate" class="big">+ CREATE NEW WORLD</button><button id="btnImport" hidden>Import this device's local worlds into my account</button></div><div id="worldList"></div><button id="btnBackWorlds">&larr; BACK</button></div>
+ <div id="scrCreate" class="scr" hidden><h2>CREATE NEW WORLD</h2><div class="form"><label>World name<input id="newName" maxlength="40" value="New World"></label>
+  <div class="lab">Game mode</div><div class="seg"><button id="modeSv" class="on">SURVIVAL</button><button id="modeCr">CREATIVE</button></div>
+  <label>World seed<span class="row"><input id="newSeed" placeholder="Enter a seed or press Random"><button id="btnRandom" title="Random seed">&#127922; Random</button></span></label>
+  <div class="pv"><canvas id="newThumb" class="thumb"></canvas><div id="newSummary"></div></div></div>
+  <div class="bar"><button id="btnCreateWorld" class="big">CREATE WORLD</button><button id="btnBackCreate">&larr; BACK</button></div></div>
+ <div id="dlgRename" class="dlg" hidden><div class="box"><h3>Rename world</h3><input id="renameInput" maxlength="40"><div class="bar"><button id="btnRenameOk" class="big">SAVE NAME</button><button id="btnRenameCancel">Cancel</button></div></div></div>
+ <div id="dlgDelete" class="dlg" hidden><div class="box"><h3>Delete world?</h3><p id="delText"></p><p id="delNote" class="note"></p><div class="bar"><button id="btnDelCancel" class="big">Cancel</button><button id="btnDelOk" class="danger">Delete World</button></div></div></div>
+</div>
 <script type="module">
 // Public values only (anon/publishable key is safe in the browser; RLS protects data). NEVER put a service-role key here.
 const SUPABASE_URL = '';      // e.g. https://xxxx.supabase.co
 const SUPABASE_ANON_KEY = ''; // anon / publishable key
 const GEN_VERSION = 3;        // generation used for NEW worlds (v2 = more water, v3 = caves + ores). Saved worlds keep their own gen_version (v1 stays identical).
-const SAVE_FORMAT = 3;        // bump + add a migration in save.js when save shape changes
+const SAVE_FORMAT = 4;        // bump + add a migration in save.js when save shape changes
 
-const open=()=>new Promise((res,rej)=>{const r=indexedDB.open('digbuild',1);r.onupgradeneeded=()=>r.result.createObjectStore('worlds');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
-async function localSave(id,data){const db=await open();return new Promise((res,rej)=>{const t=db.transaction('worlds','readwrite');t.objectStore('worlds').put(data,id);t.oncomplete=res;t.onerror=()=>rej(t.error)})}
-async function localLoad(id){const db=await open();return new Promise((res,rej)=>{const r=db.transaction('worlds').objectStore('worlds').get(id);r.onsuccess=()=>res(r.result?migrate(r.result):null);r.onerror=()=>rej(r.error)})}
-// Versioned save migrations: add a step per format bump, never drop old steps.
+// Save-format migrations (pure functions; storage lives in worlds.js). Add a step per format bump, never drop old steps.
 // format 1 -> 2: inventory became 36 slots ({id,n,d}); the old {blockId:count} object is converted into stacks. Nothing is ever deleted.
 function legacySlots(inv){const a=Array(36).fill(null);let k=0;for(const [id,n] of Object.entries(inv||{})){let r=+n||0;while(r>0&&k<36){const m=Math.min(64,r);a[k++]={id:+id,n:m};r-=m}}return a}
 function migrate(s){s.format=s.format||1;if(s.format<2){if(!Array.isArray(s.slots))s.slots=legacySlots(s.inv);s.craft=s.craft||Array(9).fill(null);s.held=s.held||null;s.format=2}
  if(s.format<3){s.furnaces=s.furnaces||{};s.format=3}
+ if(s.format<4){s.rot=s.rot||[0,0];s.playtime=s.playtime||0;s.format=4}      // world management: rotation + playtime
  if(!Array.isArray(s.slots)||s.slots.length!==36){const a=Array(36).fill(null);(s.slots||[]).slice(0,36).forEach((x,i)=>a[i]=x);s.slots=a}return s}
 const pack=(w,p,extra)=>({format:SAVE_FORMAT,...extra,pos:p,mods:[...w.mods]});
+
+// ===== World management: every world has its own unique id, its own record, and belongs to one owner (an account id, or GUEST when logged out). =====
+const GUEST='local';
+const rk=(o,id)=>o+'|'+id;                                   // storage key: owner + world id (two accounts on one device never collide)
+const seedNum=s=>{let h=0;for(const ch of String(s))h=(h*31+ch.charCodeAt(0))|0;return h||1};   // same text -> same terrain as every earlier version
+const hash36=s=>{let a=5381,b=52711;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);a=(((a<<5)+a)^c)|0;b=((b<<5)+b+c*31)|0}return (a>>>0).toString(36)+(b>>>0).toString(36)};
+const legacyId=key=>'w_legacy_'+hash36(key);                   // Stage-4 worlds get a deterministic id, so migrating twice never duplicates them
+const newId=()=>'w_'+(globalThis.crypto&&crypto.randomUUID?crypto.randomUUID().replace(/-/g,''):Date.now().toString(36)+Math.random().toString(36).slice(2,12));
+const randomSeed=()=>String(Math.floor(Math.random()*1e9));
+const cleanName=n=>String(n==null?'':n).replace(/\s+/g,' ').trim().slice(0,40)||'New World';
+const cleanMode=m=>m==='creative'?'creative':'survival';
+// ---------- IndexedDB (db "digbuild" v2: store "worlds" = full records, store "index" = small metadata for the world list). Old v1 data is kept as-is. ----------
+let dbp=null;export const _resetDB=()=>{dbp=null};
+const rq=r=>new Promise((res,rej)=>{r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const openDB=()=>dbp||(dbp=new Promise((res,rej)=>{const r=indexedDB.open('digbuild',2);r.onupgradeneeded=()=>{const d=r.result;for(const n of ['worlds','index'])if(!d.objectStoreNames.contains(n))d.createObjectStore(n)};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
+async function txn(names,mode,fn){const db=await openDB(),t=db.transaction(names,mode),done=new Promise((res,rej)=>{t.oncomplete=()=>res();t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)});const out=await fn(...names.map(n=>t.objectStore(n)));await done;return out}   // one transaction = a save is all-or-nothing
+const metaOf=r=>({id:r.id,owner:r.owner,name:r.name,seedText:r.seedText,seed:r.seed,mode:r.mode,gen_version:r.gen_version||1,created:r.created,lastPlayed:r.lastPlayed,playtime:r.playtime||0,legacyKey:r.legacyKey||null,pos:r.pos?[...r.pos]:null,cloudAt:0});
+async function putRecord(rec){const k=rk(rec.owner,rec.id),m=metaOf(rec);await txn(['worlds','index'],'readwrite',async(w,i)=>{const old=await rq(i.get(k));if(old&&!old.del)m.cloudAt=old.cloudAt||0;w.put(rec,k);i.put(m,k)});return m}
+const getMeta=(owner,id)=>txn(['index'],'readonly',i=>rq(i.get(rk(owner,id))));
+async function getRecord(owner,id){const r=await txn(['worlds'],'readonly',w=>rq(w.get(rk(owner,id))));return r?migrate(r):null}
+async function listWorlds(owner){const all=await txn(['index'],'readonly',i=>rq(i.getAll()));return all.filter(m=>m&&!m.del&&m.owner===owner).sort((a,b)=>b.lastPlayed-a.lastPlayed)}
+async function markCloud(owner,id,at){await txn(['index'],'readwrite',async i=>{const k=rk(owner,id),m=await rq(i.get(k));if(m&&!m.del){m.cloudAt=at;i.put(m,k)}})}
+async function deleteRecord(owner,id){const m=await getMeta(owner,id);await txn(['worlds','index'],'readwrite',(w,i)=>{w.delete(rk(owner,id));i.delete(rk(owner,id));if(m&&m.legacyKey)w.delete(m.legacyKey)})}   // only this world (+ its own Stage-4 raw copy)
+async function createWorld(owner,{name,seedText,mode}={}){const st=String(seedText==null||String(seedText).trim()===''?randomSeed():seedText).trim(),now=Date.now();
+ const rec={format:SAVE_FORMAT,id:newId(),owner,name:cleanName(name),seedText:st,seed:seedNum(st),mode:cleanMode(mode),gen_version:GEN_VERSION,created:now,lastPlayed:now,playtime:0,pos:null,rot:[0,0],mods:[],slots:Array(36).fill(null),craft:Array(9).fill(null),held:null,furnaces:{},health:20,hunger:20};await putRecord(rec);return rec}
+async function renameWorld(owner,id,name){const r=await getRecord(owner,id);if(!r)throw new Error('World not found');r.name=cleanName(name);await putRecord(r);return r}   // only the name changes
+async function duplicateWorld(owner,id,name){const r=await getRecord(owner,id);if(!r)throw new Error('World not found');const c=JSON.parse(JSON.stringify(r)),now=Date.now();
+ Object.assign(c,{id:newId(),name:cleanName(name||r.name+' (copy)'),created:now,lastPlayed:now,legacyKey:null,cloudAt:0});await putRecord(c);return c}
+// Stage-4 saves (keys like "world-<seed>") become proper worlds. The old raw record is left in place as a backup; running this again changes nothing.
+async function migrateLegacy(){const keys=await txn(['worlds'],'readonly',w=>rq(w.getAllKeys()));let n=0;
+ for(const key of keys){if(typeof key!=='string'||!key.startsWith('world-'))continue;const id=legacyId(key);if(await getMeta(GUEST,id))continue;
+  const raw=await txn(['worlds'],'readonly',w=>rq(w.get(key)));if(!raw)continue;const d=migrate(JSON.parse(JSON.stringify(raw))),seedText=key.slice(6),now=Date.now();
+  await putRecord({...d,id,owner:GUEST,name:d.name||key,seedText,seed:Number.isFinite(d.seed)?d.seed:seedNum(seedText),mode:d.mode||'survival',gen_version:d.gen_version||1,created:now,lastPlayed:now,playtime:d.playtime||0,legacyKey:key,rot:d.rot||[0,0],furnaces:d.furnaces||{},mods:d.mods||[]});n++}return n}
+async function importGuest(uid){const g=await listWorlds(GUEST);let n=0;for(const m of g){if(await getMeta(uid,m.id))continue;const r=await getRecord(GUEST,m.id);if(!r)continue;const c=JSON.parse(JSON.stringify(r));c.owner=uid;c.legacyKey=null;await putRecord(c);n++}return n}
+const tombs=async owner=>(await txn(['index'],'readonly',i=>rq(i.getAll()))).filter(m=>m&&m.del&&m.owner===owner);
+// ---------- Supabase (rows: one per world, unique per (user_id, world_id); RLS keeps every user inside their own rows) ----------
+const iso=t=>new Date(t).toISOString();
+async function cloudMigrate(sb){const {data,error}=await sb.from('worlds').select('id,name,world_id');if(error)throw error;let n=0;
+ for(const r of data||[])if(!r.world_id){const {error:e}=await sb.from('worlds').update({world_id:legacyId(r.name),display_name:r.name}).eq('id',r.id);if(e)throw e;n++}return n}
+const COLS='name,world_id,display_name,seed,mode,gen_version,last_played,playtime_s';
+function cloudMeta(r,uid){const legacy=String(r.name||'').startsWith('world-')&&r.display_name===r.name;return {id:r.world_id,owner:uid,name:r.display_name||r.name,seedText:legacy?r.name.slice(6):String(r.seed),seed:seedNum(legacy?r.name.slice(6):String(r.seed)),mode:r.mode,gen_version:r.gen_version||1,created:Date.parse(r.last_played),lastPlayed:Date.parse(r.last_played),playtime:r.playtime_s||0,remote:true,cloudAt:Date.parse(r.last_played)}}
+async function cloudList(sb,uid){const {data,error}=await sb.from('worlds').select(COLS);if(error)throw error;return (data||[]).filter(r=>r.world_id).map(r=>cloudMeta(r,uid))}
+async function cloudGet(sb,id){const {data,error}=await sb.from('worlds').select(COLS+',data').eq('world_id',id).maybeSingle();if(error)throw error;return data}
+function recFromCloud(row,uid){const d=migrate(JSON.parse(JSON.stringify(row.data||{}))),m=cloudMeta(row,uid);
+ return {...d,id:row.world_id,owner:uid,name:d.name&&d.id?d.name:m.name,seedText:d.seedText||m.seedText,seed:Number.isFinite(d.seed)?d.seed:m.seed,mode:d.mode||m.mode,gen_version:d.gen_version||m.gen_version,created:d.created||m.created,lastPlayed:d.lastPlayed||m.lastPlayed,playtime:d.playtime||m.playtime,mods:d.mods||[],rot:d.rot||[0,0],furnaces:d.furnaces||{},legacyKey:null}}
+async function cloudPut(sb,uid,rec){const {error}=await sb.from('worlds').upsert({user_id:uid,name:rec.id,world_id:rec.id,display_name:rec.name,seed:rec.seedText,mode:rec.mode,gen_version:rec.gen_version,save_format:rec.format,playtime_s:Math.round(rec.playtime||0),data:rec,last_played:iso(rec.lastPlayed)},{onConflict:'user_id,world_id'});if(error)throw error}
+async function cloudDelete(sb,uid,id){const {error}=await sb.from('worlds').delete().eq('user_id',uid).eq('world_id',id);if(error)throw error}
+async function deleteWorld(sb,owner,id){await deleteRecord(owner,id);if(owner===GUEST||!sb)return true;
+ try{await cloudDelete(sb,owner,id);return true}catch(e){await txn(['index'],'readwrite',i=>{i.put({del:true,owner,id},'del|'+rk(owner,id))});return false}}   // cloud unreachable: remember to delete later, never resurrect
+async function retryTombs(sb,uid){for(const t of await tombs(uid)){try{await cloudDelete(sb,uid,t.id);await txn(['index'],'readwrite',i=>{i.delete('del|'+rk(uid,t.id))})}catch(e){}}}
+const isSynced=m=>!!m.cloudAt&&m.cloudAt>=m.lastPlayed-1500;
+async function syncWorlds(sb,uid){await retryTombs(sb,uid);try{await cloudMigrate(sb)}catch(e){}
+ const cloud=await cloudList(sb,uid),dead=new Set((await tombs(uid)).map(t=>t.id)),local=await listWorlds(uid),by=new Map(local.map(m=>[m.id,m])),out=[...local];
+ for(const c of cloud){if(dead.has(c.id))continue;const l=by.get(c.id);if(!l)out.push(c);else if(c.lastPlayed>l.lastPlayed+1500)l.cloudNewer=true;else l.cloudAt=Math.max(l.cloudAt||0,c.lastPlayed)}
+ return out.sort((a,b)=>b.lastPlayed-a.lastPlayed)}
+async function loadWorld(sb,owner,id){let rec=await getRecord(owner,id);
+ if(owner!==GUEST&&sb){try{const row=await cloudGet(sb,id);if(row){const cl=row.data&&row.data.lastPlayed?row.data.lastPlayed:Date.parse(row.last_played);if(!rec||cl>rec.lastPlayed+1500){rec=recFromCloud(row,owner);await putRecord(rec)}}}catch(e){}}
+ return rec}
 
 let sb=null;
 async function initCloud(){if(!SUPABASE_URL||!SUPABASE_ANON_KEY)return null;const {createClient}=await import('https://esm.sh/@supabase/supabase-js@2.45.0');sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true}});return sb}
@@ -110,6 +189,12 @@ const sm=t=>t*t*(3-2*t);
 function vnoise(x,z,s){const xi=Math.floor(x),zi=Math.floor(z),fx=sm(x-xi),fz=sm(z-zi);const a=hash(xi,zi,s),b=hash(xi+1,zi,s),c=hash(xi,zi+1,s),d=hash(xi+1,zi+1,s);return a+(b-a)*fx+(c-a)*fz+(a-b-c+d)*fx*fz}
 function fbm(x,z,s){return vnoise(x,z,s)*.55+vnoise(x*2,z*2,s+1)*.28+vnoise(x*4,z*4,s+2)*.17}
 const F=[[[1,0,0],[[1,0,1],[1,0,0],[1,1,0],[1,1,1]],.8],[[-1,0,0],[[0,0,0],[0,0,1],[0,1,1],[0,1,0]],.8],[[0,1,0],[[0,1,1],[1,1,1],[1,1,0],[0,1,0]],1],[[0,-1,0],[[0,0,0],[1,0,0],[1,0,1],[0,0,1]],.5],[[0,0,1],[[0,0,1],[1,0,1],[1,1,1],[0,1,1]],.7],[[0,0,-1],[[1,0,0],[0,0,0],[0,1,0],[1,1,0]],.7]];
+function heightAt(seed,wx,wz){const m=Math.max(0,fbm(wx/220,wz/220,seed+7)-.5)*2;return Math.min(H-8,Math.floor(18+fbm(wx/70,wz/70,seed)*20+m*m*40))}
+// small top-down terrain thumbnail (colours by height) drawn straight from the seed: used on world cards and the create-world screen
+function drawPreview(cv,seed,gen,cx=0,cz=0,N=40,step=4){cv.width=cv.height=N;const g=cv.getContext('2d'),sea=gen>=2?25:22;
+ for(let j=0;j<N;j++)for(let i=0;i<N;i++){const h=heightAt(seed|0,Math.floor(cx+(i-N/2)*step),Math.floor(cz+(j-N/2)*step));let c;
+  if(h<=sea){const d=Math.min(1,(sea-h)/10);c=[40-d*20|0,110-d*40|0,200-d*50|0]}else if(h<=sea+1)c=[216,200,140];else if(h>46)c=[240,244,250];else if(h>38)c=[125,125,130];else{const s=.75+(h-sea)/60;c=[70*s|0,150*s|0,60*s|0]}
+  g.fillStyle=`rgb(${c})`;g.fillRect(i,j,1,1)}g.fillStyle='#fff';g.fillRect(N/2-1,N/2-1,2,2)}
 class World{
  constructor(seed,scene,gen=1){this.genVersion=gen;this.sea=gen>=2?25:SEA;this.seed=seed|0;this.scene=scene;this.chunks=new Map();this.mods=new Map();this.furnaces=new Map();this.dirty=new Set();
   this.atlas=makeAtlas();this.fluidQueue=[];this.fluidSeen=new Set();this.flowDistance=new Map();this.mat=new THREE.MeshBasicMaterial({map:this.atlas,vertexColors:true,alphaTest:.1});
@@ -124,7 +209,7 @@ class World{
   c.xm=[];for(const [k,mat,ord] of [['core',this.xmat.core,10],['glow',this.xmat.glow,11],['line',this.xmat.line,12]]){const a=K[k];if(!a.p.length)continue;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(a.p,3));g.setAttribute('color',new THREE.Float32BufferAttribute(a.c,3));g.setIndex(a.i);const m=k==='line'?new THREE.LineSegments(g,mat):new THREE.Mesh(g,mat);m.renderOrder=ord;m.frustumCulled=false;this.scene.add(m);c.xm.push(m)}}
  // terrain turns dark + semi-transparent (material properties only; textures and voxel data are never changed), water keeps its own material.
  setXray(on){this.xray=on;const m=this.mat;m.transparent=on;m.opacity=on?.34:1;m.depthWrite=!on;m.color.setRGB(on?.32:1,on?.38:1,on?.46:1);m.needsUpdate=true;for(const c of this.chunks.values())this.buildXray(c)}
- height(wx,wz){const m=Math.max(0,fbm(wx/220,wz/220,this.seed+7)-.5)*2;return Math.min(H-8,Math.floor(18+fbm(wx/70,wz/70,this.seed)*20+m*m*40))}
+ height(wx,wz){return heightAt(this.seed,wx,wz)}
  // ---- generation v3: caves, caverns, cave pools and ores. Everything is a pure function of world coordinates + seed, so chunk borders always line up and reloading never changes anything. ----
  cavesCtx(cx,cz){const s=this.seed,hs=new Int16Array(18*18);for(let z=-1;z<=16;z++)for(let x=-1;x<=16;x++)hs[(z+1)*18+x+1]=this.height(cx*S+x,cz*S+z);
   return {hs,A:field(s+1001,14,10,cx,cz),Bf:field(s+2002,16,8,cx,cz),C:field(s+3003,22,14,cx,cz),P:field(s+4004,18,H,cx,cz)}}
@@ -324,6 +409,42 @@ function createInvUI(IS,hooks){
  function tick(dt){if(!open||kind!=='furnace')return;bars();acc+=dt;if(acc>.25){acc=0;render()}}
  return {open(k,key){kind=k;fur=k==='furnace'?hooks.furnace(key):null;open=true;build();root.style.display='block';heldEl.style.display='block';hooks.onOpen()},close,tick,isOpen:()=>open,render}}
 
+// ===== Menu screens: Main Menu, World Select, Create New World, Rename, Delete confirmation =====
+const Q=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtPlay=s=>{s=Math.floor(s||0);const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?`${h}h ${String(m).padStart(2,'0')}m`:m?`${m}m`:`${s}s`};
+const ago=(t,now=Date.now())=>{const s=Math.max(0,(now-t)/1000);if(s<60)return 'just now';if(s<3600)return Math.floor(s/60)+' min ago';if(s<86400)return Math.floor(s/3600)+' h ago';return Math.floor(s/86400)+' d ago'};
+const EMPTY_HTML='<div class="empty">You haven\'t created any worlds yet.<br>Press <b>CREATE NEW WORLD</b> to begin.</div>';
+function cardHTML(m,now=Date.now()){const sync=m.owner===GUEST?'saved on this device':isSynced(m)?'&#9729; synced to your account':m.cloudNewer?'&#9729; newer copy in the cloud':'&#9729; waiting to sync',pos=m.pos||[0,0,0];
+ return `<div class="wcard" data-id="${esc(m.id)}"><canvas class="thumb" data-seed="${esc(m.seed)}" data-gen="${esc(m.gen_version||1)}" data-x="${Math.floor(pos[0])}" data-z="${Math.floor(pos[2])}"></canvas>`+
+ `<div class="winfo"><div class="wname">${esc(m.name)}</div><div class="wmeta"><span class="badge ${m.mode==='creative'?'cr':'sv'}">${m.mode==='creative'?'CREATIVE':'SURVIVAL'}</span> Seed: <code>${esc(m.seedText)}</code></div>`+
+ `<div class="wmeta">Last played: ${esc(new Date(m.lastPlayed).toLocaleString())} &middot; Playtime: ${fmtPlay(m.playtime)}</div><div class="wmeta saved">Last saved ${ago(m.lastPlayed,now)} &middot; ${sync}</div>`+
+ `<div class="wbtns"><button data-act="play">PLAY</button><button data-act="spectate" title="Fly through the world with ore X-ray. View only - nothing is changed.">SPECTATE</button><button data-act="rename">RENAME</button><button data-act="dup">DUPLICATE</button><button data-act="del" class="danger">DELETE</button></div></div></div>`}
+function createMenu(api){
+ const scr=n=>{for(const id of ['scrMain','scrWorlds','scrCreate'])Q(id).hidden=id!==n};let metas=[],mode='survival',target=null;
+ const showMain=(canResume)=>{scr('scrMain');Q('btnResume').hidden=!canResume;closeDlg()};
+ function closeDlg(){Q('dlgRename').hidden=true;Q('dlgDelete').hidden=true}
+ async function showWorlds(){scr('scrWorlds');closeDlg();Q('worldList').innerHTML='<div class="empty">Loading worlds&hellip;</div>';try{metas=await api.list()}catch(e){metas=[]}render();try{Q('btnImport').hidden=!(await api.guestCount())}catch(e){}}
+ function render(){Q('worldList').innerHTML=metas.length?metas.map(m=>cardHTML(m)).join(''):EMPTY_HTML;
+  for(const cv of Q('worldList').querySelectorAll('canvas.thumb'))drawPreview(cv,+cv.dataset.seed,+cv.dataset.gen,+cv.dataset.x,+cv.dataset.z)}
+ function setMode(m){mode=m;Q('modeSv').classList.toggle('on',m==='survival');Q('modeCr').classList.toggle('on',m==='creative');preview()}
+ function preview(){const st=Q('newSeed').value.trim()||'(random)',nm=Q('newName').value.trim()||'New World';Q('newSummary').textContent=`${nm} \u2014 ${mode==='creative'?'Creative':'Survival'} \u2014 seed ${st}`;
+  const cv=Q('newThumb');if(Q('newSeed').value.trim()){const t=Q('newSeed').value.trim();let h=0;for(const ch of t)h=(h*31+ch.charCodeAt(0))|0;drawPreview(cv,h||1,3,0,0,48,4)}}
+ const rand=()=>{Q('newSeed').value=String(Math.floor(Math.random()*1e9));preview()};
+ function showCreate(){scr('scrCreate');Q('newName').value='New World';setMode('survival');rand()}
+ Q('btnPlay').onclick=showWorlds;Q('btnResume').onclick=()=>api.resume();Q('btnCreateMain').onclick=showCreate;Q('btnCreate').onclick=showCreate;Q('btnBackWorlds').onclick=()=>showMain(api.canResume());
+ Q('btnImport').onclick=async()=>{await api.importLocal();showWorlds()};Q('modeSv').onclick=()=>setMode('survival');Q('modeCr').onclick=()=>setMode('creative');Q('btnRandom').onclick=rand;
+ Q('newSeed').oninput=preview;Q('newName').oninput=preview;Q('btnBackCreate').onclick=showWorlds;
+ Q('btnCreateWorld').onclick=async()=>{Q('btnCreateWorld').disabled=true;try{await api.createWorld({name:Q('newName').value,seedText:Q('newSeed').value,mode})}finally{Q('btnCreateWorld').disabled=false}};
+ Q('btnRenameCancel').onclick=closeDlg;Q('btnRenameOk').onclick=async()=>{if(!target)return;const t=target;closeDlg();await api.rename(t,Q('renameInput').value);showWorlds()};
+ Q('btnDelCancel').onclick=closeDlg;Q('btnDelOk').onclick=async()=>{if(!target)return;const t=target;closeDlg();await api.remove(t);showWorlds()};
+ Q('worldList').onclick=async e=>{const b=e.target.closest&&e.target.closest('[data-act]');if(!b)return;const card=b.closest('.wcard'),m=metas.find(x=>x.id===card.dataset.id);if(!m)return;target=m;
+  if(b.dataset.act==='play')await api.play(m);else if(b.dataset.act==='spectate')await api.play(m,{spectate:true});
+  else if(b.dataset.act==='rename'){Q('renameInput').value=m.name;Q('dlgRename').hidden=false}
+  else if(b.dataset.act==='dup'){const d=await api.duplicate(m);await showWorlds();target=metas.find(x=>x.id===d.id)||null;if(target){Q('renameInput').value=d.name;Q('dlgRename').hidden=false}}   // the copy opens in the rename box so its name is editable
+  else if(b.dataset.act==='del'){Q('delText').textContent=`Are you sure you want to permanently delete "${m.name}"?`;Q('delNote').textContent=m.id===api.currentId()?'This is the world you are currently playing. You will return to World Select.':'This cannot be undone. Your other worlds are not affected.';Q('dlgDelete').hidden=false}};
+ return {showMain,showWorlds,showCreate}}
+
 const $=id=>document.getElementById(id);
 const renderer=new THREE.WebGLRenderer({canvas:$('c'),antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -363,7 +484,6 @@ function breakBlock(x,y,z,b){sfx('break');const d=dropOf(b),k=x+','+y+','+z,fr=b
 const invUI=createInvUI(IS,{mode:()=>mode,change(){dirty=true;ui()},furnace:k=>{let f=world.furnaces.get(k);if(!f){f=newFurnace();world.furnaces.set(k,f)}return f},onOpen(){uiOpen=true;holding=false;finishMine();for(const k in keys)keys[k]=false;document.exitPointerLock()},onClose(){uiOpen=false;ui();if(playing)$('c').requestPointerLock()}});
 addEventListener('keydown',e=>{if(!playing)return;if(e.code==='KeyE'&&caps().inventory){e.preventDefault();invUI.isOpen()?invUI.close():invUI.open('inv')}else if(e.code==='Escape'&&invUI.isOpen())invUI.close()});
 $('c').addEventListener('click',()=>{if(playing&&!uiOpen&&!document.pointerLockElement)$('c').requestPointerLock()});
-const seedNum=s=>{let h=0;for(const ch of String(s))h=(h*31+ch.charCodeAt(0))|0;return h||1};
 const hits=(x,y,z)=>{for(let i=Math.floor(x-.3);i<=Math.floor(x+.3);i++)for(let j=Math.floor(y);j<=Math.floor(y+1.79);j++)for(let k=Math.floor(z-.3);k<=Math.floor(z+.3);k++)if(solid(world.get(i,j,k)))return true;return false};
 function ray(){const dir=new THREE.Vector3();cam.getWorldDirection(dir);let prev=null;for(let t=0;t<6;t+=.04){const x=Math.floor(cam.position.x+dir.x*t),y=Math.floor(cam.position.y+dir.y*t),z=Math.floor(cam.position.z+dir.z*t);if(solid(world.get(x,y,z)))return {hit:[x,y,z],prev};if(!prev||prev[0]!==x||prev[1]!==y||prev[2]!==z)prev=[x,y,z]}return null}
 function beginMine(){if(!playing||!document.pointerLockElement||!caps().mine)return;const r=ray();if(!r)return;const b=world.get(...r.hit);if(b===B.BEDROCK)return;if(mode==='survival'&&!canMine(b,IS.inv[slot]&&IS.inv[slot].id)){const k=r.hit.join(',');if(denyKey!==k){denyKey=k;toast(needMsg(b))}return}mine={pos:r.hit.join(','),hit:r.hit,elapsed:0,required:mode==='creative'?.12:(mineTime[b]||.7)/toolSpeed(IS.inv[slot]&&IS.inv[slot].id,b),block:b}}
@@ -375,24 +495,60 @@ addEventListener('mousedown',e=>{if(e.button===0&&!uiOpen&&caps().mine){holding=
 addEventListener('mouseup',e=>{if(e.button===0){holding=false;denyKey='';finishMine()}});
 addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('mousemove',e=>{if(document.pointerLockElement){P.yaw-=e.movementX*.0022;P.pitch=Math.max(-1.55,Math.min(1.55,P.pitch-e.movementY*.0022))}});
-async function persist(){if(readOnly)return;const data=pack(world,[P.x,P.y,P.z],{seed:world.seed,mode,name,gen_version:world.genVersion,slots:IS.inv,craft:IS.craft,held:IS.held,furnaces:Object.fromEntries(world.furnaces),health:20,hunger:20});await localSave(wid,data);try{if(sb&&await user())await cloudSave({name,seed:String(world.seed),mode,gen_version:world.genVersion,save_format:SAVE_FORMAT,data});dirty=false;status='saved'}catch(e){status='offline: local backup kept, retrying'}}
-setInterval(()=>{if(playing&&dirty)persist()},15000);
-async function start(){const seed=$('seed').value||'dig';mode=$('mode').value;const wantSpec=mode==='spectator';name='world-'+seed;wid=name;IS.inv=newInv();IS.craft=Array(9).fill(null);IS.held=null;if(world)for(const c of world.chunks.values()){c.meshes.forEach(m=>scene.remove(m));(c.xm||[]).forEach(m=>scene.remove(m))};let s=await localLoad(wid);try{if(sb&&await user()){const r=await cloudLoad(name);if(r)s=migrate(r.data)}}catch(e){}
- world=new World(seedNum(seed),scene,s?(s.gen_version||1):GEN_VERSION);if(s){world.mods=new Map(s.mods);IS.inv=s.slots;IS.craft=s.craft||Array(9).fill(null);IS.held=s.held||null;world.furnaces=new Map(Object.entries(s.furnaces||{}));mode=(s.mode&&s.mode!=='spectator')?s.mode:mode;[P.x,P.y,P.z]=s.pos}else{P.x=8.5;P.z=8.5;P.y=70}
- readOnly=false;if(wantSpec&&s&&s.mode!=='spectator'){mode='spectator';readOnly=true}   // viewing someone's survival/creative world: nothing is ever written back
- for(let i=0;i<40;i++)world.update(P.x,P.z,5);if(!s){let sx=8,sz=8;out:for(let r=0;r<40;r+=2)for(let a=0;a<8;a++){const x=Math.floor(8+Math.cos(a*.785)*r),z=Math.floor(8+Math.sin(a*.785)*r),t=world.surface(x,z),b=world.get(x,t-1,z);if(!isWater(b)&&b!==B.LEAVES){sx=x;sz=z;break out}}P.x=sx+.5;P.z=sz+.5;P.y=world.surface(sx,sz)+(mode==='spectator'?8:.1)}uwOn=false;setUnder(false);setAtlas(world.atlas.image);specInit();if(mode==='creative'&&IS.inv.slice(0,9).every(x=>!x))CREATIVE_START.forEach((id,i)=>IS.inv[i]={id,n:64});uiOpen=false;$('menu').style.display='none';playing=true;ui();$('c').requestPointerLock();if(!s&&mode==='spectator')persist()}
-$('play').onclick=start;
-document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockElement&&playing&&!uiOpen){playing=false;holding=false;finishMine();persist();$('menu').style.display='flex'}});
-await initCloud();$('auth').style.display=sb?'flex':'none';
-if(sb){$('login').onclick=async()=>{const r=await signIn($('email').value,$('pw').value);$('who').textContent=r.error?r.error.message:'Logged in'};$('signup').onclick=async()=>{const r=await signUp($('email').value,$('pw').value);$('who').textContent=r.error?r.error.message:'Check your email to confirm'};$('logout').onclick=async()=>{await signOut();$('who').textContent='Logged out'};const u=await user();if(u)$('who').textContent=u.email}
+// ================= world management: many independent worlds, each with its own id and its own save =================
+let curRec=null,curOwner=GUEST,playSecs=0,saveChain=Promise.resolve();
+const ownerNow=async()=>{try{const u=sb&&await user();return u?u.id:GUEST}catch(e){return GUEST}};
+async function cloudPush(rec){if(!sb||rec.owner===GUEST)return false;try{const u=await user();if(!u||u.id!==rec.owner)return false;await cloudPut(sb,u.id,rec);await markCloud(rec.owner,rec.id,rec.lastPlayed);return true}catch(e){return false}}
+async function doPersist(){if(readOnly||!curRec||!world)return;const rec=curRec;      // Spectator sessions never write anything
+ const snap=JSON.parse(JSON.stringify({...rec,seed:world.seed,gen_version:world.genVersion,pos:[P.x,P.y,P.z],rot:[P.yaw,P.pitch],mods:[...world.mods],slots:IS.inv,craft:IS.craft,held:IS.held,furnaces:Object.fromEntries(world.furnaces),health:20,hunger:20,playtime:playSecs,lastPlayed:Date.now(),format:SAVE_FORMAT}));
+ try{await putRecord(snap);rec.lastPlayed=snap.lastPlayed;rec.pos=snap.pos}catch(e){status='SAVE FAILED';return}
+ if(await cloudPush(snap)){dirty=false;status='saved + cloud'}else{dirty=!!(sb&&rec.owner!==GUEST);status=rec.owner===GUEST?'saved (this device)':'saved locally - cloud will retry'}}
+const persist=()=>saveChain=saveChain.then(doPersist,doPersist);     // saves run one at a time, so a delete can never be overtaken by a late save
+setInterval(()=>{if(playing&&dirty)persist()},15000);addEventListener('pagehide',()=>{if(playing)persist()});
+function unloadWorld(){if(world)for(const c of world.chunks.values()){c.meshes.forEach(m=>scene.remove(m));(c.xm||[]).forEach(m=>scene.remove(m))}world=null;finishMine()}
+async function enterWorld(rec,spectate){
+ if(curRec&&world&&!readOnly)await persist();                                     // 1. save the world we are leaving (inventory, position, edits ...)
+ unloadWorld();const R=JSON.parse(JSON.stringify(rec));curRec=R;                  // 2. load the chosen world from its own record only
+ mode=spectate?'spectator':(R.mode==='spectator'?'creative':R.mode);readOnly=!!spectate;
+ IS.inv=R.slots;IS.craft=R.craft||Array(9).fill(null);IS.held=R.held||null;
+ world=new World(R.seed,scene,R.gen_version||1);world.mods=new Map(R.mods||[]);world.furnaces=new Map(Object.entries(R.furnaces||{}));
+ Object.assign(P,{vx:0,vy:0,vz:0,ground:false,blocked:false,leap:0,yaw:0,pitch:0});
+ if(R.pos){[P.x,P.y,P.z]=R.pos;[P.yaw,P.pitch]=R.rot||[0,0]}else{P.x=8.5;P.z=8.5;P.y=70}
+ slot=0;fly=false;holding=false;mine=null;denyKey='';playSecs=R.playtime||0;uiOpen=false;
+ for(let i=0;i<40;i++)world.update(P.x,P.z,5);
+ if(!R.pos){let sx=8,sz=8;out:for(let r=0;r<40;r+=2)for(let a=0;a<8;a++){const x=Math.floor(8+Math.cos(a*.785)*r),z=Math.floor(8+Math.sin(a*.785)*r),t=world.surface(x,z),b=world.get(x,t-1,z);if(!isWater(b)&&b!==B.LEAVES){sx=x;sz=z;break out}}P.x=sx+.5;P.z=sz+.5;P.y=world.surface(sx,sz)+(mode==='spectator'?8:.1)}
+ uwOn=false;setUnder(false);setAtlas(world.atlas.image);specInit();
+ if(mode==='creative'&&IS.inv.slice(0,9).every(x=>!x))CREATIVE_START.forEach((id,i)=>IS.inv[i]={id,n:64});
+ $('menu').style.display='none';playing=true;ui();$('c').requestPointerLock();
+ if(!R.pos&&!readOnly)persist();return R}
+const DIG=globalThis.DIG={
+ currentId:()=>curRec?curRec.id:null,canResume:()=>!!(curRec&&world),
+ async list(){curOwner=await ownerNow();if(sb&&curOwner!==GUEST){try{const m=await syncWorlds(sb,curOwner);
+   for(const x of m)if(!x.remote&&!isSynced(x)){const r=await getRecord(x.owner,x.id);if(r)await cloudPush(r)}   // upload anything the cloud is missing
+   return m}catch(e){}}return listWorlds(curOwner)},
+ async guestCount(){return curOwner!==GUEST?(await listWorlds(GUEST)).length:0},
+ async importLocal(){const n=await importGuest(curOwner);return n},
+ async createWorld(o){curOwner=await ownerNow();const rec=await createWorld(curOwner,o);await cloudPush(rec);return enterWorld(rec,false)},
+ async play(meta,{spectate=false}={}){const rec=await loadWorld(sb,meta.owner,meta.id);if(!rec)throw new Error('World not found');return enterWorld(rec,spectate)},
+ async rename(meta,name){if(curRec&&curRec.id===meta.id)curRec.name=cleanName(name);const r=await renameWorld(meta.owner,meta.id,name);await cloudPush(r);return r},
+ async duplicate(meta){if(curRec&&world&&!readOnly&&curRec.id===meta.id)await persist();const d=await duplicateWorld(meta.owner,meta.id);await cloudPush(d);return d},
+ async remove(meta){if(curRec&&curRec.id===meta.id&&curRec.owner===meta.owner){playing=false;holding=false;finishMine();curRec=null;unloadWorld();if(document.pointerLockElement)document.exitPointerLock()}   // deleting the loaded world: stop it first
+   await saveChain;return deleteWorld(sb,meta.owner,meta.id)},
+ resume(){if(!(curRec&&world))return;$('menu').style.display='none';playing=true;$('c').requestPointerLock()},
+ persist};
+const menu=createMenu(DIG);
+document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockElement&&playing&&!uiOpen){playing=false;holding=false;finishMine();persist();menu.showMain(true);$('menu').style.display='flex'}});
+await initCloud();$('auth').style.display=sb?'flex':'none';try{await migrateLegacy()}catch(e){console.warn('legacy migration failed (existing saves are untouched)',e)}
+async function onAuth(){curOwner=await ownerNow();if(curRec&&curRec.owner!==curOwner){if(world&&!readOnly)await persist();playing=false;unloadWorld();curRec=null}menu.showMain(!!curRec)}   // never carry one account's world into another account
+if(sb){$('login').onclick=async()=>{const r=await signIn($('email').value,$('pw').value);$('who').textContent=r.error?r.error.message:'Logged in';if(!r.error)await onAuth()};$('signup').onclick=async()=>{const r=await signUp($('email').value,$('pw').value);$('who').textContent=r.error?r.error.message:'Check your email to confirm'};$('logout').onclick=async()=>{await signOut();$('who').textContent='Logged out';await onAuth()};const u=await user();if(u)$('who').textContent=u.email}
 let last=performance.now(),fps=60;
-(function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000)||.016;last=t;fps=fps*.9+.1/dt;if(world){world.wtex.offset.set((t*.00004)%1,(t*.00011)%1);world.wmat.opacity=.8+Math.sin(t*.0014)*.03}
+(function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000)||.016;last=t;fps=fps*.9+.1/dt;if(playing)playSecs+=dt;if(world){world.wtex.offset.set((t*.00004)%1,(t*.00011)%1);world.wmat.opacity=.8+Math.sin(t*.0014)*.03}
  if(world&&playing){if(mode!=='spectator')for(const f of world.furnaces.values())if(furnaceTick(f,dt))dirty=true;invUI.tick(dt);if(world.xray)world.xmat.glow.opacity=.2+Math.sin(t*.004)*.08}
  if(playing){world.update(P.x,P.z,6);const st=uiOpen?{swim:false}:mode==='spectator'?stepSpectator(P,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),up:!!keys.Space,down:!!(keys.ShiftLeft||keys.ShiftRight),yaw:P.yaw},dt):stepPlayer(P,world,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),space:!!keys.Space,sprint:!!keys.ShiftLeft,down:!!(keys.ControlLeft||keys.ControlRight),fly,yaw:P.yaw},dt),inW=st.swim;
   cam.position.set(P.x,P.y+1.62,P.z);cam.rotation.set(P.pitch,P.yaw,0,'YXZ');{const cw=mode!=='spectator'&&camInWater();if(cw!==uwOn){uwOn=cw;setUnder(cw)}}const r=ray();sel.visible=!!r;if(r)sel.position.set(r.hit[0]+.5,r.hit[1]+.5,r.hit[2]+.5);
   if(mine){const current=ray(),same=current&&current.hit.join(',')===mine.pos;if(!same||world.get(...mine.hit)!==mine.block)finishMine();else{mine.elapsed+=dt;mine.snd=(mine.snd||0)+dt;if(mine.snd>.22){mine.snd=0;sfx('hit')}const progress=Math.min(1,mine.elapsed/mine.required);crack.visible=true;crack.position.set(mine.hit[0]+.5,mine.hit[1]+.5,mine.hit[2]+.5);crack.material.map=crackTex[Math.min(9,Math.floor(progress*10))];showMine(progress);if(progress>=1){const [x,y,z]=mine.hit,b=mine.block;breakBlock(x,y,z,b)}}}
   if(!mine&&holding)beginMine();if(mode!=='spectator')world.stepWater(10);
-  $('hud').textContent=`DIG BUILD · ${mode==='spectator'?'SPECTATOR · X-RAY '+(xray?'ON':'OFF'):mode} · seed ${world.seed} · ${P.x|0},${P.y|0},${P.z|0} · ${fps|0}fps · save: ${status}${uwOn?' · UNDERWATER':inW?' · SWIMMING':''}`}
+  $('hud').textContent=`DIG BUILD · ${curRec?curRec.name+' · ':''}${mode==='spectator'?'SPECTATOR · X-RAY '+(xray?'ON':'OFF'):mode} · seed ${world.seed} · ${P.x|0},${P.y|0},${P.z|0} · ${fps|0}fps · save: ${status}${uwOn?' · UNDERWATER':inW?' · SWIMMING':''}`}
  renderer.render(scene,cam)})(last);
 
 </script></body></html>
