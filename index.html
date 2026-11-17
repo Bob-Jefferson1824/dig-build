@@ -318,7 +318,7 @@ const DROPS={[B.GRASS]:B.DIRT,[B.STONE]:B.COBBLE,[B.COAL_ORE]:MAT.COAL,[B.DIAMON
 // Leaves and glass do not drop themselves. Stone-family blocks require a pickaxe for drops.
 const PICKAXE_DROPS=new Set([B.STONE,B.COBBLE,B.BRICK,B.STONE_BRICKS,B.MOSSY_COBBLE,B.COAL_ORE,B.IRON_ORE,B.GOLD_ORE,B.DIAMOND_ORE,B.FURNACE]);
 const dropOf=(b,held)=>{if(b===B.LEAVES||b===B.GLASS)return 0;if(PICKAXE_DROPS.has(b)&&(!held||!isTool(held)||toolInfo(held).type!==0))return 0;return DROPS[b]||b};
-const NEED={[B.COAL_ORE]:0,[B.IRON_ORE]:1,[B.GOLD_ORE]:2,[B.DIAMOND_ORE]:2};   // minimum pickaxe tier (0 wood .. 4 diamond)
+const NEED={[B.COAL_ORE]:0,[B.IRON_ORE]:1,[B.GOLD_ORE]:2,[B.DIAMOND_ORE]:3};   // minimum pickaxe tier (0 wood .. 4 diamond)
 const needTier=b=>NEED[b];
 const canMine=(b,toolId)=>{const n=NEED[b];if(n===undefined)return true;if(!toolId||!isTool(toolId))return false;const i=toolInfo(toolId);return i.type===0&&i.tier>=n};
 const needMsg=b=>`Needs a ${TIERS[NEED[b]].toLowerCase()} pickaxe or better`;
