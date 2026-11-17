@@ -2,7 +2,7 @@ import * as THREE from 'three';
 export const B={AIR:0,GRASS:1,DIRT:2,STONE:3,SAND:4,SNOW:5,LOG:6,LEAVES:7,WATER:8,PLANKS:9,BEDROCK:10,COBBLE:11,GLASS:12,BRICK:13,FLOWING_WATER:14,WORKBENCH:15,COAL_ORE:16,IRON_ORE:17,GOLD_ORE:18,DIAMOND_ORE:19,FURNACE:20};
 export const isWater=id=>id===B.WATER||id===B.FLOWING_WATER;
 export const INFO={1:['Grass',[84,150,58]],2:['Dirt',[120,84,52]],3:['Stone',[125,125,128]],4:['Sand',[218,205,150]],5:['Snow',[240,244,250]],6:['Log',[98,72,40]],7:['Leaves',[48,120,40]],8:['Water',[60,160,240]],9:['Planks',[170,132,80]],10:['Bedrock',[45,45,48]],11:['Cobble',[100,100,104]],12:['Glass',[190,225,235]],13:['Bricks',[150,70,58]],14:['Water',[60,160,240]],15:['Workbench',[150,105,58]],16:['Coal Ore',[40,40,44]],17:['Iron Ore',[222,176,146]],18:['Gold Ore',[252,214,60]],19:['Diamond Ore',[96,236,236]],20:['Furnace',[112,112,116]]};
-const NT=21,S=16,H=64,SEA=22;
+const NT=21,S=16,H=192,SEA=22;\nconst NEW_SEA=35,NEW_SURFACE_BASE=78;
 export const solid=id=>id!==0&&!isWater(id);
 const see=id=>id===0||isWater(id)||id===7||id===12;
 export function makeAtlas(){const c=document.createElement('canvas');c.width=NT*16;c.height=16;const g=c.getContext('2d');let r=12345;const rnd=()=>(r=(r*16807)%2147483647)/2147483647;
@@ -31,23 +31,42 @@ function field(seed,sp,spy,cx,cz){const x0=Math.floor((cx*S-1)/sp),z0=Math.floor
  for(let k=0;k<nz;k++)for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)v[(k*ny+j)*nx+i]=hash3(x0+i,j,z0+k,seed);
  return (wx,y,wz)=>{const fx=wx/sp-x0,fy=y/spy,fz=wz/sp-z0,i=fx|0,j=fy|0,k=fz|0,tx=sm(fx-i),ty=sm(fy-j),tz=sm(fz-k),b=(k*ny+j)*nx+i;
   const l=(p,q,t)=>p+(q-p)*t,c00=l(v[b],v[b+1],tx),c10=l(v[b+nx],v[b+nx+1],tx),c01=l(v[b+o],v[b+o+1],tx),c11=l(v[b+o+nx],v[b+o+nx+1],tx);return l(l(c00,c10,ty),l(c01,c11,ty),tz)}}
-// ore veins: rare seed cells grow into small clusters. [block, max height, seed chance, salt] - rarest first, deeper = rarer.
-const ORES=[[B.DIAMOND_ORE,13,.0007,11],[B.GOLD_ORE,24,.0022,22],[B.IRON_ORE,46,.0045,33],[B.COAL_ORE,56,.0065,44]],NB=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
-function oreAt(x,y,z,seed){for(const [id,ymax,p,salt] of ORES){if(y>ymax)continue;const s=seed+salt*7919;
-  if(hash3(x,y,z,s)<p)return id;for(const [dx,dy,dz] of NB)if(hash3(x+dx,y+dy,z+dz,s)<p&&hash3(x,y,z,s+500)<.45)return id}return 0}
+// Legacy single-block ore scatter remains available to worlds generated before Stage 9.
+const LEGACY_ORES=[[B.DIAMOND_ORE,13,.0007,11],[B.GOLD_ORE,24,.0022,22],[B.IRON_ORE,46,.0045,33],[B.COAL_ORE,56,.0065,44]],NB=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+function oreAtLegacy(x,y,z,seed){for(const [id,ymax,p,salt] of LEGACY_ORES){if(y>ymax)continue;const s=seed+salt*7919;if(hash3(x,y,z,s)<p)return id;for(const [dx,dy,dz] of NB)if(hash3(x+dx,y+dy,z+dz,s)<p&&hash3(x,y,z,s+500)<.45)return id}return 0}
+// Stage 9 deposits are curved, connected veins. Each deterministic seed cell creates a short, angled, gently bent seam.
+const VEINS=[[B.DIAMOND_ORE,42,.09,311],[B.GOLD_ORE,70,.18,733],[B.IRON_ORE,115,.32,1193],[B.COAL_ORE,145,.42,1877]];
+function segmentDistanceSq(px,py,pz,ax,ay,az,bx,by,bz){const vx=bx-ax,vy=by-ay,vz=bz-az,wx=px-ax,wy=py-ay,wz=pz-az,den=vx*vx+vy*vy+vz*vz,t=den?Math.max(0,Math.min(1,(wx*vx+wy*vy+wz*vz)/den)):0,dx=px-(ax+vx*t),dy=py-(ay+vy*t),dz=pz-(az+vz*t);return dx*dx+dy*dy+dz*dz}
+function oreAt(x,y,z,seed){const cell=8,gx=Math.floor(x/cell),gy=Math.floor(y/cell),gz=Math.floor(z/cell);
+ for(const [id,ymax,chance,salt] of VEINS){if(y>ymax)continue;const s=seed+salt;
+  for(let dz=-1;dz<=1;dz++)for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const cx=gx+dx,cy=gy+dy,cz=gz+dz;if(hash3(cx,cy,cz,s)>=chance)continue;
+   const h=(n)=>hash3(cx,cy,cz,s+n),ax=cx*cell+1+h(1)*6,ay=cy*cell+1+h(2)*6,az=cz*cell+1+h(3)*6;
+   let vx=h(4)*2-1,vy=(h(5)*2-1)*.72,vz=h(6)*2-1;const mag=Math.hypot(vx,vy,vz)||1;vx/=mag;vy/=mag;vz/=mag;
+   const len=5+h(7)*5,bx=ax+vx*len,by=ay+vy*len,bz=az+vz*len,mx=(ax+bx)/2+(h(8)-.5)*3,my=(ay+by)/2+(h(9)-.5)*2,mz=(az+bz)/2+(h(10)-.5)*3,r=1.05+h(11)*.48,r2=r*r;
+   if(segmentDistanceSq(x,y,z,ax,ay,az,mx,my,mz)<=r2||segmentDistanceSq(x,y,z,mx,my,mz,bx,by,bz)<=r2)return id;
+  }
+ }return 0}
+// A deterministic graph of gently bent tunnel segments. Horizontal links make a connected network; occasional vertical links join cave levels.
+function caveNode(ix,iy,iz,seed){const h=n=>hash3(ix,iy,iz,seed+n);return {x:ix*44+8+h(1)*28,y:12+iy*28+(h(2)-.5)*8,z:iz*44+8+h(3)*28}}
+function tunnelAt(x,y,z,seed){const ix=Math.floor(x/44),iy=Math.floor((y-12)/28),iz=Math.floor(z/44);
+ for(let dz=-1;dz<=1;dz++)for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const a=caveNode(ix+dx,iy+dy,iz+dz,seed),rx=x-a.x,ry=y-a.y,rz=z-a.z,room=4.1+hash3(ix+dx,iy+dy,iz+dz,seed+80)*1.7;if(rx*rx+ry*ry+rz*rz<room*room)return true;
+  for(const [ex,ey,ez,kind] of [[1,0,0,1],[0,0,1,2],[0,1,0,3]]){const nx=ix+dx+ex,ny=iy+dy+ey,nz=iz+dz+ez;if(kind===3&&hash3(ix+dx,iy+dy,iz+dz,seed+90)>.34)continue;const b=caveNode(nx,ny,nz,seed),h=n=>hash3(ix+dx,iy+dy,iz+dz,seed+n+kind*101),mx=(a.x+b.x)/2+(h(4)-.5)*7,my=(a.y+b.y)/2+(h(5)-.5)*4,mz=(a.z+b.z)/2+(h(6)-.5)*7,r=2.15+h(7)*.9,r2=r*r;
+   if(segmentDistanceSq(x,y,z,a.x,a.y,a.z,mx,my,mz)<r2||segmentDistanceSq(x,y,z,mx,my,mz,b.x,b.y,b.z)<r2)return true;
+  }
+ }return false}
 function hash(x,z,s){let h=(x*374761393+z*668265263+s*982451653)|0;h=(h^(h>>>13))*1274126177|0;return((h^(h>>>16))>>>0)/4294967295}
 const sm=t=>t*t*(3-2*t);
 function vnoise(x,z,s){const xi=Math.floor(x),zi=Math.floor(z),fx=sm(x-xi),fz=sm(z-zi);const a=hash(xi,zi,s),b=hash(xi+1,zi,s),c=hash(xi,zi+1,s),d=hash(xi+1,zi+1,s);return a+(b-a)*fx+(c-a)*fz+(a-b-c+d)*fx*fz}
 function fbm(x,z,s){return vnoise(x,z,s)*.55+vnoise(x*2,z*2,s+1)*.28+vnoise(x*4,z*4,s+2)*.17}
 const F=[[[1,0,0],[[1,0,1],[1,0,0],[1,1,0],[1,1,1]],.8],[[-1,0,0],[[0,0,0],[0,0,1],[0,1,1],[0,1,0]],.8],[[0,1,0],[[0,1,1],[1,1,1],[1,1,0],[0,1,0]],1],[[0,-1,0],[[0,0,0],[1,0,0],[1,0,1],[0,0,1]],.5],[[0,0,1],[[0,0,1],[1,0,1],[1,1,1],[0,1,1]],.7],[[0,0,-1],[[1,0,0],[0,0,0],[0,1,0],[1,1,0]],.7]];
-export function heightAt(seed,wx,wz){const m=Math.max(0,fbm(wx/220,wz/220,seed+7)-.5)*2;return Math.min(H-8,Math.floor(18+fbm(wx/70,wz/70,seed)*20+m*m*40))}
+export function heightAt(seed,wx,wz,gen=3){const m=Math.max(0,fbm(wx/220,wz/220,seed+7)-.5)*2;if(gen>=4)return Math.min(H-18,Math.floor(NEW_SURFACE_BASE+fbm(wx/70,wz/70,seed)*26+m*m*36));return Math.min(56,Math.floor(18+fbm(wx/70,wz/70,seed)*20+m*m*40))}
 // small top-down terrain thumbnail (colours by height) drawn straight from the seed: used on world cards and the create-world screen
 export function drawPreview(cv,seed,gen,cx=0,cz=0,N=40,step=4){cv.width=cv.height=N;const g=cv.getContext('2d'),sea=gen>=2?25:22;
- for(let j=0;j<N;j++)for(let i=0;i<N;i++){const h=heightAt(seed|0,Math.floor(cx+(i-N/2)*step),Math.floor(cz+(j-N/2)*step));let c;
-  if(h<=sea){const d=Math.min(1,(sea-h)/10);c=[40-d*20|0,110-d*40|0,200-d*50|0]}else if(h<=sea+1)c=[216,200,140];else if(h>46)c=[240,244,250];else if(h>38)c=[125,125,130];else{const s=.75+(h-sea)/60;c=[70*s|0,150*s|0,60*s|0]}
+ for(let j=0;j<N;j++)for(let i=0;i<N;i++){const h=heightAt(seed|0,Math.floor(cx+(i-N/2)*step),Math.floor(cz+(j-N/2)*step),gen);let c;
+  if(h<=sea){const d=Math.min(1,(sea-h)/10);c=[40-d*20|0,110-d*40|0,200-d*50|0]}else if(h<=sea+1)c=[216,200,140];else if(h>(gen>=4?118:46))c=[240,244,250];else if(h>(gen>=4?105:38))c=[125,125,130];else{const s=.75+(h-sea)/60;c=[70*s|0,150*s|0,60*s|0]}
   g.fillStyle=`rgb(${c})`;g.fillRect(i,j,1,1)}g.fillStyle='#fff';g.fillRect(N/2-1,N/2-1,2,2)}
 export class World{
- constructor(seed,scene,gen=1){this.genVersion=gen;this.sea=gen>=2?25:SEA;this.seed=seed|0;this.scene=scene;this.chunks=new Map();this.mods=new Map();this.furnaces=new Map();this.dirty=new Set();
+ constructor(seed,scene,gen=1){this.genVersion=gen;this.sea=gen>=4?NEW_SEA:gen>=2?25:SEA;this.seed=seed|0;this.scene=scene;this.chunks=new Map();this.mods=new Map();this.furnaces=new Map();this.dirty=new Set();
   this.atlas=makeAtlas();this.fluidQueue=[];this.fluidSeen=new Set();this.flowDistance=new Map();this.mat=new THREE.MeshBasicMaterial({map:this.atlas,vertexColors:true,alphaTest:.1});
   this.wtex=makeWaterTex();this.wmat=new THREE.MeshBasicMaterial({map:this.wtex,vertexColors:true,transparent:true,opacity:.8,depthWrite:false,side:THREE.DoubleSide});this.xray=false;
   // X-ray overlay materials: drawn after everything else with depth testing OFF, so ores show through any number of blocks.
@@ -60,25 +79,25 @@ export class World{
   c.xm=[];for(const [k,mat,ord] of [['core',this.xmat.core,10],['glow',this.xmat.glow,11],['line',this.xmat.line,12]]){const a=K[k];if(!a.p.length)continue;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(a.p,3));g.setAttribute('color',new THREE.Float32BufferAttribute(a.c,3));g.setIndex(a.i);const m=k==='line'?new THREE.LineSegments(g,mat):new THREE.Mesh(g,mat);m.renderOrder=ord;m.frustumCulled=false;this.scene.add(m);c.xm.push(m)}}
  // terrain turns dark + semi-transparent (material properties only; textures and voxel data are never changed), water keeps its own material.
  setXray(on){this.xray=on;const m=this.mat;m.transparent=on;m.opacity=on?.34:1;m.depthWrite=!on;m.color.setRGB(on?.32:1,on?.38:1,on?.46:1);m.needsUpdate=true;for(const c of this.chunks.values())this.buildXray(c)}
- height(wx,wz){return heightAt(this.seed,wx,wz)}
- // ---- generation v3: caves, caverns, cave pools and ores. Everything is a pure function of world coordinates + seed, so chunk borders always line up and reloading never changes anything. ----
- cavesCtx(cx,cz){const s=this.seed,hs=new Int16Array(18*18);for(let z=-1;z<=16;z++)for(let x=-1;x<=16;x++)hs[(z+1)*18+x+1]=this.height(cx*S+x,cz*S+z);
-  return {hs,A:field(s+1001,14,10,cx,cz),Bf:field(s+2002,16,8,cx,cz),C:field(s+3003,22,14,cx,cz),P:field(s+4004,18,H,cx,cz)}}
- carve(d,c,cx,cz,x,z,h){const sea=this.sea,wx=cx*S+x,wz=cz*S+z,at=(dx,dz)=>c.hs[(z+dz+1)*18+x+dx+1];
-  let lim=h>sea+4?h:h-4;for(const [dx,dz] of N4){const hn=at(dx,dz);if(hn<=sea)lim=Math.min(lim,hn-3)}   // never open into lakes/rivers: keep rock between caves and surface water
-  const I=y=>(y*S+z)*S+x,pm=c.P(wx,0,wz)>PT;let wall=false;if(!pm)for(const [dx,dz] of N4)if(c.P(wx+dx,0,wz+dz)>PT)wall=true;
-  for(let y=4;y<=lim;y++){const a=c.A(wx,y,wz)-.5,b=c.Bf(wx,y,wz)-.5;if(a*a+b*b>=TUBE&&c.C(wx,y,wz)<=CAV)continue;
-   if(y<=POOLY){if(pm){d[I(y)]=B.WATER;continue}if(wall)continue}   // pools are walled in so water never touches open air sideways
-   d[I(y)]=0}
-  for(let y=1,top=Math.min(h-4,56);y<=top;y++)if(d[I(y)]===B.STONE){const o=oreAt(wx,y,wz,this.seed);if(o)d[I(y)]=o}}
+ height(wx,wz){return heightAt(this.seed,wx,wz,this.genVersion)}
+ // ---- Stage 9: connected underground tunnel networks. Every tunnel is derived from world coordinates and seed, so adjacent chunks join perfectly. ----
+ cavesCtx(cx,cz){return {seed:this.seed}}
+ carve(d,c,cx,cz,x,z,h){const wx=cx*S+x,wz=cz*S+z,I=y=>(y*S+z)*S+x;
+  if(this.genVersion>=4){for(let y=10;y<=h-12;y++)if(tunnelAt(wx,y,wz,c.seed))d[I(y)]=0;
+   for(let y=1,top=Math.min(h-4,145);y<=top;y++)if(d[I(y)]===B.STONE){const o=oreAt(wx,y,wz,this.seed);if(o)d[I(y)]=o}
+   return}
+  const sea=this.sea,at=(dx,dz)=>this.height(wx+dx,wz+dz);let lim=h>sea+4?h:h-4;for(const [dx,dz] of N4){const hn=at(dx,dz);if(hn<=sea)lim=Math.min(lim,hn-3)}
+  const pm=field(this.seed+4004,18,H,cx,cz)(wx,0,wz)>PT;
+  for(let y=4;y<=lim;y++){const a=field(this.seed+1001,14,10,cx,cz)(wx,y,wz)-.5,b=field(this.seed+2002,16,8,cx,cz)(wx,y,wz)-.5,wide=field(this.seed+3003,22,14,cx,cz)(wx,y,wz);if(a*a+b*b>=TUBE&&wide<=CAV)continue;if(y<=POOLY&&pm)d[I(y)]=B.WATER;else d[I(y)]=0}
+  for(let y=1,top=Math.min(h-4,56);y<=top;y++)if(d[I(y)]===B.STONE){const o=oreAtLegacy(wx,y,wz,this.seed);if(o)d[I(y)]=o}}
  gen(cx,cz){const sea=this.sea,d=new Uint8Array(S*H*S);const I=(x,y,z)=>(y*S+z)*S+x;const g3=this.genVersion>=3?this.cavesCtx(cx,cz):null;
   for(let x=0;x<S;x++)for(let z=0;z<S;z++){const wx=cx*S+x,wz=cz*S+z;
-   const m=Math.max(0,fbm(wx/220,wz/220,this.seed+7)-.5)*2;const h=Math.min(H-8,Math.floor(18+fbm(wx/70,wz/70,this.seed)*20+m*m*40));
+   const m=Math.max(0,fbm(wx/220,wz/220,this.seed+7)-.5)*2;const h=this.genVersion>=4?Math.min(H-18,Math.floor(NEW_SURFACE_BASE+fbm(wx/70,wz/70,this.seed)*26+m*m*36)):Math.min(56,Math.floor(18+fbm(wx/70,wz/70,this.seed)*20+m*m*40));
    for(let y=0;y<=h;y++){let b=B.STONE;if(y===0)b=B.BEDROCK;else if(y>h-4)b=B.DIRT;
-    if(y===h)b=h<=sea+1?B.SAND:h>46?B.SNOW:B.GRASS;d[I(x,y,z)]=b}
+    if(y===h)b=h<=sea+1?B.SAND:h>(this.genVersion>=4?118:46)?B.SNOW:h>(this.genVersion>=4?105:38)?B.STONE:B.GRASS;d[I(x,y,z)]=b}
    for(let y=h+1;y<=sea;y++)d[I(x,y,z)]=B.WATER;
    if(g3)this.carve(d,g3,cx,cz,x,z,h);
-   if(h>sea+1&&h<40&&(!g3||d[I(x,h,z)])&&x>2&&x<13&&z>2&&z<13&&hash(wx,wz,this.seed+99)<.012){for(let t=1;t<=5;t++)d[I(x,h+t,z)]=B.LOG;
+   if(h>sea+1&&h<(this.genVersion>=4?105:40)&&(!g3||d[I(x,h,z)])&&x>2&&x<13&&z>2&&z<13&&hash(wx,wz,this.seed+99)<.012){for(let t=1;t<=5;t++)d[I(x,h+t,z)]=B.LOG;
     for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)for(let dy=3;dy<=6;dy++)if(!(Math.abs(dx)==2&&Math.abs(dz)==2)&&!d[I(x+dx,h+dy,z+dz)])d[I(x+dx,h+dy,z+dz)]=B.LEAVES}}
   for(const [k,v] of this.mods){const [mx,my,mz]=k.split(',').map(Number);if(Math.floor(mx/S)===cx&&Math.floor(mz/S)===cz)d[I(mx-cx*S,my,mz-cz*S)]=v}
   return d}
