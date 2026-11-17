@@ -76,8 +76,9 @@ export const BIOME={FOREST:'Forest',DESERT:'Desert',JUNGLE:'Jungle',SNOWY_MOUNTA
 export function biomeAt(seed,wx,wz,gen=5){
  if(gen<5)return BIOME.FOREST;
  const temperature=fbm(wx/520,wz/520,seed+1701),moisture=fbm(wx/390,wz/390,seed+2701),rare=fbm(wx/700,wz/700,seed+3701);
- if(fbm(wx/420,wz/420,seed+91)>=.22&&fbm(wx/420,wz/420,seed+91)<.27)return BIOME.BEACH;
  if(rare>.86&&moisture>.58&&temperature>.38&&temperature<.72)return BIOME.MUSHROOM_FIELDS;
+ const coast=fbm(wx/420,wz/420,seed+91);
+ if(coast>=.22&&coast<.27)return BIOME.BEACH;
  if(temperature<.27)return BIOME.SNOWY_MOUNTAINS;
  if(temperature>.69&&moisture<.39)return BIOME.DESERT;
  if(moisture>.76&&temperature>.35&&temperature<.75)return BIOME.SWAMP;
