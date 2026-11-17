@@ -14,7 +14,15 @@ renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x9bc9e8);scene.fog=new THREE.Fog(0x9bc9e8,75,180);
 scene.add(new THREE.HemisphereLight(0xd9efff,0x59613c,1.15));
 const sun=new THREE.DirectionalLight(0xfff2d8,1.15);sun.position.set(-40,80,30);scene.add(sun);
-const cam=new THREE.PerspectiveCamera(75,1,.1,300);
+const cam=new THREE.PerspectiveCamera(75,1,.1,300);scene.add(cam);
+// Camera-attached first-person limbs. Kept in front of the world so the legs and boots remain visible.
+const viewModel=new THREE.Group();cam.add(viewModel);
+const limbMat=c=>new THREE.MeshBasicMaterial({color:c,depthTest:false});
+function limbBox(parent,x,y,z,w,h,d,color){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),limbMat(color));m.position.set(x,y,z);m.renderOrder=20;parent.add(m);return m}
+const leftLeg=new THREE.Group(),rightLeg=new THREE.Group(),leftArm=new THREE.Group(),rightArm=new THREE.Group();
+viewModel.add(leftLeg,rightLeg,leftArm,rightArm);
+for(const [g,x] of [[leftLeg,-.17],[rightLeg,.17]]){g.position.set(x,-.02,-.62);limbBox(g,0,-.14,0,.19,.42,.2,0x35475a);limbBox(g,0,-.39,-.07,.22,.16,.3,0x292a2d)}
+for(const [g,x] of [[leftArm,-.48],[rightArm,.48]]){g.position.set(x,-.35,-.62);limbBox(g,0,-.13,0,.19,.38,.2,0x527d55);limbBox(g,0,-.34,-.015,.17,.15,.18,0xd8a477)}
 const resize=()=>{renderer.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()};addEventListener('resize',resize);resize();
 const sel=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.006,1.006,1.006)),new THREE.LineBasicMaterial({color:0x101010}));sel.visible=false;scene.add(sel);
 const crackTex=(()=>{let r=4242;const rnd=()=>(r=(r*16807)%2147483647)/2147483647;const segs=[];
@@ -108,7 +116,7 @@ let last=performance.now(),fps=60;
 (function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000)||.016;last=t;fps=fps*.9+.1/dt;if(playing)playSecs+=dt;if(world){world.wtex.offset.set((t*.00004)%1,(t*.00011)%1);world.wmat.opacity=.8+Math.sin(t*.0014)*.03}
  if(world&&playing){if(mode!=='spectator')for(const f of world.furnaces.values())if(furnaceTick(f,dt))dirty=true;invUI.tick(dt);if(world.xray)world.xmat.glow.opacity=.2+Math.sin(t*.004)*.08}
  if(playing){world.update(P.x,P.z,6);const st=uiOpen?{swim:false}:mode==='spectator'?stepSpectator(P,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),up:!!keys.Space,down:!!(keys.ShiftLeft||keys.ShiftRight),yaw:P.yaw},dt):stepPlayer(P,world,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),space:!!keys.Space,sprint:!!keys.ShiftLeft,down:!!(keys.ControlLeft||keys.ControlRight),fly,yaw:P.yaw},dt),inW=st.swim;
-  cam.position.set(P.x,P.y+1.62,P.z);cam.rotation.set(P.pitch,P.yaw,0,'YXZ');{const cw=mode!=='spectator'&&camInWater();if(cw!==uwOn){uwOn=cw;setUnder(cw)}}const r=ray();sel.visible=!!r;if(r)sel.position.set(r.hit[0]+.5,r.hit[1]+.5,r.hit[2]+.5);
+  cam.position.set(P.x,P.y+1.62,P.z);cam.rotation.set(P.pitch,P.yaw,0,'YXZ');viewModel.visible=mode!=='spectator';{const walking=Math.hypot(P.vx,P.vz)>.35,phase=t*.012;leftLeg.rotation.x=walking?Math.sin(phase)*.48:0;rightLeg.rotation.x=walking?Math.sin(phase+Math.PI)*.48:0;leftArm.rotation.x=walking?Math.sin(phase+Math.PI)*.18:0;rightArm.rotation.x=walking?Math.sin(phase)*.18:0}{const cw=mode!=='spectator'&&camInWater();if(cw!==uwOn){uwOn=cw;setUnder(cw)}}const r=ray();sel.visible=!!r;if(r)sel.position.set(r.hit[0]+.5,r.hit[1]+.5,r.hit[2]+.5);
   if(mine){const current=ray(),same=current&&current.hit.join(',')===mine.pos;if(!same||world.get(...mine.hit)!==mine.block)finishMine();else{mine.elapsed+=dt;mine.snd=(mine.snd||0)+dt;if(mine.snd>.22){mine.snd=0;sfx('hit')}const progress=Math.min(1,mine.elapsed/mine.required);crack.visible=true;crack.position.set(mine.hit[0]+.5,mine.hit[1]+.5,mine.hit[2]+.5);crack.material.map=crackTex[Math.min(9,Math.floor(progress*10))];showMine(progress);if(progress>=1){const [x,y,z]=mine.hit,b=mine.block;breakBlock(x,y,z,b)}}}
   if(!mine&&holding)beginMine();if(mode!=='spectator')world.stepWater(10);
   $('hud').textContent=`DIG BUILD · ${curRec?curRec.name+' · ':''}${mode==='spectator'?'SPECTATOR · X-RAY '+(xray?'ON':'OFF'):mode} · seed ${world.seed} · ${P.x|0},${P.y|0},${P.z|0} · ${fps|0}fps · save: ${status}${uwOn?' · UNDERWATER':inW?' · SWIMMING':''}`}
