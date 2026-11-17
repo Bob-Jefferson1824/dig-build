@@ -303,9 +303,9 @@ const toolId=(t,r)=>200+t*10+r,isTool=id=>id>=200;
 const toolInfo=id=>isTool(id)?{type:Math.floor((id-200)/10),tier:(id-200)%10}:null;
 const maxDur=id=>isTool(id)?TIER.dur[toolInfo(id).tier]:0,stackMax=id=>isTool(id)?1:MAXSTACK;
 const isBlockItem=id=>id>0&&id<100&&id!==B.WATER&&id!==B.FLOWING_WATER;
-const MATN={100:'Stick',101:'Iron Ingot',102:'Gold Ingot',103:'Diamond',104:'Coal'};
+const MATN={100:'Stick',101:'Iron Ingot',102:'Gold Ingot',103:'Diamond',104:'Coal',105:'Raw Mutton',106:'Raw Beef',107:'Raw Pork',108:'Raw Chicken',109:'Leather',110:'Feather',111:'Wool'};
 const itemName=id=>isTool(id)?TIERS[toolInfo(id).tier]+' '+TYPES[toolInfo(id).type]:MATN[id]||(INFO[id]&&INFO[id][0])||'Item';
-const allItems=()=>{const a=[];for(let i=1;i<100;i++)if(isBlockItem(i)&&INFO[i])a.push(i);a.push(100,101,102,103,104);for(let t=0;t<4;t++)for(let r=0;r<5;r++)a.push(toolId(t,r));return a};
+const allItems=()=>{const a=[];for(let i=1;i<100;i++)if(isBlockItem(i)&&INFO[i])a.push(i);a.push(100,101,102,103,104,105,106,107,108,109,110,111);for(let t=0;t<4;t++)for(let r=0;r<5;r++)a.push(toolId(t,r));return a};
 const EFFECT=[[B.STONE,B.COBBLE,B.BRICK,B.COAL_ORE,B.IRON_ORE,B.GOLD_ORE,B.DIAMOND_ORE,B.FURNACE],[B.LOG,B.PLANKS,B.WORKBENCH],[B.DIRT,B.GRASS,B.SAND,B.SNOW],[]];
 const toolSpeed=(id,block)=>{if(!id||!isTool(id))return 1;const i=toolInfo(id);return EFFECT[i.type].includes(block)?TIER.speed[i.tier]:.8};
 const DROPS={[B.GRASS]:B.DIRT,[B.STONE]:B.COBBLE,[B.COAL_ORE]:MAT.COAL,[B.DIAMOND_ORE]:MAT.DIAMOND};   // iron/gold ore drop themselves (smelt them in a furnace)
@@ -561,7 +561,7 @@ function finishMine(){mine=null;crack.visible=false;$('mineUI').style.display='n
 function showMine(p){$('mineUI').style.display='block';$('mineName').textContent=INFO[mine.block][0];$('mineFill').style.width=(p*100).toFixed(0)+'%'}
 function camInWater(){return isWater(world.get(Math.floor(cam.position.x),Math.floor(cam.position.y),Math.floor(cam.position.z)))}
 function setUnder(on){const el=$('uw');el.classList.toggle('on',on);el.classList.add('pulse');setTimeout(()=>el.classList.remove('pulse'),220);const c=on?0x2f86c8:0x9bc9e8;scene.fog.color.set(c);scene.fog.near=on?1:75;scene.fog.far=on?70:180;scene.background.set(c)}
-addEventListener('mousedown',e=>{if(e.button===0&&!uiOpen&&caps().mine){holding=true;beginMine()}if(e.button===2&&playing&&!uiOpen&&caps().interact&&document.pointerLockElement){const r=ray();if(!r)return;{const hb=world.get(r.hit[0],r.hit[1],r.hit[2]);if(hb===B.WORKBENCH){invUI.open('bench');return}if(hb===B.FURNACE){invUI.open('furnace',r.hit.join(','));return}}if(!r.prev)return;const [x,y,z]=r.prev,sl=IS.inv[slot];if(!sl||!isBlockItem(sl.id))return;world.set(x,y,z,sl.id);if(hits(P.x,P.y,P.z)){world.set(x,y,z,0);return}mpBlockChange(x,y,z,sl.id);if(mode==='survival'&&--sl.n<=0)IS.inv[slot]=null;dirty=true;ui()}});
+addEventListener('mousedown',e=>{if(e.button===0&&!uiOpen&&caps().mine){if(damageAnimal()){holding=false;finishMine();return}holding=true;beginMine()}if(e.button===2&&playing&&!uiOpen&&caps().interact&&document.pointerLockElement){const r=ray();if(!r)return;{const hb=world.get(r.hit[0],r.hit[1],r.hit[2]);if(hb===B.WORKBENCH){invUI.open('bench');return}if(hb===B.FURNACE){invUI.open('furnace',r.hit.join(','));return}}if(!r.prev)return;const [x,y,z]=r.prev,sl=IS.inv[slot];if(!sl||!isBlockItem(sl.id))return;world.set(x,y,z,sl.id);if(hits(P.x,P.y,P.z)){world.set(x,y,z,0);return}mpBlockChange(x,y,z,sl.id);if(mode==='survival'&&--sl.n<=0)IS.inv[slot]=null;dirty=true;ui()}});
 addEventListener('mouseup',e=>{if(e.button===0){holding=false;denyKey='';finishMine()}});
 addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('mousemove',e=>{if(document.pointerLockElement){P.yaw-=e.movementX*.0022;P.pitch=Math.max(-1.55,Math.min(1.55,P.pitch-e.movementY*.0022))}});
@@ -712,7 +712,7 @@ function makeAnimal(type,x,z){
   const tail=wildBox(g,0,.84*sc,-.34*sc,.1*sc,.1*sc,.32*sc,cfg.body);tail.rotation.x=-.55;
  }
  g.scale.setScalar(1);g.position.set(x,0,z);scene.add(g);
- return {type,group:g,legs,head,dir:Math.random()*Math.PI*2,turn:1+Math.random()*4,speed:.35+Math.random()*.25,phase:Math.random()*6,sc,alert:0};
+ return {type,group:g,legs,head,dir:Math.random()*Math.PI*2,turn:1+Math.random()*4,speed:.35+Math.random()*.25,phase:Math.random()*6,sc,alert:0,health:type==='cow'?6:4,maxHealth:type==='cow'?6:4};
 }
 function clearWildlife(){for(const a of wildlife.animals)scene.remove(a.group);wildlife.animals=[];wildlife.spawnClock=0}
 function wildlifeGround(x,z){
@@ -735,6 +735,38 @@ function spawnWildlife(){
   const roll=Math.random(),type=roll<.32?'sheep':roll<.57?'cow':roll<.82?'pig':'chicken';
   const animal=makeAnimal(type,x+.5,z+.5);animal.group.position.y=y;wildlife.animals.push(animal);
  }
+}
+function animalDrops(a){
+ const pick=(lo,hi)=>lo+Math.floor(Math.random()*(hi-lo+1));
+ if(a.type==='cow')return [[106,pick(1,3)],[109,pick(0,2)]].filter(x=>x[1]>0);
+ if(a.type==='pig')return [[107,pick(1,3)]];
+ if(a.type==='sheep')return [[105,pick(1,2)],[111,1]];
+ return [[108,pick(1,2)],[110,pick(0,2)]].filter(x=>x[1]>0);
+}
+function damageAnimal(){
+ if(!playing||!world||mode==='spectator'||!document.pointerLockElement)return false;
+ const dir=new THREE.Vector3();cam.getWorldDirection(dir);
+ let target=null,best=4.6;
+ for(const a of wildlife.animals){
+  const center=new THREE.Vector3(a.group.position.x,a.group.position.y+.72*a.sc,a.group.position.z);
+  const to=center.clone().sub(cam.position),along=to.dot(dir);
+  if(along<0||along>4.6)continue;
+  const side=to.sub(dir.clone().multiplyScalar(along)).length();
+  if(side<.78*a.sc&&along<best){target=a;best=along}
+ }
+ if(!target)return false;
+ const held=IS.inv[slot],sword=held&&isTool(held.id)&&toolInfo(held.id).type===3;
+ const damage=sword?3:1;
+ target.health-=damage;target.group.scale.setScalar(target.health>0?1.08:1);
+ if(sword&&wearTool(IS.inv,slot,false,1))toast('Your sword broke!');
+ if(target.health<=0){
+  const drops=animalDrops(target),test=IS.inv.map(s=>s&&{...s});
+  for(const [id,n] of drops)if(addItem(test,id,n)>0){target.health=1;toast('Inventory full! Make room before collecting the drops.');ui();return true}
+  for(const [id,n] of drops)addItem(IS.inv,id,n);
+  scene.remove(target.group);const at=wildlife.animals.indexOf(target);if(at>=0)wildlife.animals.splice(at,1);
+  toast('Animal defeated · '+drops.map(([id,n])=>n+' '+itemName(id)).join(', '));
+ }else toast(target.type[0].toUpperCase()+target.type.slice(1)+' · '+target.health+'/'+target.maxHealth+' health');
+ dirty=true;ui();return true;
 }
 function wildlifeTick(dt){
  if(!world)return;
