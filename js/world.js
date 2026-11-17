@@ -60,7 +60,7 @@ const sm=t=>t*t*(3-2*t);
 function vnoise(x,z,s){const xi=Math.floor(x),zi=Math.floor(z),fx=sm(x-xi),fz=sm(z-zi);const a=hash(xi,zi,s),b=hash(xi+1,zi,s),c=hash(xi,zi+1,s),d=hash(xi+1,zi+1,s);return a+(b-a)*fx+(c-a)*fz+(a-b-c+d)*fx*fz}
 function fbm(x,z,s){return vnoise(x,z,s)*.55+vnoise(x*2,z*2,s+1)*.28+vnoise(x*4,z*4,s+2)*.17}
 const F=[[[1,0,0],[[1,0,1],[1,0,0],[1,1,0],[1,1,1]],.8],[[-1,0,0],[[0,0,0],[0,0,1],[0,1,1],[0,1,0]],.8],[[0,1,0],[[0,1,1],[1,1,1],[1,1,0],[0,1,0]],1],[[0,-1,0],[[0,0,0],[1,0,0],[1,0,1],[0,0,1]],.5],[[0,0,1],[[0,0,1],[1,0,1],[1,1,1],[0,1,1]],.7],[[0,0,-1],[[1,0,0],[0,0,0],[0,1,0],[1,1,0]],.7]];
-export function heightAt(seed,wx,wz,gen=3){const m=Math.max(0,fbm(wx/220,wz/220,seed+7)-.5)*2;if(gen>=4)return Math.min(H-18,Math.floor(NEW_SURFACE_BASE+fbm(wx/70,wz/70,seed)*26+m*m*36));return Math.min(56,Math.floor(18+fbm(wx/70,wz/70,seed)*20+m*m*40))}
+export function heightAt(seed,wx,wz,gen=3){const m=Math.max(0,fbm(wx/220,wz/220,seed+7)-.5)*2;if(gen>=4){const continent=fbm(wx/420,wz/420,seed+91);if(continent<.22)return 28+Math.floor(fbm(wx/75,wz/75,seed+123)*8);return Math.min(H-18,Math.floor(NEW_SURFACE_BASE+fbm(wx/70,wz/70,seed)*26+m*m*36))}return Math.min(56,Math.floor(18+fbm(wx/70,wz/70,seed)*20+m*m*40))}
 // small top-down terrain thumbnail (colours by height) drawn straight from the seed: used on world cards and the create-world screen
 export function drawPreview(cv,seed,gen,cx=0,cz=0,N=40,step=4){cv.width=cv.height=N;const g=cv.getContext('2d'),sea=gen>=4?NEW_SEA:gen>=2?25:22;
  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const h=heightAt(seed|0,Math.floor(cx+(i-N/2)*step),Math.floor(cz+(j-N/2)*step),gen);let c;
@@ -93,7 +93,7 @@ export class World{
   for(let y=1,top=Math.min(h-4,56);y<=top;y++)if(d[I(y)]===B.STONE){const o=oreAtLegacy(wx,y,wz,this.seed);if(o)d[I(y)]=o}}
  gen(cx,cz){const sea=this.sea,d=new Uint8Array(S*H*S);const I=(x,y,z)=>(y*S+z)*S+x;const g3=this.genVersion>=3?this.cavesCtx(cx,cz):null;
   for(let x=0;x<S;x++)for(let z=0;z<S;z++){const wx=cx*S+x,wz=cz*S+z;
-   const m=Math.max(0,fbm(wx/220,wz/220,this.seed+7)-.5)*2;const h=this.genVersion>=4?Math.min(H-18,Math.floor(NEW_SURFACE_BASE+fbm(wx/70,wz/70,this.seed)*26+m*m*36)):Math.min(56,Math.floor(18+fbm(wx/70,wz/70,this.seed)*20+m*m*40));
+   const h=this.height(wx,wz);
    for(let y=0;y<=h;y++){let b=B.STONE;if(y===0)b=B.BEDROCK;else if(y>h-4)b=B.DIRT;
     if(y===h)b=h<=sea+1?B.SAND:h>(this.genVersion>=4?118:46)?B.SNOW:h>(this.genVersion>=4?105:38)?B.STONE:B.GRASS;d[I(x,y,z)]=b}
    for(let y=h+1;y<=sea;y++)d[I(x,y,z)]=B.WATER;
