@@ -184,10 +184,10 @@ const resetPw=e=>sb.auth.resetPasswordForEmail(e);
 async function cloudSave(w){const u=await user();if(!u)return false;const {error}=await sb.from('worlds').upsert({...w,user_id:u.id,last_played:new Date().toISOString()},{onConflict:'user_id,name'});if(error)throw error;return true}
 async function cloudLoad(name){const u=await user();if(!u)return null;const {data,error}=await sb.from('worlds').select('*').eq('name',name).maybeSingle();if(error)throw error;return data}
 
-const B={AIR:0,GRASS:1,DIRT:2,STONE:3,SAND:4,SNOW:5,LOG:6,LEAVES:7,WATER:8,PLANKS:9,BEDROCK:10,COBBLE:11,GLASS:12,BRICK:13,FLOWING_WATER:14,WORKBENCH:15,COAL_ORE:16,IRON_ORE:17,GOLD_ORE:18,DIAMOND_ORE:19,FURNACE:20};
+const B={AIR:0,GRASS:1,DIRT:2,STONE:3,SAND:4,SNOW:5,LOG:6,LEAVES:7,WATER:8,PLANKS:9,BEDROCK:10,COBBLE:11,GLASS:12,BRICK:13,FLOWING_WATER:14,WORKBENCH:15,COAL_ORE:16,IRON_ORE:17,GOLD_ORE:18,DIAMOND_ORE:19,FURNACE:20,STONE_BRICKS:21,MOSSY_COBBLE:22};
 const isWater=id=>id===B.WATER||id===B.FLOWING_WATER;
-const INFO={1:['Grass',[84,150,58]],2:['Dirt',[120,84,52]],3:['Stone',[125,125,128]],4:['Sand',[218,205,150]],5:['Snow',[240,244,250]],6:['Log',[98,72,40]],7:['Leaves',[48,120,40]],8:['Water',[60,160,240]],9:['Planks',[170,132,80]],10:['Bedrock',[45,45,48]],11:['Cobble',[100,100,104]],12:['Glass',[190,225,235]],13:['Bricks',[150,70,58]],14:['Water',[60,160,240]],15:['Workbench',[150,105,58]],16:['Coal Ore',[40,40,44]],17:['Iron Ore',[222,176,146]],18:['Gold Ore',[252,214,60]],19:['Diamond Ore',[96,236,236]],20:['Furnace',[112,112,116]]};
-const NT=21,S=16,H=64,SEA=22;
+const INFO={1:['Grass',[84,150,58]],2:['Dirt',[120,84,52]],3:['Stone',[125,125,128]],4:['Sand',[218,205,150]],5:['Snow',[240,244,250]],6:['Log',[98,72,40]],7:['Leaves',[48,120,40]],8:['Water',[60,160,240]],9:['Planks',[170,132,80]],10:['Bedrock',[45,45,48]],11:['Cobble',[100,100,104]],12:['Glass',[190,225,235]],13:['Bricks',[150,70,58]],14:['Water',[60,160,240]],15:['Workbench',[150,105,58]],16:['Coal Ore',[40,40,44]],17:['Iron Ore',[222,176,146]],18:['Gold Ore',[252,214,60]],19:['Diamond Ore',[96,236,236]],20:['Furnace',[112,112,116]],21:['Stone Bricks',[135,135,138]],22:['Mossy Cobble',[85,112,72]]};
+const NT=23,S=16,H=64,SEA=22;
 const solid=id=>id!==0&&!isWater(id);
 const see=id=>id===0||isWater(id)||id===7||id===12;
 function makeAtlas(){const c=document.createElement('canvas');c.width=NT*16;c.height=16;const g=c.getContext('2d');let r=12345;const rnd=()=>(r=(r*16807)%2147483647)/2147483647;
@@ -196,6 +196,12 @@ function makeAtlas(){const c=document.createElement('canvas');c.width=NT*16;c.he
  for(const [id,col] of [[16,[28,28,32]],[17,[222,176,146]],[18,[252,214,60]],[19,[96,236,236]]]){const o=id*16;for(let y=0;y<16;y++)for(let x=0;x<16;x++){const v=.82+rnd()*.34;g.fillStyle=`rgb(${[125,125,128].map(k=>k*v|0)})`;g.fillRect(o+x,y,1,1)}
   for(let n=0;n<7;n++){const bx=1+rnd()*12|0,by=1+rnd()*12|0;for(const [dx,dy] of [[0,0],[1,0],[0,1],[1,1]]){const v=.85+rnd()*.3;g.fillStyle=`rgb(${col.map(k=>Math.min(255,k*v|0))})`;g.fillRect(o+bx+dx,by+dy,1,1)}g.fillStyle='rgba(255,255,255,.35)';g.fillRect(o+bx,by,1,1)}}
  {const o=20*16;for(let y=0;y<16;y++)for(let x=0;x<16;x++){const v=.8+rnd()*.3;g.fillStyle=`rgb(${[112,112,116].map(k=>k*v|0)})`;g.fillRect(o+x,y,1,1)}g.fillStyle='#2a2a2e';g.fillRect(o+3,6,10,7);g.fillStyle='#ff9a2e';g.fillRect(o+5,9,6,3);g.fillStyle='#ffd45a';g.fillRect(o+6,10,4,1);g.fillStyle='#3d3d42';g.fillRect(o+2,2,12,2)}
+ // Detailed oak planks: four individually shaded boards with grain, seams and knots.
+ {const o=9*16;g.fillStyle='#a77a45';g.fillRect(o,0,16,16);for(let y=0;y<16;y+=4){g.fillStyle='#76502f';g.fillRect(o,y,16,1);g.fillStyle='#c49a61';g.fillRect(o,y+1,16,1);g.fillStyle='#b48750';g.fillRect(o+1,y+2,14,1);g.fillStyle='#95683a';g.fillRect(o+1,y+3,14,1)}for(const [x,y] of [[4,2],[12,6],[7,10],[3,14]]){g.fillStyle='#704a2a';g.fillRect(o+x,y,2,1);g.fillStyle='#d0a66c';g.fillRect(o+x+1,y,1,1)}}
+ // Stone bricks with offset mortar joints.
+ {const o=21*16;for(let y=0;y<16;y++)for(let x=0;x<16;x++){const v=.88+rnd()*.22;g.fillStyle=`rgb(${[132,134,138].map(k=>Math.min(255,k*v|0))})`;g.fillRect(o+x,y,1,1)}g.fillStyle='#77797d';g.fillRect(o,0,16,1);g.fillRect(o,8,16,1);g.fillRect(o+7,0,1,8);g.fillRect(o+3,9,1,7);g.fillStyle='#aeb0b3';g.fillRect(o+1,1,5,1);g.fillRect(o+8,9,7,1)}
+ // Mossy cobblestone with irregular stones and green crevices.
+ {const o=22*16;for(let y=0;y<16;y++)for(let x=0;x<16;x++){const v=.82+rnd()*.3;g.fillStyle=`rgb(${[105,107,105].map(k=>Math.min(255,k*v|0))})`;g.fillRect(o+x,y,1,1)}for(const [x,y,w,h] of [[1,1,5,4],[9,2,5,3],[5,9,6,5],[12,11,3,3]]){g.fillStyle='#4e7540';g.fillRect(o+x,y,w,h);g.fillStyle='#72965a';g.fillRect(o+x+1,y+1,Math.max(1,w-2),1)}g.fillStyle='#55585a';for(const [x,y,w] of [[0,6,6],[8,6,8],[6,14,5]])g.fillRect(o+x,y,w,1)}
  const t=new THREE.CanvasTexture(c);t.magFilter=t.minFilter=THREE.NearestFilter;t.colorSpace=THREE.SRGBColorSpace;return t}
 // Water has its own 2-tile texture (source | flowing) that wraps vertically so it can scroll for a subtle wave effect.
 function makeWaterTex(){const c=document.createElement('canvas');c.width=16;c.height=16;const g=c.getContext('2d'),TP=Math.PI*2;
@@ -306,10 +312,12 @@ const isBlockItem=id=>id>0&&id<100&&id!==B.WATER&&id!==B.FLOWING_WATER;
 const MATN={100:'Stick',101:'Iron Ingot',102:'Gold Ingot',103:'Diamond',104:'Coal',105:'Raw Mutton',106:'Raw Beef',107:'Raw Pork',108:'Raw Chicken',109:'Leather',110:'Feather',111:'Wool'};
 const itemName=id=>isTool(id)?TIERS[toolInfo(id).tier]+' '+TYPES[toolInfo(id).type]:MATN[id]||(INFO[id]&&INFO[id][0])||'Item';
 const allItems=()=>{const a=[];for(let i=1;i<100;i++)if(isBlockItem(i)&&INFO[i])a.push(i);a.push(100,101,102,103,104,105,106,107,108,109,110,111);for(let t=0;t<4;t++)for(let r=0;r<5;r++)a.push(toolId(t,r));return a};
-const EFFECT=[[B.STONE,B.COBBLE,B.BRICK,B.COAL_ORE,B.IRON_ORE,B.GOLD_ORE,B.DIAMOND_ORE,B.FURNACE],[B.LOG,B.PLANKS,B.WORKBENCH],[B.DIRT,B.GRASS,B.SAND,B.SNOW],[]];
+const EFFECT=[[B.STONE,B.COBBLE,B.BRICK,B.STONE_BRICKS,B.MOSSY_COBBLE,B.COAL_ORE,B.IRON_ORE,B.GOLD_ORE,B.DIAMOND_ORE,B.FURNACE],[B.LOG,B.PLANKS,B.WORKBENCH],[B.DIRT,B.GRASS,B.SAND,B.SNOW],[]];
 const toolSpeed=(id,block)=>{if(!id||!isTool(id))return 1;const i=toolInfo(id);return EFFECT[i.type].includes(block)?TIER.speed[i.tier]:.8};
-const DROPS={[B.GRASS]:B.DIRT,[B.STONE]:B.COBBLE,[B.COAL_ORE]:MAT.COAL,[B.DIAMOND_ORE]:MAT.DIAMOND};   // iron/gold ore drop themselves (smelt them in a furnace)
-const dropOf=b=>DROPS[b]||b;
+const DROPS={[B.GRASS]:B.DIRT,[B.STONE]:B.COBBLE,[B.COAL_ORE]:MAT.COAL,[B.DIAMOND_ORE]:MAT.DIAMOND};
+// Leaves and glass do not drop themselves. Stone-family blocks require a pickaxe for drops.
+const PICKAXE_DROPS=new Set([B.STONE,B.COBBLE,B.BRICK,B.STONE_BRICKS,B.MOSSY_COBBLE,B.COAL_ORE,B.IRON_ORE,B.GOLD_ORE,B.DIAMOND_ORE,B.FURNACE]);
+const dropOf=(b,held)=>{if(b===B.LEAVES||b===B.GLASS)return 0;if(PICKAXE_DROPS.has(b)&&(!held||!isTool(held)||toolInfo(held).type!==0))return 0;return DROPS[b]||b};
 const NEED={[B.COAL_ORE]:0,[B.IRON_ORE]:1,[B.GOLD_ORE]:2,[B.DIAMOND_ORE]:2};   // minimum pickaxe tier (0 wood .. 4 diamond)
 const needTier=b=>NEED[b];
 const canMine=(b,toolId)=>{const n=NEED[b];if(n===undefined)return true;if(!toolId||!isTool(toolId))return false;const i=toolInfo(toolId);return i.type===0&&i.tier>=n};
@@ -338,6 +346,8 @@ const addRecipe=(out,n,pat,shapeless=false)=>RECIPES.push({out,n,pat,shapeless})
  addRecipe(PL,4,[[L]]);addRecipe(ST,4,[[PL],[PL]]);addRecipe(B.WORKBENCH,1,[PL,PL,PL,PL],true);
  [PL,B.COBBLE,MAT.IRON,MAT.GOLD,MAT.DIAMOND].forEach((M,t)=>{addRecipe(toolId(0,t),1,[[M,M,M],[0,ST,0],[0,ST,0]]);addRecipe(toolId(1,t),1,[[M,M],[M,ST],[0,ST]]);addRecipe(toolId(2,t),1,[[M],[ST],[ST]]);addRecipe(toolId(3,t),1,[[M],[M],[ST]])})})();
 addRecipe(B.FURNACE,1,[[B.COBBLE,B.COBBLE,B.COBBLE],[B.COBBLE,0,B.COBBLE],[B.COBBLE,B.COBBLE,B.COBBLE]]);
+addRecipe(B.STONE_BRICKS,4,[[B.STONE,B.STONE],[B.STONE,B.STONE]]);
+addRecipe(B.MOSSY_COBBLE,1,[[B.COBBLE,B.LEAVES],[B.LEAVES,B.COBBLE]]);
 // ---- furnace: {s:[input,fuel,output], prog, burn, burnMax}. Fuel is only burned while something is actually smelting. ----
 const SMELT={[B.IRON_ORE]:MAT.IRON,[B.GOLD_ORE]:MAT.GOLD},FUEL={[MAT.COAL]:48},SMELT_TIME=6;
 const newFurnace=()=>({s:[null,null,null],prog:0,burn:0,burnMax:0});
@@ -518,7 +528,7 @@ const crackTex=(()=>{let r=4242;const rnd=()=>(r=(r*16807)%2147483647)/214748364
 const crack=new THREE.Mesh(new THREE.BoxGeometry(1.008,1.008,1.008),new THREE.MeshBasicMaterial({map:crackTex[0],transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));crack.visible=false;crack.renderOrder=3;scene.add(crack);
 let world,mode='survival',name='world',playing=false,slot=0,fly=false,dirty=false,wid,status='-',mine=null,holding=false,uwOn=false,denyKey='',xray=true,readOnly=false;const caps=()=>MODES[mode]||MODES.survival;
 const P={x:8,y:50,z:8,vx:0,vy:0,vz:0,yaw:0,pitch:0,ground:false};
-const IS={inv:newInv(),craft:Array(9).fill(null),held:null};let uiOpen=false;const CREATIVE_START=[B.GRASS,B.DIRT,B.STONE,B.PLANKS,B.LOG,B.COBBLE,B.GLASS,B.BRICK,B.WORKBENCH];
+const IS={inv:newInv(),craft:Array(9).fill(null),held:null};let uiOpen=false;const CREATIVE_START=[B.GRASS,B.DIRT,B.STONE,B.PLANKS,B.LOG,B.COBBLE,B.GLASS,B.BRICK,B.WORKBENCH,B.STONE_BRICKS,B.MOSSY_COBBLE];
 const mineTime={[B.GRASS]:.55,[B.DIRT]:.5,[B.SAND]:.45,[B.SNOW]:.3,[B.LEAVES]:.25,[B.GLASS]:.25,[B.PLANKS]:1.0,[B.LOG]:1.3,[B.BRICK]:2.0,[B.STONE]:2.0,[B.WORKBENCH]:1.2,[B.COAL_ORE]:2.6,[B.IRON_ORE]:3.0,[B.GOLD_ORE]:3.2,[B.DIAMOND_ORE]:3.6,[B.FURNACE]:2.2,[B.COBBLE]:2.3,[B.BEDROCK]:Infinity};
 const keys={};addEventListener('keydown',e=>{if(chatOpen){keys[e.code]=false;return}keys[e.code]=true;if(e.code.startsWith('Digit')&&e.code!=='Digit0'&&caps().inventory){slot=+e.code.slice(5)-1;finishMine();ui()}if(e.code==='KeyF'&&mode==='creative')fly=!fly});
 addEventListener('keyup',e=>keys[e.code]=false);
@@ -564,8 +574,8 @@ function toast(m){let t=$('toast');if(!t){t=document.createElement('div');t.id='
 let AC=null,muted=false;
 function sfx(k){if(muted)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type=k==='break'?'square':'triangle';o.frequency.setValueAtTime(k==='break'?150:210+Math.random()*60,t);o.frequency.exponentialRampToValueAtTime(60,t+.12);g.gain.setValueAtTime(.07,t);g.gain.exponentialRampToValueAtTime(.001,t+.14);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+.15)}catch(e){}}
 addEventListener('keydown',e=>{if(e.code==='KeyM'&&playing){muted=!muted;toast(muted?'Sound off':'Sound on')}});
-function breakBlock(x,y,z,b){sfx('break');const d=dropOf(b),k=x+','+y+','+z,fr=b===B.FURNACE?world.furnaces.get(k):null;
- if(mode==='survival'){const items=[{id:d,n:1},...(fr?fr.s.filter(Boolean):[])],t=IS.inv.map(s=>s&&{...s});
+function breakBlock(x,y,z,b){sfx('break');const d=dropOf(b,IS.inv[slot]&&IS.inv[slot].id),k=x+','+y+','+z,fr=b===B.FURNACE?world.furnaces.get(k):null;
+ if(mode==='survival'){const items=[...(d?[{id:d,n:1}]:[]),...(fr?fr.s.filter(Boolean):[])],t=IS.inv.map(s=>s&&{...s});
   if(items.some(it=>addItem(t,it.id,it.n,false,it.d)>0)){toast('Inventory full - make room first');finishMine();return}      // nothing is ever lost: refuse to break instead
   world.set(x,y,z,0);mpBlockChange(x,y,z,0);items.forEach(it=>addItem(IS.inv,it.id,it.n,false,it.d));if(wearTool(IS.inv,slot,false))toast('Your tool broke!')}
  else {world.set(x,y,z,0);mpBlockChange(x,y,z,0)}
