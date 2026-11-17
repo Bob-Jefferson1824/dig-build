@@ -81,14 +81,14 @@ export class World{
  setXray(on){this.xray=on;const m=this.mat;m.transparent=on;m.opacity=on?.34:1;m.depthWrite=!on;m.color.setRGB(on?.32:1,on?.38:1,on?.46:1);m.needsUpdate=true;for(const c of this.chunks.values())this.buildXray(c)}
  height(wx,wz){return heightAt(this.seed,wx,wz,this.genVersion)}
  // ---- Stage 9: connected underground tunnel networks. Every tunnel is derived from world coordinates and seed, so adjacent chunks join perfectly. ----
- cavesCtx(cx,cz){return {seed:this.seed}}
+ cavesCtx(cx,cz){const s=this.seed;if(this.genVersion>=4)return {seed:s};return {seed:s,A:field(s+1001,14,10,cx,cz),Bf:field(s+2002,16,8,cx,cz),C:field(s+3003,22,14,cx,cz),P:field(s+4004,18,H,cx,cz)}}
  carve(d,c,cx,cz,x,z,h){const wx=cx*S+x,wz=cz*S+z,I=y=>(y*S+z)*S+x;
   if(this.genVersion>=4){for(let y=10;y<=h-12;y++)if(tunnelAt(wx,y,wz,c.seed))d[I(y)]=0;
    for(let y=1,top=Math.min(h-4,145);y<=top;y++)if(d[I(y)]===B.STONE){const o=oreAt(wx,y,wz,this.seed);if(o)d[I(y)]=o}
    return}
   const sea=this.sea,at=(dx,dz)=>this.height(wx+dx,wz+dz);let lim=h>sea+4?h:h-4;for(const [dx,dz] of N4){const hn=at(dx,dz);if(hn<=sea)lim=Math.min(lim,hn-3)}
-  const pm=field(this.seed+4004,18,H,cx,cz)(wx,0,wz)>PT;
-  for(let y=4;y<=lim;y++){const a=field(this.seed+1001,14,10,cx,cz)(wx,y,wz)-.5,b=field(this.seed+2002,16,8,cx,cz)(wx,y,wz)-.5,wide=field(this.seed+3003,22,14,cx,cz)(wx,y,wz);if(a*a+b*b>=TUBE&&wide<=CAV)continue;if(y<=POOLY&&pm)d[I(y)]=B.WATER;else d[I(y)]=0}
+  const pm=c.P(wx,0,wz)>PT;
+  for(let y=4;y<=lim;y++){const a=c.A(wx,y,wz)-.5,b=c.Bf(wx,y,wz)-.5,wide=c.C(wx,y,wz);if(a*a+b*b>=TUBE&&wide<=CAV)continue;if(y<=POOLY&&pm)d[I(y)]=B.WATER;else d[I(y)]=0}
   for(let y=1,top=Math.min(h-4,56);y<=top;y++)if(d[I(y)]===B.STONE){const o=oreAtLegacy(wx,y,wz,this.seed);if(o)d[I(y)]=o}}
  gen(cx,cz){const sea=this.sea,d=new Uint8Array(S*H*S);const I=(x,y,z)=>(y*S+z)*S+x;const g3=this.genVersion>=3?this.cavesCtx(cx,cz):null;
   for(let x=0;x<S;x++)for(let z=0;z<S;z++){const wx=cx*S+x,wz=cz*S+z;
