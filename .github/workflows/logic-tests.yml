@@ -7,7 +7,7 @@ on:
     branches: [main, stage-9-biomes]
 
 jobs:
-  logic:
+  biomes:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -16,7 +16,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Run world and inventory tests
-        run: node tests/logic.test.mjs
+      - name: Run Stage 9 biome tests
+        run: node tests/biomes.test.mjs
+
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Run game mode integration tests
         run: node tests/mode.test.mjs
