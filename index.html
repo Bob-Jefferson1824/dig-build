@@ -52,6 +52,17 @@
 #mpSetup{width:min(420px,100%);display:flex;gap:7px;flex-wrap:wrap;justify-content:center;background:#101b18c8;padding:10px;border:1px solid #53665b;border-radius:5px}
 #mpSetup input{min-width:0;flex:1;background:#0b120f;color:#fff;border:1px solid #7b8580;border-radius:3px}
 #mpSetup small{width:100%;opacity:.75;text-align:center;font-size:11px}
+#publicLobby{width:min(520px,100%);background:#101b18d9;border:1px solid #53665b;border-radius:5px;padding:10px;box-sizing:border-box}
+#publicLobby .lobbyHead{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:bold;letter-spacing:1px;margin-bottom:8px}
+#publicLobby .lobbyActions{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+#publicLobby .roomRows{display:flex;flex-direction:column;gap:6px;max-height:190px;overflow:auto}
+.publicRoom{display:flex;align-items:center;gap:8px;text-align:left;background:#1a2a21;border:1px solid #53665b;border-radius:4px;padding:8px}
+.publicRoom .roomInfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.publicRoom .roomTitle{font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.publicRoom .roomMeta{font-size:11px;opacity:.75}
+.publicRoom button{padding:6px 10px}
+#publicRoomName{width:100%;box-sizing:border-box;background:#0b120f;color:#fff;border:1px solid #7b8580;border-radius:3px;padding:8px;font:inherit}
+#chatClose{background:#6b2424;color:#fff;border:1px solid #d66;border-radius:3px;padding:2px 9px;font: bold 16px monospace;cursor:pointer}
 #chatPanel{display:none;position:fixed;left:14px;bottom:14px;width:min(360px,calc(100vw - 28px));height:250px;z-index:30;background:#101b18ed;border:2px solid #82958a;border-radius:5px;box-shadow:0 5px 24px #000b;font:13px monospace;color:#fff;pointer-events:auto}
 #chatPanel.open{display:flex;flex-direction:column}
 #chatHead{padding:7px 9px;background:#263a30;border-bottom:1px solid #64796c;display:flex;justify-content:space-between;font-weight:bold;letter-spacing:1px}
@@ -63,12 +74,22 @@
 #mpStatus{position:fixed;top:8px;right:8px;z-index:4;background:#101b18c8;padding:5px 8px;border:1px solid #53665b;border-radius:4px;font-size:11px;display:none}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script></head>
-<body><canvas id="c"></canvas><div id="specHelp"><b>SPECTATOR</b><br>WASD Move &middot; Space Up &middot; Shift Down<br>Mouse Look &middot; X Toggle X-ray</div><div id="uw"></div><div id="cross">+</div><div id="mineUI"><div id="mineName"></div><div id="mineBar"><div id="mineFill"></div></div></div><div id="hotbar"></div><div id="hud"></div><div id="mpStatus"></div><section id="chatPanel" aria-label="Multiplayer chat"><div id="chatHead"><span>WORLD CHAT</span><span>ENTER send · ESC close</span></div><div id="chatMessages"></div><form id="chatForm"><input id="chatInput" maxlength="200" autocomplete="off" placeholder="Message everyone..."><button type="submit">SEND</button></form></section>
+<body><canvas id="c"></canvas><div id="specHelp"><b>SPECTATOR</b><br>WASD Move &middot; Space Up &middot; Shift Down<br>Mouse Look &middot; X Toggle X-ray</div><div id="uw"></div><div id="cross">+</div><div id="mineUI"><div id="mineName"></div><div id="mineBar"><div id="mineFill"></div></div></div><div id="hotbar"></div><div id="hud"></div><div id="mpStatus"></div><section id="chatPanel" aria-label="Multiplayer chat"><div id="chatHead"><span>WORLD CHAT</span><button id="chatClose" type="button" aria-label="Close chat" title="Close chat">×</button></div><div id="chatMessages"></div><form id="chatForm"><input id="chatInput" maxlength="200" autocomplete="off" placeholder="Message everyone..."><button type="submit">SEND</button></form></section>
 <div id="menu">
  <div id="scrMain" class="scr"><h1>DIG BUILD</h1>
   <div id="auth"><input id="email" placeholder="email"><input id="pw" type="password" placeholder="password"><button id="login">Log in</button><button id="signup">Register</button><button id="logout">Log out</button><div id="who"></div></div>
   <div class="menubtns"><button id="btnResume" class="big" hidden>RESUME</button><button id="btnPlay" class="big">PLAY &mdash; SELECT WORLD</button><button id="btnCreateMain" class="big">CREATE NEW WORLD</button></div>
-  <div id="mpSetup"><input id="mpName" maxlength="18" placeholder="Player name" value="Player"><input id="mpRoom" maxlength="24" placeholder="Room code (optional)"><small>Enter the same room code as your friends. Leave it blank for single-player.</small></div>
+  <div id="mpSetup">
+   <input id="mpName" maxlength="18" placeholder="Player name" value="Player">
+   <input id="mpRoom" maxlength="24" placeholder="Private room code">
+   <small>Join a private room with its code, or browse public rooms below.</small>
+   <div class="lobbyActions"><button id="btnJoinPrivate" type="button">JOIN PRIVATE ROOM</button></div>
+ </div>
+ <div id="publicLobby">
+   <div class="lobbyHead"><span>PUBLIC ROOMS</span><button id="btnRefreshRooms" type="button">↻ REFRESH</button></div>
+   <div id="publicRooms" class="roomRows"><div class="empty">Loading public rooms...</div></div>
+   <div class="lobbyActions"><input id="publicRoomName" maxlength="32" placeholder="New public room name (optional)"><button id="btnCreatePublic" class="big" type="button">CREATE PUBLIC ROOM</button></div>
+ </div>
   <p>WASD move &middot; Space jump &middot; Shift sprint &middot; LMB break &middot; RMB place &middot; 1-9 hotbar &middot; E inventory &middot; F fly (creative) &middot; Spectator: free-fly, X toggles ore X-ray (view only) · Wildlife: animals roam and flee nearby players</p></div>
  <div id="scrWorlds" class="scr" hidden><h2>SELECT WORLD</h2><div class="bar"><button id="btnCreate" class="big">+ CREATE NEW WORLD</button><button id="btnImport" hidden>Import this device's local worlds into my account</button></div><div id="worldList"></div><button id="btnBackWorlds">&larr; BACK</button></div>
  <div id="scrCreate" class="scr" hidden><h2>CREATE NEW WORLD</h2><div class="form"><label>World name<input id="newName" maxlength="40" value="New World"></label>
@@ -490,6 +511,7 @@ const chatPanel=$('chatPanel'),chatInput=$('chatInput'),chatMessages=$('chatMess
 function chatLine(name,msg,system=false){const row=document.createElement('div');row.className='chatLine'+(system?' system':'');if(system)row.textContent=msg;else{const n=document.createElement('span');n.className='chatName';n.textContent=name+': ';const m=document.createElement('span');m.textContent=msg;row.append(n,m)}chatMessages.appendChild(row);while(chatMessages.children.length>80)chatMessages.firstChild.remove();chatMessages.scrollTop=chatMessages.scrollHeight}
 function chatShow(){if(!playing||uiOpen||!mpConnected)return;chatOpen=true;chatPanel.classList.add('open');for(const k in keys)keys[k]=false;holding=false;finishMine();if(document.pointerLockElement)document.exitPointerLock();setTimeout(()=>chatInput.focus(),0)}
 function chatHide(){if(!chatOpen)return;chatOpen=false;chatPanel.classList.remove('open');chatInput.blur();if(playing&&!uiOpen)$('c').requestPointerLock()}
+$('chatClose').addEventListener('click',chatHide);
 addEventListener('keydown',e=>{if(e.code==='KeyT'&&playing&&!uiOpen&&!chatOpen){e.preventDefault();chatShow()}else if(chatOpen&&e.code==='Escape'){e.preventDefault();chatHide()}else if(chatOpen&&e.code==='Enter'&&document.activeElement!==chatInput){e.preventDefault();chatInput.focus()}});
 $('chatForm').addEventListener('submit',e=>{e.preventDefault();const msg=chatInput.value.trim();if(msg&&mpSocket&&mpConnected)mpSocket.emit('chat-message',msg);chatInput.value='';chatInput.focus()});
 function playerLabel(name){const c=document.createElement('canvas');c.width=256;c.height=64;const x=c.getContext('2d');x.fillStyle='rgba(8,16,12,.78)';x.fillRect(4,5,248,54);x.strokeStyle='#b6e68b';x.lineWidth=3;x.strokeRect(4,5,248,54);x.font='bold 27px monospace';x.textAlign='center';x.textBaseline='middle';x.fillStyle='#fff';x.fillText(String(name).slice(0,18),128,33);const tex=new THREE.CanvasTexture(c);tex.minFilter=THREE.LinearFilter;const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false});const sp=new THREE.Sprite(mat);sp.scale.set(2.5,.63,1);sp.position.y=2.65;return sp}
@@ -501,8 +523,8 @@ function disconnectMultiplayer(message=''){if(mpSocket){const old=mpSocket;mpSoc
 function connectMultiplayer(){const room=String($('mpRoom').value||'').trim().toLowerCase().replace(/[^a-z0-9_-]/g,'').slice(0,24);if(!room){disconnectMultiplayer();return}const url=MULTIPLAYER_URL;if(url.includes('YOUR-DIG-BUILD-SERVER')){mpStatus('Set your Render server URL in index.html');return}if(!window.io){mpStatus('Multiplayer library failed to load');return}
  disconnectMultiplayer();mpRoom=room;mpName=String($('mpName').value||'Player').trim().slice(0,18)||'Player';mpStatus('Connecting to room '+room+'...');
  const sock=io(url,{transports:['websocket','polling'],timeout:15000,reconnection:true});mpSocket=sock;
- sock.on('connect',()=>{sock.emit('join-room',{room,name:mpName,seed:world.seed,position:{x:P.x,y:P.y,z:P.z,yaw:P.yaw,pitch:P.pitch},blocks:[...world.mods.entries()].slice(0,5000)});mpStatus('Joining '+room+'...')});
- sock.on('room-state',data=>{if(!world||String(data.seed)!==String(world.seed)){chatLine('',`Room world seed is ${data.seed}. Your world seed is ${world&&world.seed}. Join with a world using the matching seed.`,true);disconnectMultiplayer();return}for(const [key,id] of data.blocks||[]){const a=String(key).split(',').map(Number);if(a.length===3&&a.every(Number.isFinite))world.set(a[0],a[1],a[2],id)}for(const pl of data.players||[])if(pl.id!==sock.id)mpPlayers.set(pl.id,makeRemotePlayer(pl.id,pl));mpConnected=true;mpStatus('ONLINE · '+room);chatLine('',`Connected to room ${room}`,true);chatLine('',`${mpPlayers.size+1} player(s) in this room`,true)});
+ sock.on('connect',()=>{sock.emit('join-room',{room,name:mpName,seed:world.seed,position:{x:P.x,y:P.y,z:P.z,yaw:P.yaw,pitch:P.pitch},blocks:[...world.mods.entries()].slice(0,5000),public:!!mpPublicConfig,roomName:mpPublicConfig&&mpPublicConfig.name});mpStatus('Joining '+room+'...')});
+ sock.on('room-state',data=>{if(!world||String(data.seed)!==String(world.seed)){chatLine('',`Room world seed is ${data.seed}. Your world seed is ${world&&world.seed}. Join with a world using the matching seed.`,true);disconnectMultiplayer();return}for(const [key,id] of data.blocks||[]){const a=String(key).split(',').map(Number);if(a.length===3&&a.every(Number.isFinite))world.set(a[0],a[1],a[2],id)}for(const pl of data.players||[])if(pl.id!==sock.id)mpPlayers.set(pl.id,makeRemotePlayer(pl.id,pl));mpConnected=true;mpPublicConfig=null;mpStatus('ONLINE · '+room);chatLine('',`Connected to room ${room}`,true);chatLine('',`${mpPlayers.size+1} player(s) in this room`,true)});
  sock.on('player-joined',pl=>{if(pl.id===sock.id)return;if(!mpPlayers.has(pl.id))mpPlayers.set(pl.id,makeRemotePlayer(pl.id,pl));chatLine('',`${pl.name} joined`,true)});
  sock.on('player-left',pl=>{removeRemote(pl.id);chatLine('',`${pl.name||'A player'} left`,true)});
  sock.on('player-moved',pl=>{const r=mpPlayers.get(pl.id);if(r)r.target={x:pl.x,y:pl.y,z:pl.z,yaw:pl.yaw||0}});
@@ -585,6 +607,67 @@ const DIG=globalThis.DIG={
  resume(){if(!(curRec&&world))return;$('menu').style.display='none';playing=true;connectMultiplayer();$('c').requestPointerLock()},
  persist};
 const menu=createMenu(DIG);
+let roomBrowserSocket=null, mpPublicConfig=null;
+function drawPublicRooms(rooms){
+ const host=$('publicRooms');host.innerHTML='';
+ if(!Array.isArray(rooms)||!rooms.length){const empty=document.createElement('div');empty.className='empty';empty.textContent='No public rooms are open right now. Create one and invite people!';host.appendChild(empty);return}
+ for(const room of rooms){
+  const row=document.createElement('div');row.className='publicRoom';
+  const info=document.createElement('div');info.className='roomInfo';
+  const title=document.createElement('div');title.className='roomTitle';title.textContent=room.name||'Public World';
+  const meta=document.createElement('div');meta.className='roomMeta';meta.textContent=(room.host||'Player')+' · '+room.players+'/'+(room.maxPlayers||16)+' players';
+  info.append(title,meta);
+  const join=document.createElement('button');join.type='button';join.textContent='JOIN';join.disabled=room.players>=(room.maxPlayers||16);
+  join.addEventListener('click',()=>joinPublicRoom(room));
+  row.append(info,join);host.appendChild(row);
+ }
+}
+function refreshPublicRooms(){
+ if(!window.io){drawPublicRooms([]);return}
+ if(!roomBrowserSocket||!roomBrowserSocket.connected){
+  if(roomBrowserSocket)roomBrowserSocket.disconnect();
+  roomBrowserSocket=io(MULTIPLAYER_URL,{transports:['websocket','polling'],timeout:15000,reconnection:true});
+  roomBrowserSocket.on('connect',()=>roomBrowserSocket.emit('list-public-rooms'));
+  roomBrowserSocket.on('public-room-list',drawPublicRooms);
+  roomBrowserSocket.on('connect_error',()=>{const el=$('publicRooms');el.textContent='Room list unavailable. The multiplayer server may be starting up.'});
+ }else roomBrowserSocket.emit('list-public-rooms');
+}
+async function joinPublicRoom(room){
+ try{
+  $('btnRefreshRooms').disabled=true;
+  const metas=await DIG.list();
+  let meta=metas.find(m=>String(m.seed)===String(room.seed));
+  let rec;
+  if(meta) rec=await loadWorld(sb,meta.owner,meta.id);
+  else{
+   const owner=await ownerNow();
+   rec=await createWorld(owner,{name:room.name||'Public Room',seedText:String(room.seed),mode:'survival'});
+   rec.seed=Number(room.seed);rec.seedText=String(room.seed);
+   await putRecord(rec);await cloudPush(rec);
+  }
+  $('mpRoom').value=room.code;mpPublicConfig=null;
+  await enterWorld(rec,false);
+ }catch(err){toast('Could not join public room: '+(err&&err.message||'unknown error'))}
+ finally{$('btnRefreshRooms').disabled=false}
+}
+async function createPublicRoom(){
+ try{
+  const owner=await ownerNow(),name=String($('publicRoomName').value||'').trim().slice(0,32)||'Public World';
+  const rec=await createWorld(owner,{name,seedText:randomSeed(),mode:'survival'});
+  const code='pub-'+Math.random().toString(36).slice(2,10);
+  $('mpRoom').value=code;mpPublicConfig={name};
+  await enterWorld(rec,false);
+ }catch(err){toast('Could not create public room: '+(err&&err.message||'unknown error'))}
+}
+$('btnRefreshRooms').addEventListener('click',refreshPublicRooms);
+$('btnCreatePublic').addEventListener('click',createPublicRoom);
+$('btnJoinPrivate').addEventListener('click',()=>{
+ const code=String($('mpRoom').value||'').trim();
+ if(!code){toast('Enter a private room code first');return}
+ // Private rooms still use the existing world-selection flow.
+ menu.showWorlds();$('menu').style.display='flex';
+});
+refreshPublicRooms();
 document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockElement&&playing&&!uiOpen&&!chatOpen){playing=false;holding=false;finishMine();disconnectMultiplayer();persist();menu.showMain(true);$('menu').style.display='flex'}});
 await initCloud();$('auth').style.display=sb?'flex':'none';try{await migrateLegacy()}catch(e){console.warn('legacy migration failed (existing saves are untouched)',e)}
 async function onAuth(){curOwner=await ownerNow();if(curRec&&curRec.owner!==curOwner){if(world&&!readOnly)await persist();playing=false;unloadWorld();curRec=null}menu.showMain(!!curRec)}   // never carry one account's world into another account
