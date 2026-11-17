@@ -104,7 +104,7 @@
 // Public values only (anon/publishable key is safe in the browser; RLS protects data). NEVER put a service-role key here.
 const SUPABASE_URL = '';      // e.g. https://xxxx.supabase.co
 const SUPABASE_ANON_KEY = ''; // anon / publishable key
-const GEN_VERSION = 3;        // generation used for NEW worlds (v2 = more water, v3 = caves + ores). Saved worlds keep their own gen_version (v1 stays identical).
+const GEN_VERSION = 4;        // generation used for NEW worlds (v2 = more water, v3 = caves + ores). Saved worlds keep their own gen_version (v1 stays identical).
 const SAVE_FORMAT = 4;        // bump + add a migration in save.js when save shape changes
 
 // Save-format migrations (pure functions; storage lives in worlds.js). Add a step per format bump, never drop old steps.
@@ -254,11 +254,11 @@ class World{
  height(wx,wz){return heightAt(this.seed,wx,wz)}
  // ---- generation v3: caves, caverns, cave pools and ores. Everything is a pure function of world coordinates + seed, so chunk borders always line up and reloading never changes anything. ----
  cavesCtx(cx,cz){const s=this.seed,hs=new Int16Array(18*18);for(let z=-1;z<=16;z++)for(let x=-1;x<=16;x++)hs[(z+1)*18+x+1]=this.height(cx*S+x,cz*S+z);
-  return {hs,A:field(s+1001,14,10,cx,cz),Bf:field(s+2002,16,8,cx,cz),C:field(s+3003,22,14,cx,cz),P:field(s+4004,18,H,cx,cz)}}
+  return {hs,A:field(s+1001,14,10,cx,cz),Bf:field(s+2002,16,8,cx,cz),C:field(s+3003,22,14,cx,cz),D:field(s+5005,7,5,cx,cz),P:field(s+4004,18,H,cx,cz)}}
  carve(d,c,cx,cz,x,z,h){const sea=this.sea,wx=cx*S+x,wz=cz*S+z,at=(dx,dz)=>c.hs[(z+dz+1)*18+x+dx+1];
   let lim=h>sea+4?h:h-4;for(const [dx,dz] of N4){const hn=at(dx,dz);if(hn<=sea)lim=Math.min(lim,hn-3)}   // never open into lakes/rivers: keep rock between caves and surface water
   const I=y=>(y*S+z)*S+x,pm=c.P(wx,0,wz)>PT;let wall=false;if(!pm)for(const [dx,dz] of N4)if(c.P(wx+dx,0,wz+dz)>PT)wall=true;
-  for(let y=4;y<=lim;y++){const a=c.A(wx,y,wz)-.5,b=c.Bf(wx,y,wz)-.5;if(a*a+b*b>=TUBE&&c.C(wx,y,wz)<=CAV)continue;
+  for(let y=4;y<=lim;y++){const a=c.A(wx,y,wz),b=c.Bf(wx,y,wz),wide=c.C(wx,y,wz),detail=c.D(wx,y,wz);const caveDensity=a*.42+b*.28+wide*.20+(detail-.5)*.18;if(caveDensity<.535)continue;
    if(y<=POOLY){if(pm){d[I(y)]=B.WATER;continue}if(wall)continue}   // pools are walled in so water never touches open air sideways
    d[I(y)]=0}
   for(let y=1,top=Math.min(h-4,56);y<=top;y++)if(d[I(y)]===B.STONE){const o=oreAt(wx,y,wz,this.seed);if(o)d[I(y)]=o}}
