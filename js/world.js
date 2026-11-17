@@ -76,7 +76,8 @@ export const BIOME={FOREST:'Forest',DESERT:'Desert',JUNGLE:'Jungle',SNOWY_MOUNTA
 export function biomeAt(seed,wx,wz,gen=5){
  if(gen<5)return BIOME.FOREST;
  const temperature=fbm(wx/520,wz/520,seed+1701),moisture=fbm(wx/390,wz/390,seed+2701),rare=fbm(wx/700,wz/700,seed+3701);
- if(rare>.91&&moisture>.58&&temperature>.38&&temperature<.72)return BIOME.MUSHROOM_FIELDS;
+ if(fbm(wx/420,wz/420,seed+91)>=.22&&fbm(wx/420,wz/420,seed+91)<.27)return BIOME.BEACH;
+ if(rare>.86&&moisture>.58&&temperature>.38&&temperature<.72)return BIOME.MUSHROOM_FIELDS;
  if(temperature<.27)return BIOME.SNOWY_MOUNTAINS;
  if(temperature>.69&&moisture<.39)return BIOME.DESERT;
  if(moisture>.76&&temperature>.35&&temperature<.75)return BIOME.SWAMP;
@@ -93,6 +94,7 @@ export function heightAt(seed,wx,wz,gen=3){
   if(continent<.22)return 28+Math.floor(fbm(wx/75,wz/75,seed+123)*8);
   const broad=fbm(wx/70,wz/70,seed),detail=fbm(wx/24,wz/24,seed+611);
   let h=NEW_SURFACE_BASE+broad*22+m*m*30+(detail-.5)*5;
+  if(climate===BIOME.BEACH)h=NEW_SEA-1+broad*4;
   if(climate===BIOME.DESERT)h=NEW_SURFACE_BASE-5+broad*12+(detail-.5)*3;
   if(climate===BIOME.PLAINS)h=NEW_SURFACE_BASE-7+broad*12+(detail-.5)*3;
   if(climate===BIOME.SWAMP)h=NEW_SEA-3+broad*5+(detail-.5)*2;
@@ -155,7 +157,7 @@ export class World{
     const r=hash(wx,wz,this.seed+509),surface=h+1;
     if(biome===BIOME.DESERT&&h>sea+2&&r<.018){const tall=2+(hash(wx,wz,this.seed+510)*3|0);for(let t=0;t<tall;t++)d[I(x,h+1+t,z)]=B.CACTUS}
     else if(biome===BIOME.SWAMP&&h>sea-2&&r<.045){for(let t=0;t<2+(r*20|0);t++)d[I(x,h+1+t,z)]=B.REEDS}
-    else if(biome===BIOME.MUSHROOM_FIELDS&&h>sea+1&&r<.026){const stem=2+(r*80|0)%3;for(let t=0;t<stem;t++)d[I(x,h+1+t,z)]=B.MUSHROOM_STEM;for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)if(dx*dx+dz*dz<=4)d[I(x+dx,h+stem,z+dz)]=B.MUSHROOM_CAP}
+    else if(biome===BIOME.MUSHROOM_FIELDS&&h>sea+1&&x>=2&&x<=13&&z>=2&&z<=13&&r<.026){const stem=2+(r*80|0)%3;for(let t=0;t<stem;t++)d[I(x,h+1+t,z)]=B.MUSHROOM_STEM;for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)if(dx*dx+dz*dz<=4)d[I(x+dx,h+stem,z+dz)]=B.MUSHROOM_CAP}
     else if(!coast&&h>sea+1&&h<155&&x>2&&x<13&&z>2&&z<13){
      const chance=biome===BIOME.JUNGLE?.085:biome===BIOME.FOREST?.035:biome===BIOME.AUTUMN_FOREST?.04:biome===BIOME.TAIGA?.055:biome===BIOME.SWAMP?.025:biome===BIOME.PLAINS?.006:.012;
      if(r<chance){
