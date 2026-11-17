@@ -30,4 +30,4 @@ export function stepPlayer(P,w,inp,dt){
 export const SPEC_SPEED=16;
 export function stepSpectator(P,inp,dt){const l=Math.hypot(inp.fx,inp.fz)||1,fx=inp.fx/l,fz=inp.fz/l,c=Math.cos(inp.yaw),s=Math.sin(inp.yaw),k=Math.min(1,10*dt);
  const tx=(fx*c+fz*s)*SPEC_SPEED,tz=(-fx*s+fz*c)*SPEC_SPEED,ty=((inp.up?1:0)-(inp.down?1:0))*SPEC_SPEED*.75;
- P.vx+=(tx-P.vx)*k;P.vy+=(ty-P.vy)*k;P.vz+=(tz-P.vz)*k;P.x+=P.vx*dt;P.y=Math.max(-8,Math.min(110,P.y+P.vy*dt));P.z+=P.vz*dt;P.ground=false;P.blocked=false;P.leap=0;return {swim:false}}
+ P.vx+=(tx-P.vx)*k;P.vy+=(ty-P.vy)*k;P.vz+=(tz-P.vz)*k;P.x+=P.vx*dt;P.y=Math.max(-8,Math.min(220,P.y+P.vy*dt));P.z+=P.vz*dt;P.ground=false;P.blocked=false;P.leap=0;return {swim:false}}
