@@ -181,7 +181,7 @@ export class World{
   const lx=x-cx*S,lz=z-cz*S;for(const [dx,dz,t] of [[-1,0,lx===0],[1,0,lx===S-1],[0,-1,lz===0],[0,1,lz===S-1]])if(t){const n=this.chunks.get(this.key(cx+dx,cz+dz));if(n)this.dirty.add(n)}}
  mesh(c){for(const m of c.meshes)this.scene.remove(m),m.geometry.dispose();c.meshes=[];const ores=[];const out=[{p:[],u:[],c:[],i:[]},{p:[],u:[],c:[],i:[]}];
   for(let y=0;y<H;y++)for(let z=0;z<S;z++)for(let x=0;x<S;x++){const id=c.d[(y*S+z)*S+x];if(!id)continue;if(id>=16&&id<=19)ores.push(c.cx*S+x,y,c.cz*S+z,id);const wat=isWater(id),o=out[wat?1:0],wx=c.cx*S+x,wz=c.cz*S+z;
-   for(const [d,cs,sh] of F){const n=this.get(wx+d[0],y+d[1],wz+d[2]);if(!see(n)||(n===id&&id!==7)||(wat&&isWater(n)))continue;
+   for(const [d,cs,sh] of F){const n=this.get(wx+d[0],y+d[1],wz+d[2]);if(!see(n)||(n===id&&id!==7&&id!==B.AUTUMN_LEAVES)||(wat&&isWater(n)))continue;
     const b=o.p.length/3,T=wat?0:id,N=wat?1:NT,u0=T/N,u1=(T+1)/N;cs.forEach((q,k)=>{o.p.push(wx+q[0],y+q[1],wz+q[2]);o.u.push(k===0||k===3?u0:u1,k<2?0:1);{const v=wat?.88+sh*.12:sh;o.c.push(v,v,v)}});o.i.push(b,b+1,b+2,b,b+2,b+3)}}
   out.forEach((o,k)=>{if(!o.p.length)return;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(o.p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(o.u,2));g.setAttribute('color',new THREE.Float32BufferAttribute(o.c,3));g.setIndex(o.i);
    const m=new THREE.Mesh(g,k?this.wmat:this.mat);if(k)m.renderOrder=2;this.scene.add(m);c.meshes.push(m)});c.ores=ores;this.buildXray(c)}
