@@ -2,7 +2,8 @@ import * as THREE from 'three';
 export const B={AIR:0,GRASS:1,DIRT:2,STONE:3,SAND:4,SNOW:5,LOG:6,LEAVES:7,WATER:8,PLANKS:9,BEDROCK:10,COBBLE:11,GLASS:12,BRICK:13,FLOWING_WATER:14,WORKBENCH:15,COAL_ORE:16,IRON_ORE:17,GOLD_ORE:18,DIAMOND_ORE:19,FURNACE:20};
 export const isWater=id=>id===B.WATER||id===B.FLOWING_WATER;
 export const INFO={1:['Grass',[84,150,58]],2:['Dirt',[120,84,52]],3:['Stone',[125,125,128]],4:['Sand',[218,205,150]],5:['Snow',[240,244,250]],6:['Log',[98,72,40]],7:['Leaves',[48,120,40]],8:['Water',[60,160,240]],9:['Planks',[170,132,80]],10:['Bedrock',[45,45,48]],11:['Cobble',[100,100,104]],12:['Glass',[190,225,235]],13:['Bricks',[150,70,58]],14:['Water',[60,160,240]],15:['Workbench',[150,105,58]],16:['Coal Ore',[40,40,44]],17:['Iron Ore',[222,176,146]],18:['Gold Ore',[252,214,60]],19:['Diamond Ore',[96,236,236]],20:['Furnace',[112,112,116]]};
-const NT=21,S=16,H=192,SEA=22;\nconst NEW_SEA=35,NEW_SURFACE_BASE=78;
+const NT=21,S=16,H=192,SEA=22;
+const NEW_SEA=35,NEW_SURFACE_BASE=78;
 export const solid=id=>id!==0&&!isWater(id);
 const see=id=>id===0||isWater(id)||id===7||id===12;
 export function makeAtlas(){const c=document.createElement('canvas');c.width=NT*16;c.height=16;const g=c.getContext('2d');let r=12345;const rnd=()=>(r=(r*16807)%2147483647)/2147483647;
@@ -61,7 +62,7 @@ function fbm(x,z,s){return vnoise(x,z,s)*.55+vnoise(x*2,z*2,s+1)*.28+vnoise(x*4,
 const F=[[[1,0,0],[[1,0,1],[1,0,0],[1,1,0],[1,1,1]],.8],[[-1,0,0],[[0,0,0],[0,0,1],[0,1,1],[0,1,0]],.8],[[0,1,0],[[0,1,1],[1,1,1],[1,1,0],[0,1,0]],1],[[0,-1,0],[[0,0,0],[1,0,0],[1,0,1],[0,0,1]],.5],[[0,0,1],[[0,0,1],[1,0,1],[1,1,1],[0,1,1]],.7],[[0,0,-1],[[1,0,0],[0,0,0],[0,1,0],[1,1,0]],.7]];
 export function heightAt(seed,wx,wz,gen=3){const m=Math.max(0,fbm(wx/220,wz/220,seed+7)-.5)*2;if(gen>=4)return Math.min(H-18,Math.floor(NEW_SURFACE_BASE+fbm(wx/70,wz/70,seed)*26+m*m*36));return Math.min(56,Math.floor(18+fbm(wx/70,wz/70,seed)*20+m*m*40))}
 // small top-down terrain thumbnail (colours by height) drawn straight from the seed: used on world cards and the create-world screen
-export function drawPreview(cv,seed,gen,cx=0,cz=0,N=40,step=4){cv.width=cv.height=N;const g=cv.getContext('2d'),sea=gen>=2?25:22;
+export function drawPreview(cv,seed,gen,cx=0,cz=0,N=40,step=4){cv.width=cv.height=N;const g=cv.getContext('2d'),sea=gen>=4?NEW_SEA:gen>=2?25:22;
  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const h=heightAt(seed|0,Math.floor(cx+(i-N/2)*step),Math.floor(cz+(j-N/2)*step),gen);let c;
   if(h<=sea){const d=Math.min(1,(sea-h)/10);c=[40-d*20|0,110-d*40|0,200-d*50|0]}else if(h<=sea+1)c=[216,200,140];else if(h>(gen>=4?118:46))c=[240,244,250];else if(h>(gen>=4?105:38))c=[125,125,130];else{const s=.75+(h-sea)/60;c=[70*s|0,150*s|0,60*s|0]}
   g.fillStyle=`rgb(${c})`;g.fillRect(i,j,1,1)}g.fillStyle='#fff';g.fillRect(N/2-1,N/2-1,2,2)}
