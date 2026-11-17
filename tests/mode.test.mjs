@@ -4,11 +4,12 @@ import fs from 'node:fs';import os from 'node:os';import path from 'node:path';i
 const root=path.resolve(import.meta.dirname,'..'),tmp=fs.mkdtempSync(path.join(os.tmpdir(),'dig-mode-'));
 fs.writeFileSync(path.join(tmp,'three.mjs'),`
 export class Vector3{constructor(x=0,y=0,z=0){this.x=x;this.y=y;this.z=z}}
+export class Group{constructor(){this.children=[];this.position={set(){}};this.rotation={x:0,y:0,z:0};this.visible=true}add(...o){this.children.push(...o)}}
 export class Color{set(){}} export class Fog{constructor(c,n,f){this.color=new Color();this.near=n;this.far=f}}
 export class Scene{constructor(){this.children=[];this.background=new Color();globalThis.__scene=this}add(o){this.children.push(o)}remove(o){const i=this.children.indexOf(o);if(i>=0)this.children.splice(i,1)}}
 export class WebGLRenderer{setPixelRatio(){}setSize(){}render(){}}
 export class HemisphereLight{} export class DirectionalLight{constructor(){this.position={set(){}}}}
-export class PerspectiveCamera{constructor(){const s=this;this.position={x:0,y:0,z:0,set(x,y,z){this.x=x;this.y=y;this.z=z}};this.rotation={x:0,y:0,set(x,y){this.x=x;this.y=y}};globalThis.__cam=this}updateProjectionMatrix(){}getWorldDirection(v){const p=this.rotation.x,y=this.rotation.y;v.x=-Math.sin(y)*Math.cos(p);v.y=Math.sin(p);v.z=-Math.cos(y)*Math.cos(p);return v}}
+export class PerspectiveCamera{constructor(){const s=this;this.add=()=>{};this.position={x:0,y:0,z:0,set(x,y,z){this.x=x;this.y=y;this.z=z}};this.rotation={x:0,y:0,set(x,y){this.x=x;this.y=y}};globalThis.__cam=this}updateProjectionMatrix(){}getWorldDirection(v){const p=this.rotation.x,y=this.rotation.y;v.x=-Math.sin(y)*Math.cos(p);v.y=Math.sin(p);v.z=-Math.cos(y)*Math.cos(p);return v}}
 export class BoxGeometry{} export class EdgesGeometry{}
 export class MeshBasicMaterial{constructor(o){Object.assign(this,o);this.color={setRGB(r,g,b){this.r=r},r:1}}} export class LineBasicMaterial extends MeshBasicMaterial{}
 export class Mesh{constructor(g,m){this.geometry=g;this.material=m;this.visible=true;this.position={set(){}}}} export class LineSegments extends Mesh{}
