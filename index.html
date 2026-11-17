@@ -47,13 +47,28 @@
 #menu .seg{display:flex}#menu .seg button{flex:1;padding:9px}#menu .seg button.on{background:#3f7a3a;border-color:#9fe870}.pv{display:flex;gap:12px;align-items:center}.pv .thumb{width:96px;height:96px;image-rendering:pixelated;border:2px solid #0b110e}#newSummary{font-size:13px}
 .dlg{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:20}.dlg .box{background:linear-gradient(#26342d,#18221d);border:3px solid #0b110e;outline:2px solid #7b8580;border-radius:6px;padding:18px;width:min(440px,92vw);display:flex;flex-direction:column;gap:10px}.dlg h3{margin:0}.dlg .note{font-size:12px;opacity:.75;margin:0}
 @media(max-width:560px){.wcard{flex-direction:column;align-items:center}.wcard .thumb{width:80px;height:80px}#menu h1{font-size:40px;letter-spacing:4px}}
+
+/* ---- Stage 7: multiplayer chat ---- */
+#mpSetup{width:min(420px,100%);display:flex;gap:7px;flex-wrap:wrap;justify-content:center;background:#101b18c8;padding:10px;border:1px solid #53665b;border-radius:5px}
+#mpSetup input{min-width:0;flex:1;background:#0b120f;color:#fff;border:1px solid #7b8580;border-radius:3px}
+#mpSetup small{width:100%;opacity:.75;text-align:center;font-size:11px}
+#chatPanel{display:none;position:fixed;left:14px;bottom:14px;width:min(360px,calc(100vw - 28px));height:250px;z-index:30;background:#101b18ed;border:2px solid #82958a;border-radius:5px;box-shadow:0 5px 24px #000b;font:13px monospace;color:#fff;pointer-events:auto}
+#chatPanel.open{display:flex;flex-direction:column}
+#chatHead{padding:7px 9px;background:#263a30;border-bottom:1px solid #64796c;display:flex;justify-content:space-between;font-weight:bold;letter-spacing:1px}
+#chatMessages{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:5px;overflow-wrap:anywhere}
+.chatLine .chatName{color:#b6e68b;font-weight:bold}.chatLine.system{color:#a9c4b2;font-style:italic}
+#chatForm{display:flex;gap:5px;padding:7px;border-top:1px solid #53665b}
+#chatInput{flex:1;min-width:0;background:#07100c;color:#fff;border:1px solid #82958a;padding:8px;font:13px monospace}
+#chatForm button{background:#3f7a3a;color:#fff;border:1px solid #9fe870;padding:6px 10px;font:12px monospace}
+#mpStatus{position:fixed;top:8px;right:8px;z-index:4;background:#101b18c8;padding:5px 8px;border:1px solid #53665b;border-radius:4px;font-size:11px;display:none}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script></head>
-<body><canvas id="c"></canvas><div id="specHelp"><b>SPECTATOR</b><br>WASD Move &middot; Space Up &middot; Shift Down<br>Mouse Look &middot; X Toggle X-ray</div><div id="uw"></div><div id="cross">+</div><div id="mineUI"><div id="mineName"></div><div id="mineBar"><div id="mineFill"></div></div></div><div id="hotbar"></div><div id="hud"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script></head>
+<body><canvas id="c"></canvas><div id="specHelp"><b>SPECTATOR</b><br>WASD Move &middot; Space Up &middot; Shift Down<br>Mouse Look &middot; X Toggle X-ray</div><div id="uw"></div><div id="cross">+</div><div id="mineUI"><div id="mineName"></div><div id="mineBar"><div id="mineFill"></div></div></div><div id="hotbar"></div><div id="hud"></div><div id="mpStatus"></div><section id="chatPanel" aria-label="Multiplayer chat"><div id="chatHead"><span>WORLD CHAT</span><span>ENTER send · ESC close</span></div><div id="chatMessages"></div><form id="chatForm"><input id="chatInput" maxlength="200" autocomplete="off" placeholder="Message everyone..."><button type="submit">SEND</button></form></section>
 <div id="menu">
  <div id="scrMain" class="scr"><h1>DIG BUILD</h1>
   <div id="auth"><input id="email" placeholder="email"><input id="pw" type="password" placeholder="password"><button id="login">Log in</button><button id="signup">Register</button><button id="logout">Log out</button><div id="who"></div></div>
   <div class="menubtns"><button id="btnResume" class="big" hidden>RESUME</button><button id="btnPlay" class="big">PLAY &mdash; SELECT WORLD</button><button id="btnCreateMain" class="big">CREATE NEW WORLD</button></div>
+  <div id="mpSetup"><input id="mpName" maxlength="18" placeholder="Player name" value="Player"><input id="mpRoom" maxlength="24" placeholder="Room code (optional)"><small>Enter the same room code as your friends. Leave it blank for single-player.</small></div>
   <p>WASD move &middot; Space jump &middot; Shift sprint &middot; LMB break &middot; RMB place &middot; 1-9 hotbar &middot; E inventory &middot; F fly (creative) &middot; Spectator: free-fly, X toggles ore X-ray (view only) · Wildlife: animals roam and flee nearby players</p></div>
  <div id="scrWorlds" class="scr" hidden><h2>SELECT WORLD</h2><div class="bar"><button id="btnCreate" class="big">+ CREATE NEW WORLD</button><button id="btnImport" hidden>Import this device's local worlds into my account</button></div><div id="worldList"></div><button id="btnBackWorlds">&larr; BACK</button></div>
  <div id="scrCreate" class="scr" hidden><h2>CREATE NEW WORLD</h2><div class="form"><label>World name<input id="newName" maxlength="40" value="New World"></label>
@@ -465,8 +480,41 @@ let world,mode='survival',name='world',playing=false,slot=0,fly=false,dirty=fals
 const P={x:8,y:50,z:8,vx:0,vy:0,vz:0,yaw:0,pitch:0,ground:false};
 const IS={inv:newInv(),craft:Array(9).fill(null),held:null};let uiOpen=false;const CREATIVE_START=[B.GRASS,B.DIRT,B.STONE,B.PLANKS,B.LOG,B.COBBLE,B.GLASS,B.BRICK,B.WORKBENCH];
 const mineTime={[B.GRASS]:.55,[B.DIRT]:.5,[B.SAND]:.45,[B.SNOW]:.3,[B.LEAVES]:.25,[B.GLASS]:.25,[B.PLANKS]:1.0,[B.LOG]:1.3,[B.BRICK]:2.0,[B.STONE]:2.0,[B.WORKBENCH]:1.2,[B.COAL_ORE]:2.6,[B.IRON_ORE]:3.0,[B.GOLD_ORE]:3.2,[B.DIAMOND_ORE]:3.6,[B.FURNACE]:2.2,[B.COBBLE]:2.3,[B.BEDROCK]:Infinity};
-const keys={};addEventListener('keydown',e=>{keys[e.code]=true;if(e.code.startsWith('Digit')&&e.code!=='Digit0'&&caps().inventory){slot=+e.code.slice(5)-1;finishMine();ui()}if(e.code==='KeyF'&&mode==='creative')fly=!fly});
+const keys={};addEventListener('keydown',e=>{if(chatOpen){keys[e.code]=false;return}keys[e.code]=true;if(e.code.startsWith('Digit')&&e.code!=='Digit0'&&caps().inventory){slot=+e.code.slice(5)-1;finishMine();ui()}if(e.code==='KeyF'&&mode==='creative')fly=!fly});
 addEventListener('keyup',e=>keys[e.code]=false);
+// ---- Stage 7: multiplayer transport + T-to-chat ----
+// Set this to the HTTPS URL of the Render service after deploying the /server folder.
+const MULTIPLAYER_URL='https://YOUR-DIG-BUILD-SERVER.onrender.com';
+let mpSocket=null,mpRoom='',mpName='Player',mpPlayers=new Map(),mpSendClock=0,chatOpen=false,mpConnected=false;
+const chatPanel=$('chatPanel'),chatInput=$('chatInput'),chatMessages=$('chatMessages');
+function chatLine(name,msg,system=false){const row=document.createElement('div');row.className='chatLine'+(system?' system':'');if(system)row.textContent=msg;else{const n=document.createElement('span');n.className='chatName';n.textContent=name+': ';const m=document.createElement('span');m.textContent=msg;row.append(n,m)}chatMessages.appendChild(row);while(chatMessages.children.length>80)chatMessages.firstChild.remove();chatMessages.scrollTop=chatMessages.scrollHeight}
+function chatShow(){if(!playing||uiOpen||!mpConnected)return;chatOpen=true;chatPanel.classList.add('open');for(const k in keys)keys[k]=false;holding=false;finishMine();if(document.pointerLockElement)document.exitPointerLock();setTimeout(()=>chatInput.focus(),0)}
+function chatHide(){if(!chatOpen)return;chatOpen=false;chatPanel.classList.remove('open');chatInput.blur();if(playing&&!uiOpen)$('c').requestPointerLock()}
+addEventListener('keydown',e=>{if(e.code==='KeyT'&&playing&&!uiOpen&&!chatOpen){e.preventDefault();chatShow()}else if(chatOpen&&e.code==='Escape'){e.preventDefault();chatHide()}else if(chatOpen&&e.code==='Enter'&&document.activeElement!==chatInput){e.preventDefault();chatInput.focus()}});
+$('chatForm').addEventListener('submit',e=>{e.preventDefault();const msg=chatInput.value.trim();if(msg&&mpSocket&&mpConnected)mpSocket.emit('chat-message',msg);chatInput.value='';chatInput.focus()});
+function playerLabel(name){const c=document.createElement('canvas');c.width=256;c.height=64;const x=c.getContext('2d');x.fillStyle='rgba(8,16,12,.78)';x.fillRect(4,5,248,54);x.strokeStyle='#b6e68b';x.lineWidth=3;x.strokeRect(4,5,248,54);x.font='bold 27px monospace';x.textAlign='center';x.textBaseline='middle';x.fillStyle='#fff';x.fillText(String(name).slice(0,18),128,33);const tex=new THREE.CanvasTexture(c);tex.minFilter=THREE.LinearFilter;const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false});const sp=new THREE.Sprite(mat);sp.scale.set(2.5,.63,1);sp.position.y=2.65;return sp}
+function makeRemotePlayer(id,data){const g=new THREE.Group(),body=new THREE.Mesh(new THREE.BoxGeometry(.62,1.05,.34),new THREE.MeshLambertMaterial({color:0x4f9cdb})),head=new THREE.Mesh(new THREE.BoxGeometry(.48,.48,.48),new THREE.MeshLambertMaterial({color:0xd6a47d}));body.position.y=.9;head.position.y=1.68;g.add(body,head,playerLabel(data.name||'Player'));g.position.set(data.x||0,data.y||0,data.z||0);scene.add(g);return {group:g,target:{x:data.x||0,y:data.y||0,z:data.z||0,yaw:data.yaw||0},name:data.name||'Player'}}
+function removeRemote(id){const p=mpPlayers.get(id);if(!p)return;scene.remove(p.group);p.group.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(o.material.map)o.material.map.dispose();o.material.dispose()}});mpPlayers.delete(id)}
+function clearRemotePlayers(){for(const id of [...mpPlayers.keys()])removeRemote(id)}
+function mpStatus(t,show=true){const el=$('mpStatus');el.textContent=t;el.style.display=show?'block':'none'}
+function disconnectMultiplayer(message=''){if(mpSocket){const old=mpSocket;mpSocket=null;old.disconnect()}mpConnected=false;mpRoom='';clearRemotePlayers();mpStatus('',false);if(message)chatLine('',message,true);}
+function connectMultiplayer(){const room=String($('mpRoom').value||'').trim().toLowerCase().replace(/[^a-z0-9_-]/g,'').slice(0,24);if(!room){disconnectMultiplayer();return}const url=MULTIPLAYER_URL;if(url.includes('YOUR-DIG-BUILD-SERVER')){mpStatus('Set your Render server URL in index.html');return}if(!window.io){mpStatus('Multiplayer library failed to load');return}
+ disconnectMultiplayer();mpRoom=room;mpName=String($('mpName').value||'Player').trim().slice(0,18)||'Player';mpStatus('Connecting to room '+room+'...');
+ const sock=io(url,{transports:['websocket','polling'],timeout:15000,reconnection:true});mpSocket=sock;
+ sock.on('connect',()=>{sock.emit('join-room',{room,name:mpName,seed:world.seed,position:{x:P.x,y:P.y,z:P.z,yaw:P.yaw,pitch:P.pitch},blocks:[...world.mods.entries()].slice(0,5000)});mpStatus('Joining '+room+'...')});
+ sock.on('room-state',data=>{if(!world||String(data.seed)!==String(world.seed)){chatLine('',`Room world seed is ${data.seed}. Your world seed is ${world&&world.seed}. Join with a world using the matching seed.`,true);disconnectMultiplayer();return}for(const [key,id] of data.blocks||[]){const a=String(key).split(',').map(Number);if(a.length===3&&a.every(Number.isFinite))world.set(a[0],a[1],a[2],id)}for(const pl of data.players||[])if(pl.id!==sock.id)mpPlayers.set(pl.id,makeRemotePlayer(pl.id,pl));mpConnected=true;mpStatus('ONLINE · '+room);chatLine('',`Connected to room ${room}`,true);chatLine('',`${mpPlayers.size+1} player(s) in this room`,true)});
+ sock.on('player-joined',pl=>{if(pl.id===sock.id)return;if(!mpPlayers.has(pl.id))mpPlayers.set(pl.id,makeRemotePlayer(pl.id,pl));chatLine('',`${pl.name} joined`,true)});
+ sock.on('player-left',pl=>{removeRemote(pl.id);chatLine('',`${pl.name||'A player'} left`,true)});
+ sock.on('player-moved',pl=>{const r=mpPlayers.get(pl.id);if(r)r.target={x:pl.x,y:pl.y,z:pl.z,yaw:pl.yaw||0}});
+ sock.on('chat-message',m=>chatLine(m.name,m.text));
+ sock.on('block-update',b=>{if(!world)return;world.set(b.x,b.y,b.z,b.id);dirty=true});
+ sock.on('join-error',d=>{chatLine('',d.message||'Could not join room',true);mpStatus('ROOM ERROR');if(mpSocket===sock)mpSocket=null;sock.disconnect();mpConnected=false});
+ sock.on('disconnect',()=>{if(mpSocket!==sock)return;mpConnected=false;clearRemotePlayers();mpStatus('DISCONNECTED · reconnecting')});
+ sock.on('connect_error',()=>mpStatus('Server unavailable · retrying'));
+}
+function mpBlockChange(x,y,z,id){if(mpSocket&&mpConnected)mpSocket.emit('block-update',{x,y,z,id})}
+function multiplayerTick(dt){if(!mpSocket||!mpConnected)return;mpSendClock+=dt;if(mpSendClock>=.067){mpSendClock=0;mpSocket.emit('player-move',{x:P.x,y:P.y,z:P.z,yaw:P.yaw,pitch:P.pitch})}for(const r of mpPlayers.values()){const g=r.group,t=r.target;g.position.x+=(t.x-g.position.x)*Math.min(1,dt*12);g.position.y+=(t.y-g.position.y)*Math.min(1,dt*12);g.position.z+=(t.z-g.position.z)*Math.min(1,dt*12);g.rotation.y=t.yaw}}
+
 function ui(){const h=$('hotbar');h.style.display=caps().inventory?'':'none';h.innerHTML='';for(let i=0;i<9;i++){const d=document.createElement('div');d.className='slot'+(i===slot?' sel':'');d.innerHTML=slotHTML(IS.inv[i],mode==='creative');h.appendChild(d)}}
 function setXray(on){xray=on;world.setXray(on);const c=on?0x0b1420:0x9bc9e8;scene.background.set(c);scene.fog.color.set(c);toast(on?'X-ray ON':'X-ray OFF')}
 function specInit(){xray=true;$('specHelp').style.display=mode==='spectator'?'block':'none';if(mode==='spectator'){world.setXray(true);scene.background.set(0x0b1420);scene.fog.color.set(0x0b1420)}ui()}
@@ -478,8 +526,8 @@ addEventListener('keydown',e=>{if(e.code==='KeyM'&&playing){muted=!muted;toast(m
 function breakBlock(x,y,z,b){sfx('break');const d=dropOf(b),k=x+','+y+','+z,fr=b===B.FURNACE?world.furnaces.get(k):null;
  if(mode==='survival'){const items=[{id:d,n:1},...(fr?fr.s.filter(Boolean):[])],t=IS.inv.map(s=>s&&{...s});
   if(items.some(it=>addItem(t,it.id,it.n,false,it.d)>0)){toast('Inventory full - make room first');finishMine();return}      // nothing is ever lost: refuse to break instead
-  world.set(x,y,z,0);items.forEach(it=>addItem(IS.inv,it.id,it.n,false,it.d));if(wearTool(IS.inv,slot,false))toast('Your tool broke!')}
- else world.set(x,y,z,0);
+  world.set(x,y,z,0);mpBlockChange(x,y,z,0);items.forEach(it=>addItem(IS.inv,it.id,it.n,false,it.d));if(wearTool(IS.inv,slot,false))toast('Your tool broke!')}
+ else {world.set(x,y,z,0);mpBlockChange(x,y,z,0)}
  world.furnaces.delete(k);dirty=true;ui();finishMine()}
 const invUI=createInvUI(IS,{mode:()=>mode,change(){dirty=true;ui()},furnace:k=>{let f=world.furnaces.get(k);if(!f){f=newFurnace();world.furnaces.set(k,f)}return f},onOpen(){uiOpen=true;holding=false;finishMine();for(const k in keys)keys[k]=false;document.exitPointerLock()},onClose(){uiOpen=false;ui();if(playing)$('c').requestPointerLock()}});
 addEventListener('keydown',e=>{if(!playing)return;if(e.code==='KeyE'&&caps().inventory){e.preventDefault();invUI.isOpen()?invUI.close():invUI.open('inv')}else if(e.code==='Escape'&&invUI.isOpen())invUI.close()});
@@ -491,7 +539,7 @@ function finishMine(){mine=null;crack.visible=false;$('mineUI').style.display='n
 function showMine(p){$('mineUI').style.display='block';$('mineName').textContent=INFO[mine.block][0];$('mineFill').style.width=(p*100).toFixed(0)+'%'}
 function camInWater(){return isWater(world.get(Math.floor(cam.position.x),Math.floor(cam.position.y),Math.floor(cam.position.z)))}
 function setUnder(on){const el=$('uw');el.classList.toggle('on',on);el.classList.add('pulse');setTimeout(()=>el.classList.remove('pulse'),220);const c=on?0x2f86c8:0x9bc9e8;scene.fog.color.set(c);scene.fog.near=on?1:75;scene.fog.far=on?70:180;scene.background.set(c)}
-addEventListener('mousedown',e=>{if(e.button===0&&!uiOpen&&caps().mine){holding=true;beginMine()}if(e.button===2&&playing&&!uiOpen&&caps().interact&&document.pointerLockElement){const r=ray();if(!r)return;{const hb=world.get(r.hit[0],r.hit[1],r.hit[2]);if(hb===B.WORKBENCH){invUI.open('bench');return}if(hb===B.FURNACE){invUI.open('furnace',r.hit.join(','));return}}if(!r.prev)return;const [x,y,z]=r.prev,sl=IS.inv[slot];if(!sl||!isBlockItem(sl.id))return;world.set(x,y,z,sl.id);if(hits(P.x,P.y,P.z)){world.set(x,y,z,0);return}if(mode==='survival'&&--sl.n<=0)IS.inv[slot]=null;dirty=true;ui()}});
+addEventListener('mousedown',e=>{if(e.button===0&&!uiOpen&&caps().mine){holding=true;beginMine()}if(e.button===2&&playing&&!uiOpen&&caps().interact&&document.pointerLockElement){const r=ray();if(!r)return;{const hb=world.get(r.hit[0],r.hit[1],r.hit[2]);if(hb===B.WORKBENCH){invUI.open('bench');return}if(hb===B.FURNACE){invUI.open('furnace',r.hit.join(','));return}}if(!r.prev)return;const [x,y,z]=r.prev,sl=IS.inv[slot];if(!sl||!isBlockItem(sl.id))return;world.set(x,y,z,sl.id);if(hits(P.x,P.y,P.z)){world.set(x,y,z,0);return}mpBlockChange(x,y,z,sl.id);if(mode==='survival'&&--sl.n<=0)IS.inv[slot]=null;dirty=true;ui()}});
 addEventListener('mouseup',e=>{if(e.button===0){holding=false;denyKey='';finishMine()}});
 addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('mousemove',e=>{if(document.pointerLockElement){P.yaw-=e.movementX*.0022;P.pitch=Math.max(-1.55,Math.min(1.55,P.pitch-e.movementY*.0022))}});
@@ -519,7 +567,7 @@ async function enterWorld(rec,spectate){
  if(!R.pos){let sx=8,sz=8;out:for(let r=0;r<40;r+=2)for(let a=0;a<8;a++){const x=Math.floor(8+Math.cos(a*.785)*r),z=Math.floor(8+Math.sin(a*.785)*r),t=world.surface(x,z),b=world.get(x,t-1,z);if(!isWater(b)&&b!==B.LEAVES){sx=x;sz=z;break out}}P.x=sx+.5;P.z=sz+.5;P.y=world.surface(sx,sz)+(mode==='spectator'?8:.1)}
  uwOn=false;setUnder(false);setAtlas(world.atlas.image);specInit();clearWildlife();spawnWildlife();
  if(mode==='creative'&&IS.inv.slice(0,9).every(x=>!x))CREATIVE_START.forEach((id,i)=>IS.inv[i]={id,n:64});
- $('menu').style.display='none';playing=true;ui();$('c').requestPointerLock();
+ $('menu').style.display='none';playing=true;ui();connectMultiplayer();$('c').requestPointerLock();
  if(!R.pos&&!readOnly)persist();return R}
 const DIG=globalThis.DIG={
  currentId:()=>curRec?curRec.id:null,canResume:()=>!!(curRec&&world),
@@ -534,10 +582,10 @@ const DIG=globalThis.DIG={
  async duplicate(meta){if(curRec&&world&&!readOnly&&curRec.id===meta.id)await persist();const d=await duplicateWorld(meta.owner,meta.id);await cloudPush(d);return d},
  async remove(meta){if(curRec&&curRec.id===meta.id&&curRec.owner===meta.owner){playing=false;holding=false;finishMine();curRec=null;unloadWorld();if(document.pointerLockElement)document.exitPointerLock()}   // deleting the loaded world: stop it first
    await saveChain;return deleteWorld(sb,meta.owner,meta.id)},
- resume(){if(!(curRec&&world))return;$('menu').style.display='none';playing=true;$('c').requestPointerLock()},
+ resume(){if(!(curRec&&world))return;$('menu').style.display='none';playing=true;connectMultiplayer();$('c').requestPointerLock()},
  persist};
 const menu=createMenu(DIG);
-document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockElement&&playing&&!uiOpen){playing=false;holding=false;finishMine();persist();menu.showMain(true);$('menu').style.display='flex'}});
+document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockElement&&playing&&!uiOpen&&!chatOpen){playing=false;holding=false;finishMine();disconnectMultiplayer();persist();menu.showMain(true);$('menu').style.display='flex'}});
 await initCloud();$('auth').style.display=sb?'flex':'none';try{await migrateLegacy()}catch(e){console.warn('legacy migration failed (existing saves are untouched)',e)}
 async function onAuth(){curOwner=await ownerNow();if(curRec&&curRec.owner!==curOwner){if(world&&!readOnly)await persist();playing=false;unloadWorld();curRec=null}menu.showMain(!!curRec)}   // never carry one account's world into another account
 if(sb){$('login').onclick=async()=>{const r=await signIn($('email').value,$('pw').value);$('who').textContent=r.error?r.error.message:'Logged in';if(!r.error)await onAuth()};$('signup').onclick=async()=>{const r=await signUp($('email').value,$('pw').value);$('who').textContent=r.error?r.error.message:'Check your email to confirm'};$('logout').onclick=async()=>{await signOut();$('who').textContent='Logged out';await onAuth()};const u=await user();if(u)$('who').textContent=u.email}
@@ -592,10 +640,15 @@ function wildlifeGround(x,z){
 }
 function spawnWildlife(){
  if(!world||wildlife.animals.length>=12)return;
- for(let tries=0;tries<24&&wildlife.animals.length<12;tries++){
-  const a=Math.random()*Math.PI*2,r=12+Math.random()*34,x=P.x+Math.cos(a)*r,z=P.z+Math.sin(a)*r,y=wildlifeGround(x,z);
+ // Keep the first herd close enough to actually notice, rather than hiding it halfway across the map.
+ for(let tries=0;tries<100&&wildlife.animals.length<12;tries++){
+  const a=tries<12
+   ? P.yaw-Math.PI/2+(Math.random()-.5)*2.0
+   : Math.random()*Math.PI*2;
+  const r=tries<12?6+Math.random()*9:8+Math.random()*18;
+  const x=P.x+Math.cos(a)*r,z=P.z+Math.sin(a)*r,y=wildlifeGround(x,z);
   if(y===null||y<2||y>58)continue;
-  if(wildlife.animals.some(v=>Math.hypot(v.group.position.x-x,v.group.position.z-z)<5))continue;
+  if(wildlife.animals.some(v=>Math.hypot(v.group.position.x-x,v.group.position.z-z)<4))continue;
   const roll=Math.random(),type=roll<.32?'sheep':roll<.57?'cow':roll<.82?'pig':'chicken';
   const animal=makeAnimal(type,x+.5,z+.5);animal.group.position.y=y;wildlife.animals.push(animal);
  }
@@ -623,11 +676,11 @@ function wildlifeTick(dt){
 let last=performance.now(),fps=60;
 (function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000)||.016;last=t;fps=fps*.9+.1/dt;if(playing)playSecs+=dt;if(world){world.wtex.offset.set((t*.00004)%1,(t*.00011)%1);world.wmat.opacity=.8+Math.sin(t*.0014)*.03}
  if(world&&playing){if(mode!=='spectator')for(const f of world.furnaces.values())if(furnaceTick(f,dt))dirty=true;invUI.tick(dt);if(world.xray)world.xmat.glow.opacity=.2+Math.sin(t*.004)*.08}
- if(playing){world.update(P.x,P.z,6);wildlifeTick(dt);const st=uiOpen?{swim:false}:mode==='spectator'?stepSpectator(P,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),up:!!keys.Space,down:!!(keys.ShiftLeft||keys.ShiftRight),yaw:P.yaw},dt):stepPlayer(P,world,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),space:!!keys.Space,sprint:!!keys.ShiftLeft,down:!!(keys.ControlLeft||keys.ControlRight),fly,yaw:P.yaw},dt),inW=st.swim;
+ if(playing){world.update(P.x,P.z,6);wildlifeTick(dt);multiplayerTick(dt);const st=uiOpen?{swim:false}:mode==='spectator'?stepSpectator(P,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),up:!!keys.Space,down:!!(keys.ShiftLeft||keys.ShiftRight),yaw:P.yaw},dt):stepPlayer(P,world,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),space:!!keys.Space,sprint:!!keys.ShiftLeft,down:!!(keys.ControlLeft||keys.ControlRight),fly,yaw:P.yaw},dt),inW=st.swim;
   cam.position.set(P.x,P.y+1.62,P.z);cam.rotation.set(P.pitch,P.yaw,0,'YXZ');{const cw=mode!=='spectator'&&camInWater();if(cw!==uwOn){uwOn=cw;setUnder(cw)}}const r=ray();sel.visible=!!r;if(r)sel.position.set(r.hit[0]+.5,r.hit[1]+.5,r.hit[2]+.5);
   if(mine){const current=ray(),same=current&&current.hit.join(',')===mine.pos;if(!same||world.get(...mine.hit)!==mine.block)finishMine();else{mine.elapsed+=dt;mine.snd=(mine.snd||0)+dt;if(mine.snd>.22){mine.snd=0;sfx('hit')}const progress=Math.min(1,mine.elapsed/mine.required);crack.visible=true;crack.position.set(mine.hit[0]+.5,mine.hit[1]+.5,mine.hit[2]+.5);crack.material.map=crackTex[Math.min(9,Math.floor(progress*10))];showMine(progress);if(progress>=1){const [x,y,z]=mine.hit,b=mine.block;breakBlock(x,y,z,b)}}}
   if(!mine&&holding)beginMine();if(mode!=='spectator')world.stepWater(10);
-  $('hud').textContent=`DIG BUILD · ${curRec?curRec.name+' · ':''}${mode==='spectator'?'SPECTATOR · X-RAY '+(xray?'ON':'OFF'):mode} · seed ${world.seed} · ${P.x|0},${P.y|0},${P.z|0} · ${fps|0}fps · save: ${status}${uwOn?' · UNDERWATER':inW?' · SWIMMING':''}`}
+  $('hud').textContent=`DIG BUILD · ${curRec?curRec.name+' · ':''}${mode==='spectator'?'SPECTATOR · X-RAY '+(xray?'ON':'OFF'):mode} · seed ${world.seed} · ${P.x|0},${P.y|0},${P.z|0} · ${fps|0}fps · wildlife: ${wildlife.animals.length} · ${mpConnected?'players: '+(mpPlayers.size+1)+' · ':'T chat · '}save: ${status}${uwOn?' · UNDERWATER':inW?' · SWIMMING':''}`}
  renderer.render(scene,cam)})(last);
 
 </script></body></html>
