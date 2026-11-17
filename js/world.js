@@ -36,12 +36,12 @@ function field(seed,sp,spy,cx,cz){const x0=Math.floor((cx*S-1)/sp),z0=Math.floor
 const LEGACY_ORES=[[B.DIAMOND_ORE,13,.0007,11],[B.GOLD_ORE,24,.0022,22],[B.IRON_ORE,46,.0045,33],[B.COAL_ORE,56,.0065,44]],NB=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
 function oreAtLegacy(x,y,z,seed){for(const [id,ymax,p,salt] of LEGACY_ORES){if(y>ymax)continue;const s=seed+salt*7919;if(hash3(x,y,z,s)<p)return id;for(const [dx,dy,dz] of NB)if(hash3(x+dx,y+dy,z+dz,s)<p&&hash3(x,y,z,s+500)<.45)return id}return 0}
 // Stage 9 deposits are curved, connected veins. Each deterministic seed cell creates a short, angled, gently bent seam.
-const VEINS=[[B.DIAMOND_ORE,42,.09,311],[B.GOLD_ORE,70,.18,733],[B.IRON_ORE,115,.32,1193],[B.COAL_ORE,145,.42,1877]];
+const VEINS=[[B.DIAMOND_ORE,42,.06,311],[B.GOLD_ORE,70,.12,733],[B.IRON_ORE,115,.24,1193],[B.COAL_ORE,145,.34,1877]];
 function segmentDistanceSq(px,py,pz,ax,ay,az,bx,by,bz){const vx=bx-ax,vy=by-ay,vz=bz-az,wx=px-ax,wy=py-ay,wz=pz-az,den=vx*vx+vy*vy+vz*vz,t=den?Math.max(0,Math.min(1,(wx*vx+wy*vy+wz*vz)/den)):0,dx=px-(ax+vx*t),dy=py-(ay+vy*t),dz=pz-(az+vz*t);return dx*dx+dy*dy+dz*dz}
-function oreAt(x,y,z,seed){const cell=8,gx=Math.floor(x/cell),gy=Math.floor(y/cell),gz=Math.floor(z/cell);
+function oreAt(x,y,z,seed){const cell=12,gx=Math.floor(x/cell),gy=Math.floor(y/cell),gz=Math.floor(z/cell);
  for(const [id,ymax,chance,salt] of VEINS){if(y>ymax)continue;const s=seed+salt;
   for(let dz=-1;dz<=1;dz++)for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const cx=gx+dx,cy=gy+dy,cz=gz+dz;if(hash3(cx,cy,cz,s)>=chance)continue;
-   const h=(n)=>hash3(cx,cy,cz,s+n),ax=cx*cell+1+h(1)*6,ay=cy*cell+1+h(2)*6,az=cz*cell+1+h(3)*6;
+   const h=(n)=>hash3(cx,cy,cz,s+n),ax=cx*cell+1+h(1)*10,ay=cy*cell+1+h(2)*10,az=cz*cell+1+h(3)*10;
    let vx=h(4)*2-1,vy=(h(5)*2-1)*.72,vz=h(6)*2-1;const mag=Math.hypot(vx,vy,vz)||1;vx/=mag;vy/=mag;vz/=mag;
    const len=5+h(7)*5,bx=ax+vx*len,by=ay+vy*len,bz=az+vz*len,mx=(ax+bx)/2+(h(8)-.5)*3,my=(ay+by)/2+(h(9)-.5)*2,mz=(az+bz)/2+(h(10)-.5)*3,r=1.05+h(11)*.48,r2=r*r;
    if(segmentDistanceSq(x,y,z,ax,ay,az,mx,my,mz)<=r2||segmentDistanceSq(x,y,z,mx,my,mz,bx,by,bz)<=r2)return id;
