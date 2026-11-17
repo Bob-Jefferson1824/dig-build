@@ -484,7 +484,7 @@ const keys={};addEventListener('keydown',e=>{if(chatOpen){keys[e.code]=false;ret
 addEventListener('keyup',e=>keys[e.code]=false);
 // ---- Stage 7: multiplayer transport + T-to-chat ----
 // Set this to the HTTPS URL of the Render service after deploying the /server folder.
-const MULTIPLAYER_URL='https://YOUR-DIG-BUILD-SERVER.onrender.com';
+const MULTIPLAYER_URL='https://dig-build-server.onrender.com';
 let mpSocket=null,mpRoom='',mpName='Player',mpPlayers=new Map(),mpSendClock=0,chatOpen=false,mpConnected=false;
 const chatPanel=$('chatPanel'),chatInput=$('chatInput'),chatMessages=$('chatMessages');
 function chatLine(name,msg,system=false){const row=document.createElement('div');row.className='chatLine'+(system?' system':'');if(system)row.textContent=msg;else{const n=document.createElement('span');n.className='chatName';n.textContent=name+': ';const m=document.createElement('span');m.textContent=msg;row.append(n,m)}chatMessages.appendChild(row);while(chatMessages.children.length>80)chatMessages.firstChild.remove();chatMessages.scrollTop=chatMessages.scrollHeight}
