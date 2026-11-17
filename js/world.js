@@ -1,17 +1,28 @@
 import * as THREE from 'three';
-export const B={AIR:0,GRASS:1,DIRT:2,STONE:3,SAND:4,SNOW:5,LOG:6,LEAVES:7,WATER:8,PLANKS:9,BEDROCK:10,COBBLE:11,GLASS:12,BRICK:13,FLOWING_WATER:14,WORKBENCH:15,COAL_ORE:16,IRON_ORE:17,GOLD_ORE:18,DIAMOND_ORE:19,FURNACE:20};
+export const B={AIR:0,GRASS:1,DIRT:2,STONE:3,SAND:4,SNOW:5,LOG:6,LEAVES:7,WATER:8,PLANKS:9,BEDROCK:10,COBBLE:11,GLASS:12,BRICK:13,FLOWING_WATER:14,WORKBENCH:15,COAL_ORE:16,IRON_ORE:17,GOLD_ORE:18,DIAMOND_ORE:19,FURNACE:20,CACTUS:21,AUTUMN_LEAVES:22,MUSHROOM_CAP:23,MUSHROOM_STEM:24,REEDS:25};
 export const isWater=id=>id===B.WATER||id===B.FLOWING_WATER;
-export const INFO={1:['Grass',[84,150,58]],2:['Dirt',[120,84,52]],3:['Stone',[125,125,128]],4:['Sand',[218,205,150]],5:['Snow',[240,244,250]],6:['Log',[98,72,40]],7:['Leaves',[48,120,40]],8:['Water',[60,160,240]],9:['Planks',[170,132,80]],10:['Bedrock',[45,45,48]],11:['Cobble',[100,100,104]],12:['Glass',[190,225,235]],13:['Bricks',[150,70,58]],14:['Water',[60,160,240]],15:['Workbench',[150,105,58]],16:['Coal Ore',[40,40,44]],17:['Iron Ore',[222,176,146]],18:['Gold Ore',[252,214,60]],19:['Diamond Ore',[96,236,236]],20:['Furnace',[112,112,116]]};
-const NT=21,S=16,H=192,SEA=22;
+export const INFO={1:['Grass',[84,150,58]],2:['Dirt',[120,84,52]],3:['Stone',[125,125,128]],4:['Sand',[218,205,150]],5:['Snow',[240,244,250]],6:['Log',[98,72,40]],7:['Leaves',[48,120,40]],8:['Water',[60,160,240]],9:['Planks',[170,132,80]],10:['Bedrock',[45,45,48]],11:['Cobble',[100,100,104]],12:['Glass',[190,225,235]],13:['Bricks',[150,70,58]],14:['Water',[60,160,240]],15:['Workbench',[150,105,58]],16:['Coal Ore',[40,40,44]],17:['Iron Ore',[222,176,146]],18:['Gold Ore',[252,214,60]],19:['Diamond Ore',[96,236,236]],20:['Furnace',[112,112,116]],21:['Cactus',[55,145,65]],22:['Autumn Leaves',[205,105,35]],23:['Mushroom Cap',[175,45,55]],24:['Mushroom Stem',[225,215,185]],25:['Reeds',[105,150,65]]};
+const NT=26,S=16,H=192,SEA=22;
 const NEW_SEA=35,NEW_SURFACE_BASE=78;
 export const solid=id=>id!==0&&!isWater(id);
-const see=id=>id===0||isWater(id)||id===7||id===12;
+const see=id=>id===0||isWater(id)||id===7||id===12||id===B.AUTUMN_LEAVES;
 export function makeAtlas(){const c=document.createElement('canvas');c.width=NT*16;c.height=16;const g=c.getContext('2d');let r=12345;const rnd=()=>(r=(r*16807)%2147483647)/2147483647;
  for(let i=1;i<NT;i++){const col=INFO[i][1];for(let y=0;y<16;y++)for(let x=0;x<16;x++){const v=.8+rnd()*.4;g.fillStyle=`rgb(${col.map(k=>Math.min(255,k*v|0))})`;g.fillRect(i*16+x,y,1,1);}}
  {const o=15*16;g.fillStyle='rgb(150,105,58)';g.fillRect(o,0,16,16);g.fillStyle='rgb(108,72,36)';for(let k=0;k<16;k+=5)g.fillRect(o,k,16,1);g.fillRect(o,0,1,16);g.fillRect(o+15,0,1,16);g.fillStyle='rgb(70,70,78)';g.fillRect(o+3,3,7,3);g.fillStyle='rgb(205,60,50)';g.fillRect(o+10,9,3,4);g.fillStyle='rgb(225,225,230)';g.fillRect(o+3,10,5,1)}
  for(const [id,col] of [[16,[28,28,32]],[17,[222,176,146]],[18,[252,214,60]],[19,[96,236,236]]]){const o=id*16;for(let y=0;y<16;y++)for(let x=0;x<16;x++){const v=.82+rnd()*.34;g.fillStyle=`rgb(${[125,125,128].map(k=>k*v|0)})`;g.fillRect(o+x,y,1,1)}
   for(let n=0;n<7;n++){const bx=1+rnd()*12|0,by=1+rnd()*12|0;for(const [dx,dy] of [[0,0],[1,0],[0,1],[1,1]]){const v=.85+rnd()*.3;g.fillStyle=`rgb(${col.map(k=>Math.min(255,k*v|0))})`;g.fillRect(o+bx+dx,by+dy,1,1)}g.fillStyle='rgba(255,255,255,.35)';g.fillRect(o+bx,by,1,1)}}
  {const o=20*16;for(let y=0;y<16;y++)for(let x=0;x<16;x++){const v=.8+rnd()*.3;g.fillStyle=`rgb(${[112,112,116].map(k=>k*v|0)})`;g.fillRect(o+x,y,1,1)}g.fillStyle='#2a2a2e';g.fillRect(o+3,6,10,7);g.fillStyle='#ff9a2e';g.fillRect(o+5,9,6,3);g.fillStyle='#ffd45a';g.fillRect(o+6,10,4,1);g.fillStyle='#3d3d42';g.fillRect(o+2,2,12,2)}
+ // Stage 9 biome vegetation textures.
+ for(let y=0;y<16;y++)for(let x=0;x<16;x++){
+  const n=hash(x,y,941);
+  const cactus=n>.72? [35,105,45]:[65,155,72];
+  g.fillStyle=`rgb(${cactus})`;g.fillRect(21*16+x,y,1,1);
+  g.fillStyle=(x%5===0||y%5===0)?'rgb(150,65,22)':'rgb(205,112,38)';g.fillRect(22*16+x,y,1,1);
+  const cap=(y<6&&((x-7)**2+(y-6)**2<46))||((x<5||x>10)&&y>4&&y<11);
+  g.fillStyle=cap?'rgb(180,48,58)':(x%4===0?'rgb(245,235,205)':'rgb(225,215,185)');g.fillRect(23*16+x,y,1,1);
+  g.fillStyle=(x%4===0||y%5===0)?'rgb(195,185,155)':'rgb(235,225,195)';g.fillRect(24*16+x,y,1,1);
+  g.fillStyle=(x%4===0)?'rgb(70,110,45)':'rgb(125,165,75)';g.fillRect(25*16+x,y,1,1);
+ }
  const t=new THREE.CanvasTexture(c);t.magFilter=t.minFilter=THREE.NearestFilter;t.colorSpace=THREE.SRGBColorSpace;return t}
 // Water has its own 2-tile texture (source | flowing) that wraps vertically so it can scroll for a subtle wave effect.
 export function makeWaterTex(){const c=document.createElement('canvas');c.width=16;c.height=16;const g=c.getContext('2d'),TP=Math.PI*2;
@@ -60,7 +71,40 @@ const sm=t=>t*t*(3-2*t);
 function vnoise(x,z,s){const xi=Math.floor(x),zi=Math.floor(z),fx=sm(x-xi),fz=sm(z-zi);const a=hash(xi,zi,s),b=hash(xi+1,zi,s),c=hash(xi,zi+1,s),d=hash(xi+1,zi+1,s);return a+(b-a)*fx+(c-a)*fz+(a-b-c+d)*fx*fz}
 function fbm(x,z,s){return vnoise(x,z,s)*.55+vnoise(x*2,z*2,s+1)*.28+vnoise(x*4,z*4,s+2)*.17}
 const F=[[[1,0,0],[[1,0,1],[1,0,0],[1,1,0],[1,1,1]],.8],[[-1,0,0],[[0,0,0],[0,0,1],[0,1,1],[0,1,0]],.8],[[0,1,0],[[0,1,1],[1,1,1],[1,1,0],[0,1,0]],1],[[0,-1,0],[[0,0,0],[1,0,0],[1,0,1],[0,0,1]],.5],[[0,0,1],[[0,0,1],[1,0,1],[1,1,1],[0,1,1]],.7],[[0,0,-1],[[1,0,0],[0,0,0],[0,1,0],[1,1,0]],.7]];
-export function heightAt(seed,wx,wz,gen=3){const m=Math.max(0,fbm(wx/220,wz/220,seed+7)-.5)*2;if(gen>=4){const continent=fbm(wx/420,wz/420,seed+91);if(continent<.22)return 28+Math.floor(fbm(wx/75,wz/75,seed+123)*8);return Math.min(H-18,Math.floor(NEW_SURFACE_BASE+fbm(wx/70,wz/70,seed)*26+m*m*36))}return Math.min(56,Math.floor(18+fbm(wx/70,wz/70,seed)*20+m*m*40))}
+// Broad, deterministic climate fields create large biome regions with natural-looking boundaries.
+export const BIOME={FOREST:'Forest',DESERT:'Desert',JUNGLE:'Jungle',SNOWY_MOUNTAINS:'Snowy Mountains',SWAMP:'Swamp',PLAINS:'Plains',AUTUMN_FOREST:'Autumn Forest',TAIGA:'Taiga',BEACH:'Beach and Coast',MUSHROOM_FIELDS:'Mushroom Fields'};
+export function biomeAt(seed,wx,wz,gen=5){
+ if(gen<5)return BIOME.FOREST;
+ const temperature=fbm(wx/520,wz/520,seed+1701),moisture=fbm(wx/390,wz/390,seed+2701),rare=fbm(wx/700,wz/700,seed+3701);
+ if(rare>.91&&moisture>.58&&temperature>.38&&temperature<.72)return BIOME.MUSHROOM_FIELDS;
+ if(temperature<.27)return BIOME.SNOWY_MOUNTAINS;
+ if(temperature>.69&&moisture<.39)return BIOME.DESERT;
+ if(moisture>.76&&temperature>.35&&temperature<.75)return BIOME.SWAMP;
+ if(temperature>.62&&moisture>.59)return BIOME.JUNGLE;
+ if(temperature<.43&&moisture>.43)return BIOME.TAIGA;
+ if(temperature>.46&&temperature<.7&&moisture<.49)return BIOME.AUTUMN_FOREST;
+ if(moisture<.43)return BIOME.PLAINS;
+ return BIOME.FOREST;
+}
+export function heightAt(seed,wx,wz,gen=3){
+ const m=Math.max(0,fbm(wx/220,wz/220,seed+7)-.5)*2;
+ if(gen>=5){
+  const continent=fbm(wx/420,wz/420,seed+91),climate=biomeAt(seed,wx,wz,gen);
+  if(continent<.22)return 28+Math.floor(fbm(wx/75,wz/75,seed+123)*8);
+  const broad=fbm(wx/70,wz/70,seed),detail=fbm(wx/24,wz/24,seed+611);
+  let h=NEW_SURFACE_BASE+broad*22+m*m*30+(detail-.5)*5;
+  if(climate===BIOME.DESERT)h=NEW_SURFACE_BASE-5+broad*12+(detail-.5)*3;
+  if(climate===BIOME.PLAINS)h=NEW_SURFACE_BASE-7+broad*12+(detail-.5)*3;
+  if(climate===BIOME.SWAMP)h=NEW_SEA-3+broad*5+(detail-.5)*2;
+  if(climate===BIOME.JUNGLE)h=NEW_SURFACE_BASE+3+broad*23+m*m*18;
+  if(climate===BIOME.SNOWY_MOUNTAINS)h=NEW_SURFACE_BASE+24+broad*38+m*m*45;
+  if(climate===BIOME.TAIGA)h=NEW_SURFACE_BASE+3+broad*22+m*m*25;
+  if(climate===BIOME.MUSHROOM_FIELDS)h=NEW_SURFACE_BASE+2+broad*17+(detail-.5)*4;
+  return Math.max(NEW_SEA-5,Math.min(H-18,Math.floor(h)));
+ }
+ if(gen>=4){const continent=fbm(wx/420,wz/420,seed+91);if(continent<.22)return 28+Math.floor(fbm(wx/75,wz/75,seed+123)*8);return Math.min(H-18,Math.floor(NEW_SURFACE_BASE+fbm(wx/70,wz/70,seed)*26+m*m*36))}
+ return Math.min(56,Math.floor(18+fbm(wx/70,wz/70,seed)*20+m*m*40))
+}
 // small top-down terrain thumbnail (colours by height) drawn straight from the seed: used on world cards and the create-world screen
 export function drawPreview(cv,seed,gen,cx=0,cz=0,N=40,step=4){cv.width=cv.height=N;const g=cv.getContext('2d'),sea=gen>=4?NEW_SEA:gen>=2?25:22;
  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const h=heightAt(seed|0,Math.floor(cx+(i-N/2)*step),Math.floor(cz+(j-N/2)*step),gen);let c;
@@ -94,12 +138,39 @@ export class World{
  gen(cx,cz){const sea=this.sea,d=new Uint8Array(S*H*S);const I=(x,y,z)=>(y*S+z)*S+x;const g3=this.genVersion>=3?this.cavesCtx(cx,cz):null;
   for(let x=0;x<S;x++)for(let z=0;z<S;z++){const wx=cx*S+x,wz=cz*S+z;
    const h=this.height(wx,wz);
+   const biome=this.genVersion>=5?biomeAt(this.seed,wx,wz,this.genVersion):BIOME.FOREST;
+   const topY=h,coast=this.genVersion>=5&&h<=sea+3&&h>sea-2;
    for(let y=0;y<=h;y++){let b=B.STONE;if(y===0)b=B.BEDROCK;else if(y>h-4)b=B.DIRT;
-    if(y===h)b=h<=sea+1?B.SAND:h>(this.genVersion>=4?118:46)?B.SNOW:h>(this.genVersion>=4?105:38)?B.STONE:B.GRASS;d[I(x,y,z)]=b}
+    if(y===h){
+     if(coast||biome===BIOME.DESERT)b=B.SAND;
+     else if(biome===BIOME.SNOWY_MOUNTAINS||h>118)b=B.SNOW;
+     else if(h>105)b=B.STONE;
+     else b=B.GRASS;
+    }
+    if(this.genVersion>=5&&biome===BIOME.SWAMP&&y===h)b=B.DIRT;
+    d[I(x,y,z)]=b}
    for(let y=h+1;y<=sea;y++)d[I(x,y,z)]=B.WATER;
    if(g3)this.carve(d,g3,cx,cz,x,z,h);
-   if(h>sea+1&&h<(this.genVersion>=4?105:40)&&(!g3||d[I(x,h,z)])&&x>2&&x<13&&z>2&&z<13&&hash(wx,wz,this.seed+99)<.012){for(let t=1;t<=5;t++)d[I(x,h+t,z)]=B.LOG;
-    for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)for(let dy=3;dy<=6;dy++)if(!(Math.abs(dx)==2&&Math.abs(dz)==2)&&!d[I(x+dx,h+dy,z+dz)])d[I(x+dx,h+dy,z+dz)]=B.LEAVES}}
+   if(this.genVersion>=5){
+    const r=hash(wx,wz,this.seed+509),surface=h+1;
+    if(biome===BIOME.DESERT&&h>sea+2&&r<.018){const tall=2+(hash(wx,wz,this.seed+510)*3|0);for(let t=0;t<tall;t++)d[I(x,h+1+t,z)]=B.CACTUS}
+    else if(biome===BIOME.SWAMP&&h>sea-2&&r<.045){for(let t=0;t<2+(r*20|0);t++)d[I(x,h+1+t,z)]=B.REEDS}
+    else if(biome===BIOME.MUSHROOM_FIELDS&&h>sea+1&&r<.026){const stem=2+(r*80|0)%3;for(let t=0;t<stem;t++)d[I(x,h+1+t,z)]=B.MUSHROOM_STEM;for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)if(dx*dx+dz*dz<=4)d[I(x+dx,h+stem,z+dz)]=B.MUSHROOM_CAP}
+    else if(!coast&&h>sea+1&&h<155&&x>2&&x<13&&z>2&&z<13){
+     const chance=biome===BIOME.JUNGLE?.085:biome===BIOME.FOREST?.035:biome===BIOME.AUTUMN_FOREST?.04:biome===BIOME.TAIGA?.055:biome===BIOME.SWAMP?.025:biome===BIOME.PLAINS?.006:.012;
+     if(r<chance){
+      const jungle=biome===BIOME.JUNGLE,taiga=biome===BIOME.TAIGA,autumn=biome===BIOME.AUTUMN_FOREST,swamp=biome===BIOME.SWAMP;
+      const trunk=(jungle?8:taiga?7:autumn?5:swamp?4:4)+(hash(wx,wz,this.seed+511)*3|0);
+      for(let t=1;t<=trunk;t++)d[I(x,h+t,z)]=B.LOG;
+      const radius=jungle?3:taiga?1:2,leaf=jungle?B.LEAVES:autumn?B.AUTUMN_LEAVES:B.LEAVES;
+      for(let dy=trunk-2;dy<=trunk+2;dy++){const rad=dy===trunk+2?1:radius;for(let dx=-rad;dx<=rad;dx++)for(let dz=-rad;dz<=rad;dz++)if(dx*dx+dz*dz<=rad*rad+1&&!d[I(x+dx,h+dy,z+dz)])d[I(x+dx,h+dy,z+dz)]=leaf}
+      if(swamp)for(const [dx,dz] of [[-1,0],[1,0],[0,-1],[0,1]])for(let t=0;t<2;t++)if(!d[I(x+dx,h+t,z+dz)])d[I(x+dx,h+t,z+dz)]=B.LOG;
+     }
+    }
+   }else if(h>sea+1&&h<(this.genVersion>=4?105:40)&&(!g3||d[I(x,h,z)])&&x>2&&x<13&&z>2&&z<13&&hash(wx,wz,this.seed+99)<.012){
+    for(let t=1;t<=5;t++)d[I(x,h+t,z)]=B.LOG;
+    for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)for(let dy=3;dy<=6;dy++)if(!(Math.abs(dx)==2&&Math.abs(dz)==2)&&!d[I(x+dx,h+dy,z+dz)])d[I(x+dx,h+dy,z+dz)]=B.LEAVES
+   }}
   for(const [k,v] of this.mods){const [mx,my,mz]=k.split(',').map(Number);if(Math.floor(mx/S)===cx&&Math.floor(mz/S)===cz)d[I(mx-cx*S,my,mz-cz*S)]=v}
   return d}
  get(x,y,z){if(y<0||y>=H)return 0;const c=this.chunks.get(this.key(Math.floor(x/S),Math.floor(z/S)));if(!c)return 0;return c.d[((y*S)+(z-c.cz*S))*S+(x-c.cx*S)]}
