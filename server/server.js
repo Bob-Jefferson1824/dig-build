@@ -25,7 +25,7 @@ function publicRoomList() {
 function broadcastPublicRooms() { io.emit('public-room-list', publicRoomList()); }
 const cleanText = (v, max) => String(v ?? '').replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, max);
 const validNum = (v, min, max) => Number.isFinite(v) && v >= min && v <= max;
-const validPosition = p => p && validNum(p.x, -1e6, 1e6) && validNum(p.y, -100, 200) && validNum(p.z, -1e6, 1e6);
+const validPosition = p => p && validNum(p.x, -1e6, 1e6) && validNum(p.y, -100, 240) && validNum(p.z, -1e6, 1e6);
 
 io.on('connection', socket => {
   socket.on('join-room', payload => {
@@ -101,7 +101,7 @@ io.on('connection', socket => {
   socket.on('block-update', b => {
     const roomId = socket.data.roomId, room = rooms.get(roomId);
     if (!room || !b || ![b.x, b.y, b.z, b.id].every(Number.isInteger)) return;
-    if (!validNum(b.x, -100000, 100000) || !validNum(b.y, 0, 63) || !validNum(b.z, -100000, 100000) || !validNum(b.id, 0, 255)) return;
+    if (!validNum(b.x, -100000, 100000) || !validNum(b.y, 0, 191) || !validNum(b.z, -100000, 100000) || !validNum(b.id, 0, 255)) return;
     const key = `${b.x},${b.y},${b.z}`;
     if (room.blocks.size < 10000 || room.blocks.has(key)) room.blocks.set(key, b.id);
     socket.to(roomId).emit('block-update', { x: b.x, y: b.y, z: b.z, id: b.id });
