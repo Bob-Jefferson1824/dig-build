@@ -20,6 +20,11 @@ const liveScriptPath=path.join(tmp,'live-game.mjs');
 fs.writeFileSync(liveScriptPath,liveHtml.slice(scriptStart+'<script type="module">'.length,scriptEnd));
 const syntax=spawnSync(process.execPath,['--check',liveScriptPath],{encoding:'utf8'});
 assert.equal(syntax.status,0,'live game module must parse: '+syntax.stderr);
+assert.ok(liveHtml.includes('FARMLAND:39')&&liveHtml.includes('WHEAT_3:42'),'farming blocks must be registered');
+assert.ok(liveHtml.includes('function farmingTick')&&liveHtml.includes('MAT.WHEAT_SEEDS'),'crop growth and seed handling must exist');
+assert.ok(liveHtml.includes('function powerCircuit')&&liveHtml.includes('B.LAMP_ON'),'engineering circuits must exist');
+assert.ok(liveHtml.includes('function cartTick')&&liveHtml.includes('MAT.MINECART'),'minecart transport must exist');
+
 
 const I=await import(pathToFileURL(path.join(tmp,'items.mjs')));
 
