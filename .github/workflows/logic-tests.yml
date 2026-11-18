@@ -1,10 +1,10 @@
-name: Stage 9 biome tests
+name: Biome generation and finder checks
 
 on:
   pull_request:
     branches: [main]
   push:
-    branches: [main, stage-9-biomes]
+    branches: [main, stage-9-biomes, stage-10-biome-finder-update]
 
 jobs:
   biomes:
@@ -18,3 +18,5 @@ jobs:
           node-version: 22
       - name: Run Stage 9 biome tests
         run: node tests/biomes.test.mjs
+      - name: Check game and biome finder JavaScript syntax
+        run: node --check js/main.js && node --check js/biome-finder.js
