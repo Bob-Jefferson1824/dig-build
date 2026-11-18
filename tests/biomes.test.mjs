@@ -24,6 +24,10 @@ assert.ok(liveHtml.includes('FARMLAND:39')&&liveHtml.includes('WHEAT_3:42'),'far
 assert.ok(liveHtml.includes('function farmingTick')&&liveHtml.includes('MAT.WHEAT_SEEDS'),'crop growth and seed handling must exist');
 assert.ok(liveHtml.includes('function powerCircuit')&&liveHtml.includes('B.LAMP_ON'),'engineering circuits must exist');
 assert.ok(liveHtml.includes('function cartTick')&&liveHtml.includes('MAT.MINECART'),'minecart transport must exist');
+assert.ok(liveHtml.includes('function tunnelAt')&&liveHtml.includes('function caveNode'),'generation 7 caves must use connected chamber-and-tunnel networks');
+assert.ok(liveHtml.includes('const NT=56,S=16,H=192'),'the live world must retain the expanded vertical depth');
+assert.ok(liveHtml.includes('leg.position.set(x,-.25,-.9)'),'first-person legs and boots must sit inside the camera view');
+
 
 
 const I=await import(pathToFileURL(path.join(tmp,'items.mjs')));
