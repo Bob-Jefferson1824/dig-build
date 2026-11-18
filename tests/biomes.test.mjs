@@ -26,7 +26,7 @@ assert.ok(liveHtml.includes('function farmingTick')&&liveHtml.includes('MAT.WHEA
 assert.ok(liveHtml.includes('function powerCircuit')&&liveHtml.includes('B.LAMP_ON'),'engineering circuits must exist');
 assert.ok(liveHtml.includes('function cartTick')&&liveHtml.includes('MAT.MINECART'),'minecart transport must exist');
 assert.ok(liveHtml.includes('function tunnelAt')&&liveHtml.includes('function caveNode'),'generation 7 caves must use connected chamber-and-tunnel networks');
-assert.ok(liveHtml.includes('depth<=48')&&liveHtml.includes('h(7711)>.34'),'generation 8 must create shafts that reach the surface and connect deeper');
+assert.ok(liveHtml.includes('depth<=20')&&liveHtml.includes('h(7711)>.18'),'generation 7 cave entrance layout must remain unchanged');
 assert.ok(liveHtml.includes('const NT=56,S=16,H=192'),'the live world must retain the expanded vertical depth');
 assert.ok(!liveHtml.includes('const leftLeg=new THREE.Group(),rightLeg=new THREE.Group()'),'first-person feet must not be rendered');
 assert.ok(liveHtml.includes('const waterTop=this.genVersion>=8&&inRiver?Math.min(sea,h+4):this.genVersion===7&&riverAt(this.seed,wx,wz,7)?h+1:sea'),'generation 8 rivers must fill to bank height while generation 7 remains unchanged');
