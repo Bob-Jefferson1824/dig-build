@@ -110,7 +110,7 @@ import {STRUCTURES,structuresNear,findNearestStructure,structureBlocksForChunk} 
 // Public values only (anon/publishable key is safe in the browser; RLS protects data). NEVER put a service-role key here.
 const SUPABASE_URL = '';      // e.g. https://xxxx.supabase.co
 const SUPABASE_ANON_KEY = ''; // anon / publishable key
-const GEN_VERSION = 12;        // Stage 20 structures. Existing saved worlds keep their own generation and terrain.
+const GEN_VERSION = 13;        // Stage 20.1: larger landmasses and inland structure placement; existing worlds keep their generation.
 const SAVE_FORMAT = 4;        // bump + add a migration in save.js when save shape changes
 
 // Save-format migrations (pure functions; storage lives in worlds.js). Add a step per format bump, never drop old steps.
