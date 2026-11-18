@@ -55,8 +55,9 @@ function siteFor(seed,gen,x,z,type,biome){
  }
  const r=radius[type],samples=[];for(let dx=-r;dx<=r;dx+=Math.max(3,Math.floor(r/3)))for(let dz=-r;dz<=r;dz+=Math.max(3,Math.floor(r/3)))samples.push(height(seed,x+dx,z+dz,gen));
  const lo=Math.min(...samples),hi=Math.max(...samples),base=gen>=12?Math.floor(height(seed,x,z,gen)):Math.round(samples.reduce((a,b)=>a+b,0)/samples.length);
- const maxSlope=type==='village'||type==='castle'?7:type==='desert-pyramid'?6:5;
- if(hi-lo>maxSlope||base<SEA+2||base>155)return null;
+ const maxSlope=gen>=13?(type==='village'||type==='castle'?4:5):(type==='village'||type==='castle'?7:type==='desert-pyramid'?6:5);
+ const minElevation=gen>=13?SEA+10:SEA+2;
+ if(hi-lo>maxSlope||base<minElevation||base>155)return null;
  return {base,orient:'z'};
 }
 function candidate(seed,gen,gx,gz){
