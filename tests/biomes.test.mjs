@@ -30,7 +30,8 @@ assert.ok(liveHtml.includes('y>=surface-20')&&liveHtml.includes('h(7711)>.18'),'
 assert.ok(liveHtml.includes('const NT=56,S=16,H=192'),'the live world must retain the expanded vertical depth');
 assert.ok(!liveHtml.includes('const leftLeg=new THREE.Group(),rightLeg=new THREE.Group()'),'first-person feet must not be rendered');
 assert.ok(liveHtml.includes('const waterTop=this.genVersion>=8&&inRiver?Math.min(sea,h+4):this.genVersion===7&&riverAt(this.seed,wx,wz,7)?h+1:sea'),'generation 8 rivers must fill to bank height while generation 7 remains unchanged');
-assert.ok(liveHtml.includes('const GEN_VERSION = 11;'),'new worlds must use generation 10');
+assert.ok(liveHtml.includes('const GEN_VERSION = 12;'),'new worlds must use generation 12');
+assert.ok(liveHtml.includes('if(gen>=12)return biomeHeight(seed,wx,wz,sea,H-12,gen)'),'generation 12 terrain must pass its own generation version into the height helper');
 assert.ok(biomeSource.includes('if(gen>=9)')&&biomeSource.includes('h+=mountain*mountain*19'),'generation 9 must use a gentler mountain profile');
 assert.ok(liveHtml.includes('const cell=192')&&liveHtml.includes('rand(7711)>.085')&&liveHtml.includes('caveNode(nodeCellX,1,nodeCellZ,seed)')&&liveHtml.includes('this.genVersion>=10?56:this.genVersion>=9?28:this.genVersion===8?48:20'),'generation 9 must create rare ground-level cave mouths that descend into connected chambers');
 assert.ok(liveHtml.includes('tunnelAtV7')&&liveHtml.includes('caveEntranceAtV7'),'generation 7 cave layouts must remain unchanged');
