@@ -111,7 +111,7 @@ function band(v,lo,hi,fade=.10){return sm(Math.max(0,Math.min(1,(v-lo)/fade)))*s
 export function riverStrength(seed,wx,wz){
  const warpX=(fbm(wx/360,wz/360,seed+801)-.5)*150,warpZ=(fbm(wx/360,wz/360,seed+802)-.5)*150;
  const d=Math.abs(fbm((wx+warpX)/230,(wz+warpZ)/230,seed+803)-.5);
- return 1-sm(Math.max(0,Math.min(1,d/.035));
+ return 1-sm(Math.max(0,Math.min(1,d/.035)));
 }
 export function heightAt(seed,wx,wz,gen=3){
  const m=Math.max(0,fbm(wx/220,wz/220,seed+7)-.5)*2;
@@ -127,7 +127,7 @@ export function heightAt(seed,wx,wz,gen=3){
   const mushroom=band(temperature,.36,.76,.18)*band(moisture,.56,.90,.15)*sm(Math.max(0,Math.min(1,(fbm(wx/700,wz/700,seed+3701)-.78)/.12)));
   let h=NEW_SURFACE_BASE+broad*18+m*m*22+(detail-.5)*3;
   h+=mountain*mountain*35;
-  h-=desert*5;h+=jungle*7;h-=swamp*18;h+=taiga*4;mushroom;
+  h-=desert*5;h+=jungle*7;h-=swamp*18;h+=taiga*4+mushroom*3;
   const coastBlend=sm(Math.max(0,Math.min(1,(continent-.30)/.13)));
   h=(GEN6_SEA-1)+(h-(GEN6_SEA-1))*coastBlend;
   const river=riverStrength(seed,wx,wz);
