@@ -14,6 +14,7 @@ let itemSource=fs.readFileSync(path.join(root,'js/items.js'),'utf8').replace("fr
 fs.writeFileSync(path.join(tmp,'items.mjs'),itemSource);
 const W=await import(pathToFileURL(path.join(tmp,'world.mjs')));
 const liveHtml=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const biomeSource=fs.readFileSync(path.join(root,'js/biome-finder.js'),'utf8');
 const scriptStart=liveHtml.indexOf('<script type="module">'),scriptEnd=liveHtml.indexOf('</script>',scriptStart);
 assert.ok(scriptStart>=0&&scriptEnd>scriptStart,'live game module script must exist');
 const liveScriptPath=path.join(tmp,'live-game.mjs');
@@ -30,7 +31,7 @@ assert.ok(liveHtml.includes('const NT=56,S=16,H=192'),'the live world must retai
 assert.ok(!liveHtml.includes('const leftLeg=new THREE.Group(),rightLeg=new THREE.Group()'),'first-person feet must not be rendered');
 assert.ok(liveHtml.includes('const waterTop=inRiver?Math.min(sea,h+4):sea'),'river channels must fill to their surrounding bank height');
 assert.ok(liveHtml.includes("(inRiver||biome==='Ocean'||biome==='Beach and Coast'||h<=sea+1)"),'riverbeds and ocean floors must use sand');
-assert.ok(b.includes('riverField>=.016')&&b.includes('>.48'),'generation 7 rivers must be narrower and less frequent');
+assert.ok(biomeSource.includes('riverField>=.016')&&biomeSource.includes('>.48'),'generation 7 rivers must be narrower and less frequent');
 assert.ok(liveHtml.includes("document.addEventListener('keydown',e=>{if(e.code!=='KeyE'||!playing||e.repeat)return;")&&liveHtml.includes("invUI.open('inv')"),'E must open the inventory through the capture-phase keyboard handler');
 assert.ok(liveHtml.includes("biome!=='Ocean'&&!inRiver"),'trees must not spawn in oceans or rivers');
 
