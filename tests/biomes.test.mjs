@@ -26,12 +26,15 @@ assert.ok(liveHtml.includes('function farmingTick')&&liveHtml.includes('MAT.WHEA
 assert.ok(liveHtml.includes('function powerCircuit')&&liveHtml.includes('B.LAMP_ON'),'engineering circuits must exist');
 assert.ok(liveHtml.includes('function cartTick')&&liveHtml.includes('MAT.MINECART'),'minecart transport must exist');
 assert.ok(liveHtml.includes('function tunnelAt')&&liveHtml.includes('function caveNode'),'generation 7 caves must use connected chamber-and-tunnel networks');
-assert.ok(liveHtml.includes('depth<=48')&&liveHtml.includes('h(7711)>.34'),'generation 7 must create shafts that reach the surface and connect deeper');
+assert.ok(liveHtml.includes('depth<=48')&&liveHtml.includes('h(7711)>.34'),'generation 8 must create shafts that reach the surface and connect deeper');
 assert.ok(liveHtml.includes('const NT=56,S=16,H=192'),'the live world must retain the expanded vertical depth');
 assert.ok(!liveHtml.includes('const leftLeg=new THREE.Group(),rightLeg=new THREE.Group()'),'first-person feet must not be rendered');
-assert.ok(liveHtml.includes('const waterTop=inRiver?Math.min(sea,h+4):sea'),'river channels must fill to their surrounding bank height');
+assert.ok(liveHtml.includes('const waterTop=this.genVersion>=8&&inRiver?Math.min(sea,h+4):this.genVersion===7&&riverAt(this.seed,wx,wz,7)?h+1:sea'),'generation 8 rivers must fill to bank height while generation 7 remains unchanged');
+assert.ok(liveHtml.includes('const GEN_VERSION = 8;'),'new worlds must use generation 8');
+assert.ok(liveHtml.includes('tunnelAtV7')&&liveHtml.includes('caveEntranceAtV7'),'generation 7 cave layouts must remain unchanged');
 assert.ok(liveHtml.includes("(inRiver||biome==='Ocean'||biome==='Beach and Coast'||h<=sea+1)"),'riverbeds and ocean floors must use sand');
-assert.ok(biomeSource.includes('riverField>=.016')&&biomeSource.includes('>.48')&&biomeSource.includes('>.90'),'generation 7 rivers must be narrower and less frequent');
+assert.ok(biomeSource.includes('riverField>=.016')&&biomeSource.includes('>.48')&&biomeSource.includes('>.90'),'generation 8 rivers must be narrower and less frequent');
+assert.ok(biomeSource.includes('if(gen===7)return biomeHeightLegacy')&&biomeSource.includes('const oceanLimit=gen>=8?.20:.23'),'generation 7 biome terrain must remain compatible');
 assert.ok(liveHtml.includes("document.addEventListener('keydown',e=>{if(e.code!=='KeyE'||!playing||e.repeat)return;")&&liveHtml.includes("invUI.open('inv')"),'E must open the inventory through the capture-phase keyboard handler');
 assert.ok(liveHtml.includes("biome!=='Ocean'&&!inRiver"),'trees must not spawn in oceans or rivers');
 
