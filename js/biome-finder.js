@@ -8,7 +8,7 @@ const COLORS={
 };
 const names=Object.values(BIOME);
 
-export function createBiomeFinder({getWorld,getPlayer,getMode,getWorldKey,toast,onOpen=()=>{},onClose=()=>{}}){
+export function createBiomeFinder({getWorld,getPlayer,getMode,getWorldKey,getPlaying=()=>true,toast,onOpen=()=>{},onClose=()=>{}}){
   const style=document.createElement('style');
   style.textContent=`
   #biomeToggle{position:fixed;top:43px;right:8px;z-index:8;background:#18271f;color:#fff;border:1px solid #9aaa9d;border-radius:4px;padding:7px 10px;font:12px monospace;cursor:pointer;display:none}
@@ -83,7 +83,7 @@ export function createBiomeFinder({getWorld,getPlayer,getMode,getWorldKey,toast,
   }
   function update(){
     const w=getWorld(),p=getPlayer(),mode=getMode();
-    const allowed=!!w&&!!p&&(mode==='creative'||mode==='spectator');
+    const allowed=!!w&&!!p&&getPlaying()&&(mode==='creative'||mode==='spectator');
     toggle.style.display=allowed?'block':'none';
     if(!allowed){if(opened)close();return}
     const key=getWorldKey();
@@ -103,7 +103,7 @@ export function createBiomeFinder({getWorld,getPlayer,getMode,getWorldKey,toast,
   toggle.addEventListener('click',togglePanel);
   panel.querySelector('.bfClose').addEventListener('click',close);
   window.addEventListener('keydown',e=>{
-    if(e.code!=='KeyB'||!getWorld())return;
+    if(e.code!=='KeyB'||!getWorld()||!getPlaying())return;
     if(document.activeElement&&/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName))return;
     if(getMode()!=='creative'&&getMode()!=='spectator')return;
     e.preventDefault();togglePanel();
