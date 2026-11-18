@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {World,B,INFO,solid,isWater} from './world.js';
+import {createBiomeFinder} from './biome-finder.js';
 import {stepPlayer,stepSpectator} from './physics.js';
 import {newInv,canAdd,addItem,isBlockItem,isTool,toolSpeed,dropOf,wearTool,MODES,canMine,needMsg,furnaceTick,newFurnace} from './items.js';
 import {setAtlas,slotHTML} from './icons.js';
@@ -68,6 +69,7 @@ addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('mousemove',e=>{if(document.pointerLockElement){P.yaw-=e.movementX*.0022;P.pitch=Math.max(-1.55,Math.min(1.55,P.pitch-e.movementY*.0022))}});
 // ================= world management: many independent worlds, each with its own id and its own save =================
 let curRec=null,curOwner=GUEST,playSecs=0,saveChain=Promise.resolve();
+const biomeFinder=createBiomeFinder({getWorld:()=>world,getPlayer:()=>P,getMode:()=>mode,getWorldKey:()=>curRec?String(curRec.owner||'guest')+'|'+String(curRec.id):'unknown-world',toast});
 const ownerNow=async()=>{try{const u=sb&&await user();return u?u.id:GUEST}catch(e){return GUEST}};
 async function cloudPush(rec){if(!sb||rec.owner===GUEST)return false;try{const u=await user();if(!u||u.id!==rec.owner)return false;await cloudPut(sb,u.id,rec);await markCloud(rec.owner,rec.id,rec.lastPlayed);return true}catch(e){return false}}
 async function doPersist(){if(readOnly||!curRec||!world)return;const rec=curRec;      // Spectator sessions never write anything
@@ -120,4 +122,5 @@ let last=performance.now(),fps=60;
   if(mine){const current=ray(),same=current&&current.hit.join(',')===mine.pos;if(!same||world.get(...mine.hit)!==mine.block)finishMine();else{mine.elapsed+=dt;mine.snd=(mine.snd||0)+dt;if(mine.snd>.22){mine.snd=0;sfx('hit')}const progress=Math.min(1,mine.elapsed/mine.required);crack.visible=true;crack.position.set(mine.hit[0]+.5,mine.hit[1]+.5,mine.hit[2]+.5);crack.material.map=crackTex[Math.min(9,Math.floor(progress*10))];showMine(progress);if(progress>=1){const [x,y,z]=mine.hit,b=mine.block;breakBlock(x,y,z,b)}}}
   if(!mine&&holding)beginMine();if(mode!=='spectator')world.stepWater(10);
   $('hud').textContent=`DIG BUILD · ${curRec?curRec.name+' · ':''}${mode==='spectator'?'SPECTATOR · X-RAY '+(xray?'ON':'OFF'):mode} · seed ${world.seed} · ${P.x|0},${P.y|0},${P.z|0} · ${fps|0}fps · save: ${status}${uwOn?' · UNDERWATER':inW?' · SWIMMING':''}`}
+ biomeFinder.update();
  renderer.render(scene,cam)})(last);
