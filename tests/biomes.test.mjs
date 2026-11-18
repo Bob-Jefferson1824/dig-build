@@ -31,7 +31,7 @@ assert.ok(liveHtml.includes('const NT=56,S=16,H=192'),'the live world must retai
 assert.ok(!liveHtml.includes('const leftLeg=new THREE.Group(),rightLeg=new THREE.Group()'),'first-person feet must not be rendered');
 assert.ok(liveHtml.includes('const waterTop=inRiver?Math.min(sea,h+4):sea'),'river channels must fill to their surrounding bank height');
 assert.ok(liveHtml.includes("(inRiver||biome==='Ocean'||biome==='Beach and Coast'||h<=sea+1)"),'riverbeds and ocean floors must use sand');
-assert.ok(biomeSource.includes('riverField>=.016')&&biomeSource.includes('>.48'),'generation 7 rivers must be narrower and less frequent');
+assert.ok(biomeSource.includes('riverField>=.016')&&biomeSource.includes('>.48')&&biomeSource.includes('>.90'),'generation 7 rivers must be narrower and less frequent');
 assert.ok(liveHtml.includes("document.addEventListener('keydown',e=>{if(e.code!=='KeyE'||!playing||e.repeat)return;")&&liveHtml.includes("invUI.open('inv')"),'E must open the inventory through the capture-phase keyboard handler');
 assert.ok(liveHtml.includes("biome!=='Ocean'&&!inRiver"),'trees must not spawn in oceans or rivers');
 
