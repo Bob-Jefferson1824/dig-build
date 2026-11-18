@@ -357,7 +357,7 @@ class World{
   for(let y=this.genVersion>=7?10:this.genVersion>=5?2:4;y<=lim;y++){let open;if(this.genVersion>=7){open=this.genVersion>=8?tunnelAt(wx,y,wz,this.seed):tunnelAtV7(wx,y,wz,this.seed)}else if(this.genVersion>=5){const a=c.A(wx,y,wz),b=c.Bf(wx,y,wz),wide=c.C(wx,y,wz),detail=c.D(wx,y,wz);const caveDensity=a*.36+b*.27+wide*.13+(detail-.5)*.48;open=caveDensity>=.565}else if(this.genVersion>=4){const a=c.A(wx,y,wz),b=c.Bf(wx,y,wz),wide=c.C(wx,y,wz),detail=c.D(wx,y,wz);const caveDensity=a*.42+b*.28+wide*.20+(detail-.5)*.18;open=caveDensity>=.535}else{const a=c.A(wx,y,wz)-.5,b=c.Bf(wx,y,wz)-.5;open=a*a+b*b<TUBE||c.C(wx,y,wz)>CAV}if(!open)continue;
    if(y<=POOLY){if(pm){d[I(y)]=B.WATER;continue}if(wall)continue}   // pools are walled in so water never touches open air sideways
    d[I(y)]=0}
-  if(this.genVersion>=7&&h>sea+5)for(let y=Math.max(2,h-(this.genVersion>=9?28:this.genVersion>=8?48:20));y<=h;y++)if((this.genVersion>=9?caveEntranceAt(wx,y,wz,this.seed,h):this.genVersion===8?caveEntranceAtV7(wx,y,wz,this.seed,h):caveEntranceAtV7(wx,y,wz,this.seed,h)))d[I(y)]=0;
+  if(this.genVersion>=7&&h>sea+5)for(let y=Math.max(2,h-(this.genVersion>=9?56:this.genVersion>=8?48:20));y<=h;y++)if((this.genVersion>=9?caveEntranceAt(wx,y,wz,this.seed,h):this.genVersion===8?caveEntranceAtV7(wx,y,wz,this.seed,h):caveEntranceAtV7(wx,y,wz,this.seed,h)))d[I(y)]=0;
   for(let y=1,top=Math.min(h-4,145);y<=top;y++)if(d[I(y)]===B.STONE){const o=this.genVersion>=5?oreAt(wx,y,wz,this.seed):oreAtLegacy(wx,y,wz,this.seed);if(o)d[I(y)]=o}}
  gen(cx,cz){const sea=this.sea,d=new Uint8Array(S*H*S);const I=(x,y,z)=>(y*S+z)*S+x;const g3=this.genVersion>=3?this.cavesCtx(cx,cz):null;
   for(let x=0;x<S;x++)for(let z=0;z<S;z++){const wx=cx*S+x,wz=cz*S+z;
