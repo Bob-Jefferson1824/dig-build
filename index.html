@@ -396,7 +396,7 @@ const addRecipe=(out,n,pat,shapeless=false)=>RECIPES.push({out,n,pat,shapeless})
 addRecipe(B.FURNACE,1,[[B.COBBLE,B.COBBLE,B.COBBLE],[B.COBBLE,0,B.COBBLE],[B.COBBLE,B.COBBLE,B.COBBLE]]);
 addRecipe(B.STONE_BRICKS,4,[[B.STONE,B.STONE],[B.STONE,B.STONE]]);
 addRecipe(B.MOSSY_COBBLE,1,[[B.COBBLE,B.LEAVES],[B.LEAVES,B.COBBLE]]);
-addRecipe(MAT.CARROT_SEEDS=113,2,[[116]]);addRecipe(MAT.POTATO_SEEDS=114,2,[[117]]);
+addRecipe(MAT.CARROT_SEEDS,2,[[MAT.CARROT]]);addRecipe(MAT.POTATO_SEEDS,2,[[MAT.POTATO]]);
 addRecipe(B.LEVER_OFF,1,[[MAT.STICK],[B.COBBLE]]);
 addRecipe(B.LAMP_OFF,1,[[B.GLASS,B.GLASS,B.GLASS],[B.GLASS,MAT.COAL,B.GLASS],[B.GLASS,B.GLASS,B.GLASS]]);
 addRecipe(B.PRESSURE_PLATE_OFF,1,[[B.PLANKS,B.PLANKS]]);
@@ -943,7 +943,7 @@ function farmingTick(dt){
   if(!next)continue;
   let watered=false;
   for(let dx=-4;dx<=4&&!watered;dx++)for(let dz=-4;dz<=4&&!watered;dz++)for(let dy=0;dy<=1;dy++)if(isWater(world.get(x+dx,soilY+dy,z+dz))){watered=true;break}
-  if(Math.random()<(watered?.58:.12)){world.set(x,cropY,z,next);mpBlockChange(x,cropY,z,next);dirty=true}
+  if(Math.random()<(watered ? .58 : .12)){world.set(x,cropY,z,next);mpBlockChange(x,cropY,z,next);dirty=true}
  }
 }
 function wildlifeTick(dt){
