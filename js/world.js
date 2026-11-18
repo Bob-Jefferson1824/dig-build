@@ -75,7 +75,7 @@ function vnoise(x,z,s){const xi=Math.floor(x),zi=Math.floor(z),fx=sm(x-xi),fz=sm
 function fbm(x,z,s){return vnoise(x,z,s)*.55+vnoise(x*2,z*2,s+1)*.28+vnoise(x*4,z*4,s+2)*.17}
 const F=[[[1,0,0],[[1,0,1],[1,0,0],[1,1,0],[1,1,1]],.8],[[-1,0,0],[[0,0,0],[0,0,1],[0,1,1],[0,1,0]],.8],[[0,1,0],[[0,1,1],[1,1,1],[1,1,0],[0,1,0]],1],[[0,-1,0],[[0,0,0],[1,0,0],[1,0,1],[0,0,1]],.5],[[0,0,1],[[0,0,1],[1,0,1],[1,1,1],[0,1,1]],.7],[[0,0,-1],[[1,0,0],[0,0,0],[0,1,0],[1,1,0]],.7]];
 // Broad, deterministic climate fields create large biome regions with natural-looking boundaries.
-export const BIOME={FOREST:'Forest',DESERT:'Desert',JUNGLE:'Jungle',SNOWY_MOUNTAINS:'Snowy Mountains',SWAMP:'Swamp',PLAINS:'Plains',AUTUMN_FOREST:'Autumn Forest',TAIGA:'Taiga',BEACH:'Beach and Coast',MUSHROOM_FIELDS:'Mushroom Fields'};
+export const BIOME={FOREST:'Forest',DESERT:'Desert',JUNGLE:'Jungle',SNOWY_MOUNTAINS:'Snowy Mountains',SWAMP:'Swamp',PLAINS:'Plains',AUTUMN_FOREST:'Autumn Forest',TAIGA:'Taiga',BEACH:'Beach and Coast',MUSHROOM_FIELDS:'Mushroom Fields',OCEAN:'Ocean'};
 export function biomeAt(seed,wx,wz,gen=5){
  if(gen<5)return BIOME.FOREST;
  const climateScale=gen>=6?1.75:1,temperature=fbm(wx/(520*climateScale),wz/(520*climateScale),seed+1701),moisture=fbm(wx/(390*climateScale),wz/(390*climateScale),seed+2701),rare=fbm(wx/(700*climateScale),wz/(700*climateScale),seed+3701);
@@ -159,7 +159,7 @@ export class World{
    const topY=h,coast=this.genVersion>=5&&h<=sea+3&&h>sea-2,river=this.genVersion>=6&&riverAt(this.seed,wx,wz);
    for(let y=0;y<=h;y++){let b=B.STONE;if(y===0)b=B.BEDROCK;else if(y>h-4)b=B.DIRT;
     if(y===h){
-     if(coast||biome===BIOME.DESERT)b=B.SAND;
+     if(coast||biome===BIOME.DESERT||biome===BIOME.OCEAN)b=B.SAND;
      else if(biome===BIOME.SNOWY_MOUNTAINS||h>118)b=B.SNOW;
      else if(h>105)b=B.STONE;
      else b=B.GRASS;
@@ -173,7 +173,7 @@ export class World{
     if(biome===BIOME.DESERT&&h>sea+2&&r<.018){const tall=2+(hash(wx,wz,this.seed+510)*3|0);for(let t=0;t<tall;t++)d[I(x,h+1+t,z)]=B.CACTUS}
     else if(biome===BIOME.SWAMP&&h>sea-2&&r<.045){for(let t=0;t<2+(r*20|0);t++)d[I(x,h+1+t,z)]=B.REEDS}
     else if(biome===BIOME.MUSHROOM_FIELDS&&h>sea+1&&x>=2&&x<=13&&z>=2&&z<=13&&r<.026){const stem=2+(r*80|0)%3;for(let t=0;t<stem;t++)d[I(x,h+1+t,z)]=B.MUSHROOM_STEM;for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)if(dx*dx+dz*dz<=4)d[I(x+dx,h+stem,z+dz)]=B.MUSHROOM_CAP}
-    else if(!coast&&h>sea+1&&h<155&&x>2&&x<13&&z>2&&z<13){
+    else if(!coast&&(h>sea+1||biome===BIOME.SWAMP&&h>=sea-3)&&h<155&&x>2&&x<13&&z>2&&z<13){
      const chance=biome===BIOME.JUNGLE?.085:biome===BIOME.FOREST?.045:biome===BIOME.AUTUMN_FOREST?.04:biome===BIOME.TAIGA?.065:biome===BIOME.SWAMP?.055:biome===BIOME.PLAINS?.006:.012;
      if(r<chance){
       const jungle=biome===BIOME.JUNGLE,taiga=biome===BIOME.TAIGA,autumn=biome===BIOME.AUTUMN_FOREST,swamp=biome===BIOME.SWAMP,birch=!jungle&&!taiga&&!autumn&&!swamp&&hash(wx,wz,this.seed+515)<.22;
