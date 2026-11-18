@@ -26,7 +26,11 @@ assert.ok(liveHtml.includes('function powerCircuit')&&liveHtml.includes('B.LAMP_
 assert.ok(liveHtml.includes('function cartTick')&&liveHtml.includes('MAT.MINECART'),'minecart transport must exist');
 assert.ok(liveHtml.includes('function tunnelAt')&&liveHtml.includes('function caveNode'),'generation 7 caves must use connected chamber-and-tunnel networks');
 assert.ok(liveHtml.includes('const NT=56,S=16,H=192'),'the live world must retain the expanded vertical depth');
-assert.ok(liveHtml.includes('leg.position.set(x,-.25,-.9)'),'first-person legs and boots must sit inside the camera view');
+assert.ok(!liveHtml.includes('const leftLeg=new THREE.Group(),rightLeg=new THREE.Group()'),'first-person feet must not be rendered');
+assert.ok(liveHtml.includes('const waterTop=inRiver?h+1:sea'),'river water must stay one block above the carved riverbed');
+assert.ok(!liveHtml.includes('inRiver?h+3:sea'),'river water must not float three blocks above the terrain');
+assert.ok(liveHtml.includes("document.addEventListener('keydown',e=>{if(e.code!=='KeyE'||!playing||e.repeat)return;")&&liveHtml.includes("invUI.open('inv')"),'E must open the inventory through the capture-phase keyboard handler');
+assert.ok(liveHtml.includes("biome!=='Ocean'&&!inRiver"),'trees must not spawn in oceans or rivers');
 
 
 
