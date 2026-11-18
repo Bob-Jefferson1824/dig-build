@@ -678,6 +678,13 @@ function showMine(p){$('mineUI').style.display='block';$('mineName').textContent
 function camInWater(){return isWater(world.get(Math.floor(cam.position.x),Math.floor(cam.position.y),Math.floor(cam.position.z)))}
 function setUnder(on){const el=$('uw');el.classList.toggle('on',on);el.classList.add('pulse');setTimeout(()=>el.classList.remove('pulse'),220);const c=on?0x2f86c8:0x9bc9e8;scene.fog.color.set(c);scene.fog.near=on?1:75;scene.fog.far=on?70:180;scene.background.set(c)}
 addEventListener('mousedown',e=>{if(e.button===0&&!uiOpen&&caps().mine){if(damageAnimal()){holding=false;finishMine();return}holding=true;beginMine()}if(e.button===2&&playing&&!uiOpen&&caps().interact&&document.pointerLockElement){const r=ray();if(!r)return;const [hx,hy,hz]=r.hit,hitBlock=world.get(hx,hy,hz),sl=IS.inv[slot];if(hitBlock===B.WORKBENCH){invUI.open('bench');return}if(hitBlock===B.FURNACE){invUI.open('furnace',r.hit.join(','));return}
+ if((hitBlock===B.RAIL||hitBlock===B.POWERED_RAIL)&&sl&&sl.id===MAT.MINECART&&!cart){
+  cart={x:hx+.5,y:hy+1,z:hz+.5,railY:hy,yaw:P.yaw,speed:0,mesh:makeMinecart(hx+.5,hy+1,hz+.5)};
+  P.x=cart.x;P.y=cart.y;P.z=cart.z;if(mode==='survival'&&--sl.n<=0)IS.inv[slot]=null;dirty=true;ui();toast('Minecart mounted · W/S move · A/D steer · Space exit');return
+ }
+ if(hitBlock===B.LEVER_OFF||hitBlock===B.LEVER_ON){
+  const on=hitBlock===B.LEVER_OFF,next=on?B.LEVER_ON:B.LEVER_OFF;world.set(hx,hy,hz,next);mpBlockChange(hx,hy,hz,next);powerCircuit(hx,hy,hz,on);dirty=true;toast(on?'Circuit powered':'Circuit switched off');return
+ }
  if(sl&&isTool(sl.id)&&toolInfo(sl.id).type===4&&(hitBlock===B.GRASS||hitBlock===B.DIRT)){world.set(hx,hy,hz,B.FARMLAND);mpBlockChange(hx,hy,hz,B.FARMLAND);if(mode==='survival'&&wearTool(IS.inv,slot,false))toast('Your hoe broke!');dirty=true;ui();return}
  const seedCrop=sl&&({[MAT.WHEAT_SEEDS]:B.WHEAT_1,[MAT.CARROT_SEEDS]:B.CARROT_1,[MAT.POTATO_SEEDS]:B.POTATO_1})[sl.id];if(seedCrop&&hitBlock===B.FARMLAND&&world.get(hx,hy+1,hz)===0){world.set(hx,hy+1,hz,seedCrop);mpBlockChange(hx,hy+1,hz,seedCrop);if(mode==='survival'&&--sl.n<=0)IS.inv[slot]=null;dirty=true;ui();return}
  if(!r.prev)return;const [x,y,z]=r.prev;if(!sl||!isBlockItem(sl.id))return;world.set(x,y,z,sl.id);if(hits(P.x,P.y,P.z)){world.set(x,y,z,0);return}mpBlockChange(x,y,z,sl.id);if(mode==='survival'&&--sl.n<=0)IS.inv[slot]=null;dirty=true;ui()}});
@@ -694,7 +701,7 @@ async function doPersist(){if(readOnly||!curRec||!world)return;const rec=curRec;
  if(await cloudPush(snap)){dirty=false;status='saved + cloud'}else{dirty=!!(sb&&rec.owner!==GUEST);status=rec.owner===GUEST?'saved (this device)':'saved locally - cloud will retry'}}
 const persist=()=>saveChain=saveChain.then(doPersist,doPersist);     // saves run one at a time, so a delete can never be overtaken by a late save
 setInterval(()=>{if(playing&&dirty)persist()},15000);addEventListener('pagehide',()=>{if(playing)persist()});
-function unloadWorld(){clearWildlife();if(world)for(const c of world.chunks.values()){c.meshes.forEach(m=>scene.remove(m));(c.xm||[]).forEach(m=>scene.remove(m))}world=null;finishMine()}
+function unloadWorld(){clearWildlife();if(cart){scene.remove(cart.mesh);cart=null}pressedPlateKey=null;if(world)for(const c of world.chunks.values()){c.meshes.forEach(m=>scene.remove(m));(c.xm||[]).forEach(m=>scene.remove(m))}world=null;finishMine()}
 async function enterWorld(rec,spectate){
  if(curRec&&world&&!readOnly)await persist();                                     // 1. save the world we are leaving (inventory, position, edits ...)
  unloadWorld();const R=JSON.parse(JSON.stringify(rec));curRec=R;                  // 2. load the chosen world from its own record only
@@ -888,6 +895,42 @@ function damageAnimal(){
  }else toast(target.type[0].toUpperCase()+target.type.slice(1)+' · '+target.health+'/'+target.maxHealth+' health');
  dirty=true;ui();return true;
 }
+let cart=null,pressedPlateKey=null;
+const circuitDirs=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+function powerCircuit(x,y,z,on){
+ const queue=circuitDirs.map(([dx,dy,dz])=>[x+dx,y+dy,z+dz]),seen=new Set();let steps=0;
+ while(queue.length&&steps++<180){
+  const [px,py,pz]=queue.shift(),key=px+','+py+','+pz;if(seen.has(key))continue;seen.add(key);
+  const id=world.get(px,py,pz);
+  if(id===B.REDSTONE_WIRE){for(const [dx,dy,dz] of circuitDirs)queue.push([px+dx,py+dy,pz+dz]);continue}
+  if((on&&id===B.LAMP_OFF)||(!on&&id===B.LAMP_ON)){const next=on?B.LAMP_ON:B.LAMP_OFF;world.set(px,py,pz,next);mpBlockChange(px,py,pz,next);dirty=true}
+ }
+}
+function engineeringTick(){
+ if(!world||!playing||mode==='spectator')return;
+ const x=Math.floor(P.x),y=Math.floor(P.y-1),z=Math.floor(P.z),id=world.get(x,y,z),key=id===B.PRESSURE_PLATE_OFF||id===B.PRESSURE_PLATE_ON?x+','+y+','+z:null;
+ if(pressedPlateKey&&pressedPlateKey!==key){const [px,py,pz]=pressedPlateKey.split(',').map(Number);if(world.get(px,py,pz)===B.PRESSURE_PLATE_ON){world.set(px,py,pz,B.PRESSURE_PLATE_OFF);mpBlockChange(px,py,pz,B.PRESSURE_PLATE_OFF);powerCircuit(px,py,pz,false)}pressedPlateKey=null}
+ if(key&&pressedPlateKey!==key&&id===B.PRESSURE_PLATE_OFF){world.set(x,y,z,B.PRESSURE_PLATE_ON);mpBlockChange(x,y,z,B.PRESSURE_PLATE_ON);powerCircuit(x,y,z,true);pressedPlateKey=key;dirty=true}
+}
+function makeMinecart(x,y,z){
+ const g=new THREE.Group(),metal=new THREE.MeshStandardMaterial({color:0x69737c,metalness:.65,roughness:.4}),dark=new THREE.MeshStandardMaterial({color:0x252a30});
+ const body=new THREE.Mesh(new THREE.BoxGeometry(.9,.42,1.05),metal);body.position.y=.32;g.add(body);
+ const inside=new THREE.Mesh(new THREE.BoxGeometry(.72,.08,.82),dark);inside.position.set(0,.55,0);g.add(inside);
+ for(const xx of [-.43,.43])for(const zz of [-.34,.34]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,.1,10),dark);w.rotation.z=Math.PI/2;w.position.set(xx,.12,zz);g.add(w)}
+ g.position.set(x,y-.25,z);scene.add(g);return g;
+}
+function cartTick(dt){
+ if(!cart)return;
+ if(keys.Space){scene.remove(cart.mesh);cart=null;P.vx=P.vy=P.vz=0;P.y+=.25;toast('Left minecart');return}
+ const steer=(keys.KeyD?1:0)-(keys.KeyA?1:0);if(steer)cart.yaw+=steer*dt*1.5;
+ const drive=(keys.KeyW?1:0)-(keys.KeyS?1:0);cart.speed=Math.max(-3,Math.min(7,cart.speed+drive*dt*4));
+ if(Math.abs(cart.speed)>.015){
+  const nx=cart.x+Math.sin(cart.yaw)*cart.speed*dt,nz=cart.z+Math.cos(cart.yaw)*cart.speed*dt,rx=Math.floor(nx),rz=Math.floor(nz),rail=world.get(rx,cart.railY,rz);
+  if(rail===B.RAIL||rail===B.POWERED_RAIL){cart.x=nx;cart.z=nz;if(rail===B.POWERED_RAIL)cart.speed=Math.min(9,cart.speed+dt*3)}
+  else cart.speed=0;
+ }
+ cart.speed*=Math.max(0,1-dt*.28);P.x=cart.x;P.y=cart.y;P.z=cart.z;P.yaw=cart.yaw;P.vx=P.vy=P.vz=0;cart.mesh.position.set(cart.x,cart.y-.25,cart.z);cart.mesh.rotation.y=cart.yaw;
+}
 let farmingClock=0;
 function farmingTick(dt){
  if(!world||!playing||mode==='spectator')return;
@@ -927,11 +970,11 @@ function wildlifeTick(dt){
 let last=performance.now(),fps=60;
 (function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000)||.016;last=t;fps=fps*.9+.1/dt;if(playing)playSecs+=dt;if(world){world.wtex.offset.set((t*.00004)%1,(t*.00011)%1);world.wmat.opacity=.8+Math.sin(t*.0014)*.03}
  if(world&&playing){if(mode!=='spectator')for(const f of world.furnaces.values())if(furnaceTick(f,dt))dirty=true;invUI.tick(dt);if(world.xray)world.xmat.glow.opacity=.2+Math.sin(t*.004)*.08}
- if(playing){world.update(P.x,P.z,6);wildlifeTick(dt);farmingTick(dt);multiplayerTick(dt);const st=uiOpen?{swim:false}:mode==='spectator'?stepSpectator(P,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),up:!!keys.Space,down:!!(keys.ShiftLeft||keys.ShiftRight),yaw:P.yaw},dt):stepPlayer(P,world,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),space:!!keys.Space,sprint:!!keys.ShiftLeft,down:!!(fly?(keys.ShiftLeft||keys.ShiftRight):(keys.ControlLeft||keys.ControlRight)),fly,yaw:P.yaw},dt),inW=st.swim;
+ if(playing){world.update(P.x,P.z,6);wildlifeTick(dt);farmingTick(dt);engineeringTick();multiplayerTick(dt);const st=uiOpen?{swim:false}:mode==='spectator'?stepSpectator(P,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),up:!!keys.Space,down:!!(keys.ShiftLeft||keys.ShiftRight),yaw:P.yaw},dt):stepPlayer(P,world,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),space:!!keys.Space,sprint:!!keys.ShiftLeft,down:!!(fly?(keys.ShiftLeft||keys.ShiftRight):(keys.ControlLeft||keys.ControlRight)),fly,yaw:P.yaw},dt),inW=st.swim;
   cam.position.set(P.x,P.y+1.62,P.z);cam.rotation.set(P.pitch,P.yaw,0,'YXZ');biomeFinderTick(dt);viewModel.visible=mode!=='spectator';{const walking=Math.hypot(P.vx,P.vz)>.35,phase=t*.012;leftLeg.rotation.x=walking?Math.sin(phase)*.45:0;rightLeg.rotation.x=walking?Math.sin(phase+Math.PI)*.45:0;leftArm.rotation.x=walking?Math.sin(phase+Math.PI)*.18:0;rightArm.rotation.x=(holding?-.7:0)+(walking?Math.sin(phase+Math.PI)*.16:0)}{const cw=mode!=='spectator'&&camInWater();if(cw!==uwOn){uwOn=cw;setUnder(cw)}}const r=ray();sel.visible=!!r;if(r)sel.position.set(r.hit[0]+.5,r.hit[1]+.5,r.hit[2]+.5);
   if(mine){const current=ray(),same=current&&current.hit.join(',')===mine.pos;if(!same||world.get(...mine.hit)!==mine.block)finishMine();else{mine.elapsed+=dt;mine.snd=(mine.snd||0)+dt;if(mine.snd>.22){mine.snd=0;sfx('hit')}const progress=Math.min(1,mine.elapsed/mine.required);crack.visible=true;crack.position.set(mine.hit[0]+.5,mine.hit[1]+.5,mine.hit[2]+.5);crack.material.map=crackTex[Math.min(9,Math.floor(progress*10))];showMine(progress);if(progress>=1){const [x,y,z]=mine.hit,b=mine.block;breakBlock(x,y,z,b)}}}
   if(!mine&&holding)beginMine();if(mode!=='spectator')world.stepWater(10);
-  $('hud').textContent=`DIG BUILD · ${curRec?curRec.name+' · ':''}${mode==='spectator'?'SPECTATOR · X-RAY '+(xray?'ON':'OFF'):mode} · seed ${world.seed} · ${P.x|0},${P.y|0},${P.z|0} · ${fps|0}fps · wildlife: ${wildlife.animals.length} · ${mpConnected?'players: '+(mpPlayers.size+1)+' · ':'T chat · '}save: ${status}${fly&&mode==='creative'?' · FLIGHT ON (F off)':''}${uwOn?' · UNDERWATER':inW?' · SWIMMING':''}`}
+  $('hud').textContent=`DIG BUILD · ${curRec?curRec.name+' · ':''}${mode==='spectator'?'SPECTATOR · X-RAY '+(xray?'ON':'OFF'):mode} · seed ${world.seed} · ${P.x|0},${P.y|0},${P.z|0} · ${fps|0}fps · wildlife: ${wildlife.animals.length} · ${mpConnected?'players: '+(mpPlayers.size+1)+' · ':'T chat · '}save: ${status}${fly&&mode==='creative'?' · FLIGHT ON (F off)':''}${uwOn?' · UNDERWATER':inW?' · SWIMMING':''}${cart?' · MINECART (W/S move · A/D steer · Space exit)':''}`}
  renderer.render(scene,cam)})(last);
 
 </script></body></html>
