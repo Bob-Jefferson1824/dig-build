@@ -157,7 +157,7 @@ export class World{
   for(let x=0;x<S;x++)for(let z=0;z<S;z++){const wx=cx*S+x,wz=cz*S+z;
    const h=this.height(wx,wz);
    const biome=this.genVersion>=5?biomeAt(this.seed,wx,wz,this.genVersion):BIOME.FOREST;
-   const topY=h,coast=this.genVersion>=5&&h<=sea+3&&h>sea-2,river=this.genVersion>=6&&riverAt(this.seed,wx,wz);
+   const topY=h,coast=this.genVersion>=5&&h<=sea+3&&h>sea-2,river=this.genVersion>=6&&h>sea&&riverAt(this.seed,wx,wz);
    for(let y=0;y<=h;y++){let b=B.STONE;if(y===0)b=B.BEDROCK;else if(y>h-4)b=B.DIRT;
     if(y===h){
      if(coast||biome===BIOME.DESERT||biome===BIOME.OCEAN)b=B.SAND;
