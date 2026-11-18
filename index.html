@@ -391,7 +391,7 @@ const addRecipe=(out,n,pat,shapeless=false)=>RECIPES.push({out,n,pat,shapeless})
 (function(){const ST=MAT.STICK,woods=[[B.LOG,B.PLANKS],[B.BIRCH_LOG,B.BIRCH_PLANKS],[B.PINE_LOG,B.PINE_PLANKS],[B.JUNGLE_LOG,B.JUNGLE_PLANKS],[B.ACACIA_LOG,B.ACACIA_PLANKS],[B.MANGROVE_LOG,B.MANGROVE_PLANKS]],planks=woods.map(w=>w[1]);
  for(const [log,plank] of woods){addRecipe(plank,4,[[log]]);addRecipe(ST,4,[[plank],[plank]]);addRecipe(B.WORKBENCH,1,[plank,plank,plank,plank],true);}
  const materials=[...planks,B.COBBLE,MAT.IRON,MAT.GOLD,MAT.DIAMOND];
- for(const M of materials){const tier=planks.includes(M)?0:([B.COBBLE,MAT.IRON,MAT.GOLD,MAT.DIAMOND].indexOf(M)+1);addRecipe(toolId(0,tier),1,[[M,M,M],[0,ST,0],[0,ST,0]]);addRecipe(toolId(1,tier),1,[[M,M],[M,ST],[0,ST]]);addRecipe(toolId(2,tier),1,[[M],[ST],[ST]]);addRecipe(toolId(3,tier),1,[[M],[M],[ST]])}
+ for(const M of materials){const tier=planks.includes(M)?0:([B.COBBLE,MAT.IRON,MAT.GOLD,MAT.DIAMOND].indexOf(M)+1);addRecipe(toolId(0,tier),1,[[M,M,M],[0,ST,0],[0,ST,0]]);addRecipe(toolId(1,tier),1,[[M,M],[M,ST],[0,ST]]);addRecipe(toolId(2,tier),1,[[M],[ST],[ST]]);addRecipe(toolId(3,tier),1,[[M],[M],[ST]]);addRecipe(toolId(4,tier),1,[[M,M],[0,ST],[0,ST]])}
 })();
 addRecipe(B.FURNACE,1,[[B.COBBLE,B.COBBLE,B.COBBLE],[B.COBBLE,0,B.COBBLE],[B.COBBLE,B.COBBLE,B.COBBLE]]);
 addRecipe(B.STONE_BRICKS,4,[[B.STONE,B.STONE],[B.STONE,B.STONE]]);
