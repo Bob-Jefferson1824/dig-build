@@ -41,6 +41,8 @@ class M{constructor(){this.m=new Map()}get(x,y,z){return y<0?B.STONE:(this.m.get
 const lake=(bankTop)=>{const m=new M();for(let x=-6;x<=16;x++)for(let z=-10;z<=10;z++){m.set(x,0,z,B.STONE);const water=x>=0&&x<=5;for(let y=1;y<bankTop&&!water;y++)m.set(x,y,z,B.STONE);if(water)for(let y=1;y<=6;y++)m.set(x,y,z,B.WATER)}return m};
 const mkP=(x,y,z,yaw=-Math.PI/2)=>({x,y,z,vx:0,vy:0,vz:0,yaw,ground:false,blocked:false});
 const run=(P,m,inp,secs,cb)=>{let last;for(let i=0;i<secs*60;i++){last=stepPlayer(P,m,{fx:0,fz:0,space:false,sprint:false,down:false,fly:false,yaw:P.yaw,...inp},1/60);cb&&cb(P,last)}return last};
+ok('Creative flight moves vertically without gravity and Shift-style down input descends',()=>{const m=new M(),P=mkP(0,10,0);stepPlayer(P,m,{fx:0,fz:0,space:true,down:false,sprint:false,fly:true,yaw:0},.1);assert.ok(P.y>10,'Space did not lift player');const high=P.y;stepPlayer(P,m,{fx:0,fz:0,space:false,down:true,sprint:false,fly:true,yaw:0},.1);assert.ok(P.y<high,'down input did not lower player');assert.equal(P.vy,-9.5)});
+ok('Creative flight diagonal movement is normalised and uses consistent speed',()=>{const m=new M(),a=mkP(0,10,0),b=mkP(0,10,0);stepPlayer(a,m,{fx:0,fz:-1,fly:true,yaw:0},.1);stepPlayer(b,m,{fx:1,fz:-1,fly:true,yaw:0},.1);assert.ok(Math.abs(Math.hypot(a.vx,a.vz)-Math.hypot(b.vx,b.vz))<1e-9);assert.ok(Math.abs(Math.hypot(a.vx,a.vz)-9.5)<1e-9)});
 // hold input until the player is on the bank (x>6.6), then release everything and let them settle
 const exit=(P,m,inp,secs)=>{for(let i=0;i<secs*60&&P.x<6.6;i++)stepPlayer(P,m,{fx:0,fz:0,space:false,sprint:false,down:false,fly:false,yaw:P.yaw,...inp},1/60);run(P,m,{},1.5)};
 const dry=(m,P)=>!isWater(m.get(Math.floor(P.x),Math.floor(P.y+.2),Math.floor(P.z)));

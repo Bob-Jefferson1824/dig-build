@@ -10,10 +10,10 @@ export function stepPlayer(P,w,inp,dt){
  const fly=!!inp.fly,moving=inp.fx!==0||inp.fz!==0;
  const feetW=isWater(w.get(fl(P.x),fl(P.y+.2),fl(P.z))),bodyW=isWater(w.get(fl(P.x),fl(P.y+.9),fl(P.z))),headW=isWater(w.get(fl(P.x),fl(P.y+EYE),fl(P.z)));
  const swim=!fly&&(feetW||bodyW);
- let sp=(inp.sprint?SPRINT:WALK)*(fly?2:1);if(swim)sp=WALK*SWIM_SCALE;   // swimming is always slower than walking
+ let sp=fly?9.5:(inp.sprint?SPRINT:WALK);if(swim)sp=WALK*SWIM_SCALE;   // swimming is always slower than walking
  const l=Math.hypot(inp.fx,inp.fz)||1,fx=inp.fx/l,fz=inp.fz/l,c=Math.cos(inp.yaw),s=Math.sin(inp.yaw);
  P.vx=(fx*c+fz*s)*sp;P.vz=(-fx*s+fz*c)*sp;P.leap=Math.max(0,(P.leap||0)-dt);
- if(fly)P.vy=((inp.space?1:0)-(inp.sprint?1:0))*sp;
+ if(fly)P.vy=((inp.space?1:0)-(inp.down?1:0))*sp;
  else if(swim){
   if(P.leap>0)P.vy-=GRAV*dt;                                           // after a leap/climb: normal gravity so we can clear the edge
   else if(inp.space&&P.ground&&!headW){P.vy=JUMP;P.leap=.3}            // wading in shallows: ordinary jump
