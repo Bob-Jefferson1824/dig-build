@@ -358,9 +358,9 @@ const isBlockItem=id=>id>0&&id<100&&id!==B.WATER&&id!==B.FLOWING_WATER;
 const MATN={100:'Stick',101:'Iron Ingot',102:'Gold Ingot',103:'Diamond',104:'Coal',105:'Raw Mutton',106:'Raw Beef',107:'Raw Pork',108:'Raw Chicken',109:'Leather',110:'Feather',111:'Wool',112:'Wheat Seeds',113:'Carrot Seeds',114:'Potato Seeds',115:'Wheat',116:'Carrot',117:'Potato',118:'Minecart'};
 const itemName=id=>isTool(id)?TIERS[toolInfo(id).tier]+' '+TYPES[toolInfo(id).type]:MATN[id]||(INFO[id]&&INFO[id][0])||'Item';
 const allItems=()=>{const a=[];for(let i=1;i<100;i++)if(isBlockItem(i)&&INFO[i])a.push(i);a.push(100,101,102,103,104,105,106,107,108,109,110,111);a.push(112,113,114,115,116,117,118);for(let t=0;t<5;t++)for(let r=0;r<5;r++)a.push(toolId(t,r));return a};
-const EFFECT=[[B.STONE,B.COBBLE,B.BRICK,B.STONE_BRICKS,B.MOSSY_COBBLE,B.COAL_ORE,B.IRON_ORE,B.GOLD_ORE,B.DIAMOND_ORE,B.FURNACE],[B.LOG,B.PLANKS,B.BIRCH_LOG,B.BIRCH_PLANKS,B.PINE_LOG,B.PINE_PLANKS,B.JUNGLE_LOG,B.JUNGLE_PLANKS,B.ACACIA_LOG,B.ACACIA_PLANKS,B.MANGROVE_LOG,B.MANGROVE_PLANKS,B.WORKBENCH],[B.DIRT,B.GRASS,B.SAND,B.SNOW,B.MUD],[],[]];
+const EFFECT=[[B.STONE,B.COBBLE,B.BRICK,B.STONE_BRICKS,B.MOSSY_COBBLE,B.COAL_ORE,B.IRON_ORE,B.GOLD_ORE,B.DIAMOND_ORE,B.FURNACE,B.LAMP_OFF,B.LAMP_ON,B.RAIL,B.POWERED_RAIL],[B.LOG,B.PLANKS,B.BIRCH_LOG,B.BIRCH_PLANKS,B.PINE_LOG,B.PINE_PLANKS,B.JUNGLE_LOG,B.JUNGLE_PLANKS,B.ACACIA_LOG,B.ACACIA_PLANKS,B.MANGROVE_LOG,B.MANGROVE_PLANKS,B.WORKBENCH],[B.DIRT,B.GRASS,B.SAND,B.SNOW,B.MUD],[],[]];
 const toolSpeed=(id,block)=>{if(!id||!isTool(id))return 1;const i=toolInfo(id);return EFFECT[i.type].includes(block)?TIER.speed[i.tier]:.8};
-const DROPS={[B.GRASS]:B.DIRT,[B.STONE]:B.COBBLE,[B.COAL_ORE]:MAT.COAL,[B.DIAMOND_ORE]:MAT.DIAMOND,[B.WHEAT_1]:MAT.WHEAT_SEEDS,[B.WHEAT_2]:MAT.WHEAT_SEEDS,[B.WHEAT_3]:MAT.WHEAT,[B.CARROT_1]:MAT.CARROT_SEEDS,[B.CARROT_2]:MAT.CARROT,[B.POTATO_1]:MAT.POTATO_SEEDS,[B.POTATO_2]:MAT.POTATO};
+const DROPS={[B.LEVER_ON]:B.LEVER_OFF,[B.LAMP_ON]:B.LAMP_OFF,[B.PRESSURE_PLATE_ON]:B.PRESSURE_PLATE_OFF,[B.GRASS]:B.DIRT,[B.STONE]:B.COBBLE,[B.COAL_ORE]:MAT.COAL,[B.DIAMOND_ORE]:MAT.DIAMOND,[B.WHEAT_1]:MAT.WHEAT_SEEDS,[B.WHEAT_2]:MAT.WHEAT_SEEDS,[B.WHEAT_3]:MAT.WHEAT,[B.CARROT_1]:MAT.CARROT_SEEDS,[B.CARROT_2]:MAT.CARROT,[B.POTATO_1]:MAT.POTATO_SEEDS,[B.POTATO_2]:MAT.POTATO};
 // Leaves and glass do not drop themselves. Stone-family blocks require a pickaxe for drops.
 const PICKAXE_DROPS=new Set([B.STONE,B.COBBLE,B.BRICK,B.STONE_BRICKS,B.MOSSY_COBBLE,B.COAL_ORE,B.IRON_ORE,B.GOLD_ORE,B.DIAMOND_ORE,B.FURNACE]);
 const dropOf=(b,held)=>{if(b===B.LEAVES||b===B.GLASS)return 0;if(PICKAXE_DROPS.has(b)&&(!held||!isTool(held)||toolInfo(held).type!==0))return 0;return DROPS[b]||b};
@@ -397,6 +397,13 @@ addRecipe(B.FURNACE,1,[[B.COBBLE,B.COBBLE,B.COBBLE],[B.COBBLE,0,B.COBBLE],[B.COB
 addRecipe(B.STONE_BRICKS,4,[[B.STONE,B.STONE],[B.STONE,B.STONE]]);
 addRecipe(B.MOSSY_COBBLE,1,[[B.COBBLE,B.LEAVES],[B.LEAVES,B.COBBLE]]);
 addRecipe(MAT.CARROT_SEEDS=113,2,[[116]]);addRecipe(MAT.POTATO_SEEDS=114,2,[[117]]);
+addRecipe(B.LEVER_OFF,1,[[MAT.STICK],[B.COBBLE]]);
+addRecipe(B.LAMP_OFF,1,[[B.GLASS,B.GLASS,B.GLASS],[B.GLASS,MAT.COAL,B.GLASS],[B.GLASS,B.GLASS,B.GLASS]]);
+addRecipe(B.PRESSURE_PLATE_OFF,1,[[B.PLANKS,B.PLANKS]]);
+addRecipe(B.REDSTONE_WIRE,8,[[MAT.IRON,MAT.COAL,MAT.IRON]]);
+addRecipe(B.RAIL,8,[[MAT.IRON,0,MAT.IRON],[MAT.IRON,MAT.STICK,MAT.IRON],[MAT.IRON,0,MAT.IRON]]);
+addRecipe(B.POWERED_RAIL,6,[[MAT.GOLD,0,MAT.GOLD],[MAT.GOLD,MAT.STICK,MAT.GOLD],[MAT.GOLD,0,MAT.GOLD]]);
+addRecipe(MAT.MINECART,1,[[MAT.IRON,0,MAT.IRON],[MAT.IRON,MAT.IRON,MAT.IRON]]);
 // ---- furnace: {s:[input,fuel,output], prog, burn, burnMax}. Fuel is only burned while something is actually smelting. ----
 const SMELT={[B.IRON_ORE]:MAT.IRON,[B.GOLD_ORE]:MAT.GOLD},FUEL={[MAT.COAL]:48},SMELT_TIME=6;
 const newFurnace=()=>({s:[null,null,null],prog:0,burn:0,burnMax:0});
