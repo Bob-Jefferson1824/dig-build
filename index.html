@@ -284,7 +284,7 @@ function caveEntranceAt(x,y,z,seed,surface){
   const depth=surface-y;
   // A wide, irregular entrance continues as a descending shaft deep enough to intersect the cave network.
   const radius=depth<4?3.0:depth<14?3.8:depth<30?3.1:depth<48?2.35:0;
-  return depth>=0&&depth<=48&&d<radius+wobble;
+  if(depth>=0&&depth<=48&&d<radius+wobble)return true;
  }
  return false;
 }
