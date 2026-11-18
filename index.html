@@ -230,6 +230,30 @@ function cube(a,x,y,z,h,col,lines){const b=a.p.length/3;for(const [dx,dy,dz] of 
  a.i.push(...(lines?[0,1,1,2,2,3,3,0,4,5,5,6,6,7,7,4,0,4,1,5,2,6,3,7]:[0,2,1,0,3,2,4,5,6,4,6,7,0,1,5,0,5,4,2,3,7,2,7,6,0,4,7,0,7,3,1,2,6,1,6,5]).map(v=>v+b))}
 const N4=[[1,0],[-1,0],[0,1],[0,-1]],TUBE=.0016,CAV=.76,PT=.68,POOLY=10;
 function hash3(x,y,z,s){let h=(x*374761393+y*668265263+z*2147483629+s*982451653)|0;h=(h^(h>>>13))*1274126177|0;return((h^(h>>>16))>>>0)/4294967295}
+function segmentDistanceSq(px,py,pz,ax,ay,az,bx,by,bz){
+ const vx=bx-ax,vy=by-ay,vz=bz-az,wx=px-ax,wy=py-ay,wz=pz-az,den=vx*vx+vy*vy+vz*vz,t=den?Math.max(0,Math.min(1,(wx*vx+wy*vy+wz*vz)/den)):0;
+ const dx=px-(ax+vx*t),dy=py-(ay+vy*t),dz=pz-(az+vz*t);return dx*dx+dy*dy+dz*dz;
+}
+function caveNode(ix,iy,iz,seed){
+ const h=n=>hash3(ix,iy,iz,seed+n);
+ return {x:ix*44+8+h(1)*28,y:12+iy*28+(h(2)-.5)*8,z:iz*44+8+h(3)*28};
+}
+// Each chamber links to eastern and southern neighbours; occasional vertical links connect cave levels.
+function tunnelAt(x,y,z,seed){
+ const ix=Math.floor(x/44),iy=Math.floor((y-12)/28),iz=Math.floor(z/44);
+ for(let dz=-1;dz<=1;dz++)for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+  const gx=ix+dx,gy=iy+dy,gz=iz+dz,a=caveNode(gx,gy,gz,seed),rx=x-a.x,ry=y-a.y,rz=z-a.z;
+  const large=hash3(gx,gy,gz,seed+80)<.075,room=large?8.2+hash3(gx,gy,gz,seed+81)*2:4.0+hash3(gx,gy,gz,seed+80)*1.6;
+  if(rx*rx+ry*ry+rz*rz<room*room)return true;
+  for(const [ex,ey,ez,kind] of [[1,0,0,1],[0,0,1,2],[0,1,0,3]]){
+   if(kind===3&&hash3(gx,gy,gz,seed+90)>.34)continue;
+   const b=caveNode(gx+ex,gy+ey,gz+ez,seed),h=n=>hash3(gx,gy,gz,seed+n+kind*101);
+   const mx=(a.x+b.x)/2+(h(4)-.5)*7,my=(a.y+b.y)/2+(h(5)-.5)*4,mz=(a.z+b.z)/2+(h(6)-.5)*7,r=2.0+h(7)*.9,r2=r*r;
+   if(segmentDistanceSq(x,y,z,a.x,a.y,a.z,mx,my,mz)<r2||segmentDistanceSq(x,y,z,mx,my,mz,b.x,b.y,b.z)<r2)return true;
+  }
+ }
+ return false;
+}
 // lattice value noise (trilinear) cached for one chunk (+1 block border). f(wx,y,wz) is identical no matter which chunk builds it.
 function field(seed,sp,spy,cx,cz){const x0=Math.floor((cx*S-1)/sp),z0=Math.floor((cz*S-1)/sp),nx=Math.floor((cx*S+S)/sp)-x0+2,nz=Math.floor((cz*S+S)/sp)-z0+2,ny=Math.floor(H/spy)+2,o=nx*ny,v=new Float32Array(nx*nz*ny);
  for(let k=0;k<nz;k++)for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)v[(k*ny+j)*nx+i]=hash3(x0+i,j,z0+k,seed);
@@ -289,7 +313,7 @@ class World{
  carve(d,c,cx,cz,x,z,h){const sea=this.sea,wx=cx*S+x,wz=cz*S+z,at=(dx,dz)=>c.hs[(z+dz+1)*18+x+dx+1];
   let lim=this.genVersion>=7?h-12:(h>sea+4?h:h-4);for(const [dx,dz] of N4){const hn=at(dx,dz);if(hn<=sea)lim=Math.min(lim,hn-3)}   // never open into lakes/rivers: keep rock between caves and surface water
   const I=y=>(y*S+z)*S+x,pm=c.P(wx,0,wz)>PT;let wall=false;if(!pm)for(const [dx,dz] of N4)if(c.P(wx+dx,0,wz+dz)>PT)wall=true;
-  for(let y=this.genVersion>=5?2:4;y<=lim;y++){let open;if(this.genVersion>=5){const a=c.A(wx,y,wz),b=c.Bf(wx,y,wz),wide=c.C(wx,y,wz),detail=c.D(wx,y,wz);const caveDensity=a*.36+b*.27+wide*.13+(detail-.5)*.48;open=caveDensity>=.565}else if(this.genVersion>=4){const a=c.A(wx,y,wz),b=c.Bf(wx,y,wz),wide=c.C(wx,y,wz),detail=c.D(wx,y,wz);const caveDensity=a*.42+b*.28+wide*.20+(detail-.5)*.18;open=caveDensity>=.535}else{const a=c.A(wx,y,wz)-.5,b=c.Bf(wx,y,wz)-.5;open=a*a+b*b<TUBE||c.C(wx,y,wz)>CAV}if(!open)continue;
+  for(let y=this.genVersion>=7?10:this.genVersion>=5?2:4;y<=lim;y++){let open;if(this.genVersion>=7){open=tunnelAt(wx,y,wz,this.seed)}else if(this.genVersion>=5){const a=c.A(wx,y,wz),b=c.Bf(wx,y,wz),wide=c.C(wx,y,wz),detail=c.D(wx,y,wz);const caveDensity=a*.36+b*.27+wide*.13+(detail-.5)*.48;open=caveDensity>=.565}else if(this.genVersion>=4){const a=c.A(wx,y,wz),b=c.Bf(wx,y,wz),wide=c.C(wx,y,wz),detail=c.D(wx,y,wz);const caveDensity=a*.42+b*.28+wide*.20+(detail-.5)*.18;open=caveDensity>=.535}else{const a=c.A(wx,y,wz)-.5,b=c.Bf(wx,y,wz)-.5;open=a*a+b*b<TUBE||c.C(wx,y,wz)>CAV}if(!open)continue;
    if(y<=POOLY){if(pm){d[I(y)]=B.WATER;continue}if(wall)continue}   // pools are walled in so water never touches open air sideways
    d[I(y)]=0}
   if(this.genVersion>=7&&h>sea+5)for(let y=Math.max(2,h-20);y<=h;y++)if(caveEntranceAt(wx,y,wz,this.seed,h))d[I(y)]=0;
@@ -585,7 +609,7 @@ function vmBox(parent,x,y,z,w,h,d,color){const m=new THREE.Mesh(new THREE.BoxGeo
 const leftArm=new THREE.Group(),rightArm=new THREE.Group();viewModel.add(leftArm,rightArm);
 for(const [arm,x] of [[leftArm,-.48],[rightArm,.48]]){arm.position.set(x,-.35,-.62);vmBox(arm,0,-.13,0,.19,.38,.2,0x527d55);vmBox(arm,0,-.34,-.015,.17,.15,.18,0xd8a477)}
 const leftLeg=new THREE.Group(),rightLeg=new THREE.Group();viewModel.add(leftLeg,rightLeg);
-for(const [leg,x] of [[leftLeg,-.17],[rightLeg,.17]]){leg.position.set(x,-1.05,-.42);vmBox(leg,0,-.12,0,.19,.48,.2,0x35475a);vmBox(leg,0,-.37,-.035,.2,.13,.29,0x292a2d)}
+for(const [leg,x] of [[leftLeg,-.15],[rightLeg,.15]]){leg.position.set(x,-.25,-.9);vmBox(leg,0,-.12,0,.2,.42,.22,0x35475a);vmBox(leg,0,-.36,-.045,.22,.14,.31,0x292a2d)}
 const heldView=new THREE.Mesh(new THREE.PlaneGeometry(.27,.27),new THREE.MeshBasicMaterial({transparent:true,depthTest:false,side:THREE.DoubleSide}));heldView.position.set(.39,-.37,-.78);heldView.rotation.set(-.18,-.28,-.28);heldView.renderOrder=22;viewModel.add(heldView);
 function syncHeldView(){const item=IS.inv&&IS.inv[slot];if(!item){heldView.visible=false;return}heldView.visible=true;const tex=new THREE.TextureLoader().load(iconURL(item.id));tex.magFilter=tex.minFilter=THREE.NearestFilter;const old=heldView.material.map;heldView.material.map=tex;heldView.material.needsUpdate=true;if(old)old.dispose()}
 const resize=()=>{renderer.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()};addEventListener('resize',resize);resize();
