@@ -95,7 +95,7 @@ export function biomeAt(seed,wx,wz,gen=5){
  const climateScale=gen>=6?1.75:1,temperature=fbm(wx/(520*climateScale),wz/(520*climateScale),seed+1701),moisture=fbm(wx/(390*climateScale),wz/(390*climateScale),seed+2701),rare=fbm(wx/(700*climateScale),wz/(700*climateScale),seed+3701);
  const coast=fbm(wx/(gen>=6?900:420),wz/(gen>=6?900:420),seed+91);
  if(gen>=6&&coast<.30)return BIOME.OCEAN;
- if(rare>.84&&moisture>.58&&temperature>.38&&temperature<.72)return BIOME.MUSHROOM_FIELDS;
+ if(rare>(gen>=7?.78:.84)&&moisture>.54&&temperature>.34&&temperature<.76)return BIOME.MUSHROOM_FIELDS;
  if(gen>=6?coast>=.30&&coast<.35:coast>=.22&&coast<.27)return BIOME.BEACH;
  if(temperature<.27)return BIOME.SNOWY_MOUNTAINS;
  if(temperature>.69&&moisture<.39)return BIOME.DESERT;
