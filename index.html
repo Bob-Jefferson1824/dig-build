@@ -205,6 +205,16 @@ function makeAtlas(){const c=document.createElement('canvas');c.width=NT*16;c.he
  {const o=21*16;for(let y=0;y<16;y++)for(let x=0;x<16;x++){const v=.88+rnd()*.22;g.fillStyle=`rgb(${[132,134,138].map(k=>Math.min(255,k*v|0))})`;g.fillRect(o+x,y,1,1)}g.fillStyle='#77797d';g.fillRect(o,0,16,1);g.fillRect(o,8,16,1);g.fillRect(o+7,0,1,8);g.fillRect(o+3,9,1,7);g.fillStyle='#aeb0b3';g.fillRect(o+1,1,5,1);g.fillRect(o+8,9,7,1)}
  // Mossy cobblestone with irregular stones and green crevices.
  {const o=22*16;for(let y=0;y<16;y++)for(let x=0;x<16;x++){const v=.82+rnd()*.3;g.fillStyle=`rgb(${[105,107,105].map(k=>Math.min(255,k*v|0))})`;g.fillRect(o+x,y,1,1)}for(const [x,y,w,h] of [[1,1,5,4],[9,2,5,3],[5,9,6,5],[12,11,3,3]]){g.fillStyle='#4e7540';g.fillRect(o+x,y,w,h);g.fillStyle='#72965a';g.fillRect(o+x+1,y+1,Math.max(1,w-2),1)}g.fillStyle='#55585a';for(const [x,y,w] of [[0,6,6],[8,6,8],[6,14,5]])g.fillRect(o+x,y,w,1)}
+ // Dedicated bark/plank patterns for the additional wood species, plus a rough mud tile.
+ for(const [log,plank,bark,wood] of [[28,29,[205,190,150],[205,185,130]],[30,31,[92,67,43],[145,105,65]],[32,33,[115,75,42],[170,115,65]],[34,35,[120,75,45],[195,112,55]],[36,37,[92,55,48],[145,75,65]]]){
+  for(let y=0;y<16;y++)for(let x=0;x<16;x++){
+   const v=.88+hash(x,y,log)*.24,grain=x%5===0||x%7===0;
+   g.fillStyle=`rgb(${(grain?bark:wood).map(k=>Math.min(255,k*v)|0)})`;g.fillRect(log*16+x,y,1,1);
+   const pv=.88+hash(x,y,plank)*.2,edge=(y%5===0);
+   g.fillStyle=`rgb(${wood.map(k=>Math.min(255,k*(edge?.78:pv))|0)})`;g.fillRect(plank*16+x,y,1,1);
+  }
+ }
+ for(let y=0;y<16;y++)for(let x=0;x<16;x++){const v=.82+hash(x,y,38)*.3;g.fillStyle=`rgb(${[105,79,55].map(k=>Math.min(255,k*v)|0)})`;g.fillRect(38*16+x,y,1,1)}
  const t=new THREE.CanvasTexture(c);t.magFilter=t.minFilter=THREE.NearestFilter;t.colorSpace=THREE.SRGBColorSpace;return t}
 // Water has its own 2-tile texture (source | flowing) that wraps vertically so it can scroll for a subtle wave effect.
 function makeWaterTex(){const c=document.createElement('canvas');c.width=16;c.height=16;const g=c.getContext('2d'),TP=Math.PI*2;
@@ -297,7 +307,7 @@ class World{
     else if(biome==='Swamp'&&h>sea-2&&r<.045){for(let t=0;t<2+(r*20|0)&&h+t+1<H;t++)d[I(x,h+1+t,z)]=B.REEDS}
     else if(biome==='Mushroom Fields'&&h>sea+1&&x>=2&&x<=13&&z>=2&&z<=13&&r<.026){const stem=2+(hash(wx,wz,this.seed+511)*3|0);for(let t=0;t<stem;t++)d[I(x,h+1+t,z)]=B.MUSHROOM_STEM;for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)if(dx*dx+dz*dz<=4)d[I(x+dx,h+stem,z+dz)]=B.MUSHROOM_CAP}
     else if(biome!=='Beach and Coast'&&h>sea+1&&h<H-12&&x>2&&x<13&&z>2&&z<13){
-     const chance=biome==='Jungle'?.085:biome==='Forest'?.035:biome==='Autumn Forest'?.04:biome==='Taiga'?.055:biome==='Swamp'?.025:biome==='Plains'?.006:.012;
+     const chance=biome==='Jungle'?.085:biome==='Forest'?.035:biome==='Autumn Forest'?.04:biome==='Taiga'?.055:biome==='Swamp'?.04:biome==='Plains'?.006:.012;
      if(r<chance){const jungle=biome==='Jungle',taiga=biome==='Taiga'||biome==='Snowy Mountains',autumn=biome==='Autumn Forest',swamp=biome==='Swamp',birch=biome==='Forest'&&hash(wx,wz,this.seed+513)<.24,wood=jungle?B.JUNGLE_LOG:taiga?B.PINE_LOG:autumn?B.ACACIA_LOG:swamp?B.MANGROVE_LOG:birch?B.BIRCH_LOG:B.LOG,trunk=(jungle?8:taiga?7:autumn?5:swamp?4:birch?6:4)+(hash(wx,wz,this.seed+512)*3|0);
       for(let t=1;t<=trunk;t++)d[I(x,h+t,z)]=wood;
       const radius=jungle?3:taiga?1:swamp?2:2,leaf=autumn?B.AUTUMN_LEAVES:B.LEAVES;
