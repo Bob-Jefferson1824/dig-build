@@ -69,7 +69,7 @@ addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('mousemove',e=>{if(document.pointerLockElement){P.yaw-=e.movementX*.0022;P.pitch=Math.max(-1.55,Math.min(1.55,P.pitch-e.movementY*.0022))}});
 // ================= world management: many independent worlds, each with its own id and its own save =================
 let curRec=null,curOwner=GUEST,playSecs=0,saveChain=Promise.resolve();
-const biomeFinder=createBiomeFinder({getWorld:()=>world,getPlayer:()=>P,getMode:()=>mode,getWorldKey:()=>curRec?String(curRec.owner||'guest')+'|'+String(curRec.id):'unknown-world',toast});
+const biomeFinder=createBiomeFinder({getWorld:()=>world,getPlayer:()=>P,getMode:()=>mode,getWorldKey:()=>curRec?String(curRec.owner||'guest')+'|'+String(curRec.id):'unknown-world',toast,onOpen:()=>{if(document.pointerLockElement)document.exitPointerLock()},onClose:()=>{if(playing&&!uiOpen)$('c').requestPointerLock()}});
 const ownerNow=async()=>{try{const u=sb&&await user();return u?u.id:GUEST}catch(e){return GUEST}};
 async function cloudPush(rec){if(!sb||rec.owner===GUEST)return false;try{const u=await user();if(!u||u.id!==rec.owner)return false;await cloudPut(sb,u.id,rec);await markCloud(rec.owner,rec.id,rec.lastPlayed);return true}catch(e){return false}}
 async function doPersist(){if(readOnly||!curRec||!world)return;const rec=curRec;      // Spectator sessions never write anything
