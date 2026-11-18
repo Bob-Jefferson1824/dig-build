@@ -288,7 +288,7 @@ class World{
   for(let x=0;x<S;x++)for(let z=0;z<S;z++){const wx=cx*S+x,wz=cz*S+z;
    const biome=this.genVersion>=5?biomeAt(this.seed,wx,wz,this.genVersion):'Forest';const h=heightAt(this.seed,wx,wz,this.genVersion,sea);
    for(let y=0;y<=h;y++){let b=B.STONE;if(y===0)b=B.BEDROCK;else if(y>h-4)b=B.DIRT;
-    if(y===h){if(this.genVersion>=5){if(biome==='Desert'||biome==='Beach and Coast')b=B.SAND;else if(biome==='Snowy Mountains'||h>46)b=B.SNOW;else if(biome==='Swamp')b=B.DIRT;else b=B.GRASS}else b=h<=sea+1?B.SAND:h>46?B.SNOW:B.GRASS}d[I(x,y,z)]=b}
+    if(y===h){if(this.genVersion>=5){if(biome==='Desert'||biome==='Beach and Coast')b=B.SAND;else if(biome==='Snowy Mountains'||h>46)b=B.SNOW;else if(biome==='Swamp')b=B.MUD;else b=B.GRASS}else b=h<=sea+1?B.SAND:h>46?B.SNOW:B.GRASS}d[I(x,y,z)]=b}
    const waterTop=this.genVersion>=7&&riverAt(this.seed,wx,wz)?h+3:sea;for(let y=h+1;y<=waterTop;y++)d[I(x,y,z)]=B.WATER;
    if(g3)this.carve(d,g3,cx,cz,x,z,h);
    if(this.genVersion>=5){
@@ -298,11 +298,11 @@ class World{
     else if(biome==='Mushroom Fields'&&h>sea+1&&x>=2&&x<=13&&z>=2&&z<=13&&r<.026){const stem=2+(hash(wx,wz,this.seed+511)*3|0);for(let t=0;t<stem;t++)d[I(x,h+1+t,z)]=B.MUSHROOM_STEM;for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)if(dx*dx+dz*dz<=4)d[I(x+dx,h+stem,z+dz)]=B.MUSHROOM_CAP}
     else if(biome!=='Beach and Coast'&&h>sea+1&&h<H-12&&x>2&&x<13&&z>2&&z<13){
      const chance=biome==='Jungle'?.085:biome==='Forest'?.035:biome==='Autumn Forest'?.04:biome==='Taiga'?.055:biome==='Swamp'?.025:biome==='Plains'?.006:.012;
-     if(r<chance){const jungle=biome==='Jungle',taiga=biome==='Taiga',autumn=biome==='Autumn Forest',swamp=biome==='Swamp',trunk=(jungle?8:taiga?7:autumn?5:swamp?4:4)+(hash(wx,wz,this.seed+512)*3|0);
-      for(let t=1;t<=trunk;t++)d[I(x,h+t,z)]=B.LOG;
-      const radius=jungle?3:taiga?1:2,leaf=autumn?B.AUTUMN_LEAVES:B.LEAVES;
+     if(r<chance){const jungle=biome==='Jungle',taiga=biome==='Taiga'||biome==='Snowy Mountains',autumn=biome==='Autumn Forest',swamp=biome==='Swamp',birch=biome==='Forest'&&hash(wx,wz,this.seed+513)<.24,wood=jungle?B.JUNGLE_LOG:taiga?B.PINE_LOG:autumn?B.ACACIA_LOG:swamp?B.MANGROVE_LOG:birch?B.BIRCH_LOG:B.LOG,trunk=(jungle?8:taiga?7:autumn?5:swamp?4:birch?6:4)+(hash(wx,wz,this.seed+512)*3|0);
+      for(let t=1;t<=trunk;t++)d[I(x,h+t,z)]=wood;
+      const radius=jungle?3:taiga?1:swamp?2:2,leaf=autumn?B.AUTUMN_LEAVES:B.LEAVES;
       for(let dy=trunk-2;dy<=trunk+2;dy++){const rad=dy===trunk+2?1:radius;for(let dx=-rad;dx<=rad;dx++)for(let dz=-rad;dz<=rad;dz++)if(dx*dx+dz*dz<=rad*rad+1&&!d[I(x+dx,h+dy,z+dz)])d[I(x+dx,h+dy,z+dz)]=leaf}
-      if(swamp)for(const [dx,dz] of [[-1,0],[1,0],[0,-1],[0,1]])for(let t=0;t<2;t++)if(!d[I(x+dx,h+t,z+dz)])d[I(x+dx,h+t,z+dz)]=B.LOG;
+      if(swamp)for(const [dx,dz] of [[-1,0],[1,0],[0,-1],[0,1]])for(let t=0;t<3;t++)if(!d[I(x+dx,h+t,z+dz)])d[I(x+dx,h+t,z+dz)]=B.MANGROVE_LOG;
      }
     }
    }else if(h>sea+1&&h<40&&(!g3||d[I(x,h,z)])&&x>2&&x<13&&z>2&&z<13&&hash(wx,wz,this.seed+99)<.012){for(let t=1;t<=5;t++)d[I(x,h+t,z)]=B.LOG;
@@ -348,7 +348,7 @@ const isBlockItem=id=>id>0&&id<100&&id!==B.WATER&&id!==B.FLOWING_WATER;
 const MATN={100:'Stick',101:'Iron Ingot',102:'Gold Ingot',103:'Diamond',104:'Coal',105:'Raw Mutton',106:'Raw Beef',107:'Raw Pork',108:'Raw Chicken',109:'Leather',110:'Feather',111:'Wool'};
 const itemName=id=>isTool(id)?TIERS[toolInfo(id).tier]+' '+TYPES[toolInfo(id).type]:MATN[id]||(INFO[id]&&INFO[id][0])||'Item';
 const allItems=()=>{const a=[];for(let i=1;i<100;i++)if(isBlockItem(i)&&INFO[i])a.push(i);a.push(100,101,102,103,104,105,106,107,108,109,110,111);for(let t=0;t<4;t++)for(let r=0;r<5;r++)a.push(toolId(t,r));return a};
-const EFFECT=[[B.STONE,B.COBBLE,B.BRICK,B.STONE_BRICKS,B.MOSSY_COBBLE,B.BIRCH_LOG,B.BIRCH_PLANKS,B.PINE_LOG,B.PINE_PLANKS,B.JUNGLE_LOG,B.JUNGLE_PLANKS,B.ACACIA_LOG,B.ACACIA_PLANKS,B.MANGROVE_LOG,B.MANGROVE_PLANKS,B.COAL_ORE,B.IRON_ORE,B.GOLD_ORE,B.DIAMOND_ORE,B.FURNACE],[B.LOG,B.PLANKS,B.BIRCH_LOG,B.BIRCH_PLANKS,B.PINE_LOG,B.PINE_PLANKS,B.JUNGLE_LOG,B.JUNGLE_PLANKS,B.ACACIA_LOG,B.ACACIA_PLANKS,B.MANGROVE_LOG,B.MANGROVE_PLANKS,B.WORKBENCH],[B.DIRT,B.GRASS,B.SAND,B.SNOW,B.MUD],[]];
+const EFFECT=[[B.STONE,B.COBBLE,B.BRICK,B.STONE_BRICKS,B.MOSSY_COBBLE,B.COAL_ORE,B.IRON_ORE,B.GOLD_ORE,B.DIAMOND_ORE,B.FURNACE],[B.LOG,B.PLANKS,B.BIRCH_LOG,B.BIRCH_PLANKS,B.PINE_LOG,B.PINE_PLANKS,B.JUNGLE_LOG,B.JUNGLE_PLANKS,B.ACACIA_LOG,B.ACACIA_PLANKS,B.MANGROVE_LOG,B.MANGROVE_PLANKS,B.WORKBENCH],[B.DIRT,B.GRASS,B.SAND,B.SNOW,B.MUD],[]];
 const toolSpeed=(id,block)=>{if(!id||!isTool(id))return 1;const i=toolInfo(id);return EFFECT[i.type].includes(block)?TIER.speed[i.tier]:.8};
 const DROPS={[B.GRASS]:B.DIRT,[B.STONE]:B.COBBLE,[B.COAL_ORE]:MAT.COAL,[B.DIAMOND_ORE]:MAT.DIAMOND};
 // Leaves and glass do not drop themselves. Stone-family blocks require a pickaxe for drops.
@@ -581,8 +581,8 @@ const crackTex=(()=>{let r=4242;const rnd=()=>(r=(r*16807)%2147483647)/214748364
 const crack=new THREE.Mesh(new THREE.BoxGeometry(1.008,1.008,1.008),new THREE.MeshBasicMaterial({map:crackTex[0],transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));crack.visible=false;crack.renderOrder=3;scene.add(crack);
 let world,mode='survival',name='world',playing=false,slot=0,fly=false,dirty=false,wid,status='-',mine=null,holding=false,uwOn=false,denyKey='',xray=true,readOnly=false;const caps=()=>MODES[mode]||MODES.survival;
 const P={x:8,y:50,z:8,vx:0,vy:0,vz:0,yaw:0,pitch:0,ground:false};
-const IS={inv:newInv(),craft:Array(9).fill(null),held:null};let uiOpen=false;const CREATIVE_START=[B.GRASS,B.DIRT,B.STONE,B.PLANKS,B.LOG,B.COBBLE,B.GLASS,B.BRICK,B.WORKBENCH,B.STONE_BRICKS,B.MOSSY_COBBLE];
-const mineTime={[B.GRASS]:.55,[B.DIRT]:.5,[B.SAND]:.45,[B.SNOW]:.3,[B.LEAVES]:.25,[B.GLASS]:.25,[B.PLANKS]:1.0,[B.LOG]:1.3,[B.BRICK]:2.0,[B.STONE]:2.0,[B.WORKBENCH]:1.2,[B.COAL_ORE]:2.6,[B.IRON_ORE]:3.0,[B.GOLD_ORE]:3.2,[B.DIAMOND_ORE]:3.6,[B.FURNACE]:2.2,[B.COBBLE]:2.3,[B.BEDROCK]:Infinity};
+const IS={inv:newInv(),craft:Array(9).fill(null),held:null};let uiOpen=false;const CREATIVE_START=[B.GRASS,B.DIRT,B.STONE,B.PLANKS,B.LOG,B.BIRCH_LOG,B.PINE_LOG,B.JUNGLE_LOG,B.ACACIA_LOG,B.MANGROVE_LOG,B.COBBLE,B.GLASS,B.BRICK,B.WORKBENCH,B.STONE_BRICKS,B.MOSSY_COBBLE,B.MUD];
+const mineTime={[B.GRASS]:.55,[B.DIRT]:.5,[B.SAND]:.45,[B.SNOW]:.3,[B.LEAVES]:.25,[B.GLASS]:.25,[B.PLANKS]:1.0,[B.LOG]:1.3,[B.BIRCH_LOG]:1.3,[B.BIRCH_PLANKS]:1.0,[B.PINE_LOG]:1.3,[B.PINE_PLANKS]:1.0,[B.JUNGLE_LOG]:1.3,[B.JUNGLE_PLANKS]:1.0,[B.ACACIA_LOG]:1.3,[B.ACACIA_PLANKS]:1.0,[B.MANGROVE_LOG]:1.3,[B.MANGROVE_PLANKS]:1.0,[B.MUD]:.5,[B.BRICK]:2.0,[B.STONE]:2.0,[B.WORKBENCH]:1.2,[B.COAL_ORE]:2.6,[B.IRON_ORE]:3.0,[B.GOLD_ORE]:3.2,[B.DIAMOND_ORE]:3.6,[B.FURNACE]:2.2,[B.COBBLE]:2.3,[B.BEDROCK]:Infinity};
 const keys={};addEventListener('keydown',e=>{if(chatOpen){keys[e.code]=false;return}keys[e.code]=true;if(e.code.startsWith('Digit')&&e.code!=='Digit0'&&caps().inventory){slot=+e.code.slice(5)-1;finishMine();ui()}if(e.code==='KeyF'&&mode==='creative'&&!uiOpen&&!e.repeat){fly=!fly;P.vy=0;toast(fly?'Creative flight enabled · Space up · Shift down':'Creative flight disabled')}});
 addEventListener('keyup',e=>keys[e.code]=false);
 // ---- Stage 7: multiplayer transport + T-to-chat ----
