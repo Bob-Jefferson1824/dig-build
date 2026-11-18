@@ -7,7 +7,7 @@ function fbm(x,z,s){return noise(x,z,s)*.55+noise(x*2,z*2,s+1)*.28+noise(x*4,z*4
 export function biomeAt(seed,x,z,gen=5){
  if(gen<5)return 'Forest';
  const scale=gen>=6?1.75:1,temperature=fbm(x/(520*scale),z/(520*scale),seed+1701),moisture=fbm(x/(390*scale),z/(390*scale),seed+2701),rare=fbm(x/(700*scale),z/(700*scale),seed+3701),coast=fbm(x/(gen>=6?900:420),z/(gen>=6?900:420),seed+91);
- const oceanLimit=gen>=8?.20:.23,beachLimit=gen>=8?.48:.35;
+ const oceanLimit=gen>=8?.20:gen>=7?.23:.30,beachLimit=gen>=8?.48:.35;
  if(gen>=6&&coast<oceanLimit)return 'Ocean';
  if(rare>(gen>=7?.78:.84)&&moisture>.54&&temperature>.34&&temperature<.76)return 'Mushroom Fields';
  if(gen>=6&&coast<beachLimit)return 'Beach and Coast';
