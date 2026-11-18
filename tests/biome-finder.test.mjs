@@ -14,21 +14,24 @@ test('live index module parses after its browser import is removed',()=>{const h
 test('generation 11 biome teleport uses terrain-aware landing checks across chunk edges',()=>{const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');assert.ok(html.includes('y<H-2'));assert.ok(html.includes('r<=12'));assert.ok(!html.includes('y<62'));assert.ok(!html.includes('Math.floor(x/16)!==Math.floor(target.x/16)'))});
 test('generation 11 cave entrances target a connected cave chamber',()=>{const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');assert.ok(html.includes('caveNode(nodeCellX,1,nodeCellZ,seed)'));assert.ok(html.includes('this.genVersion>=10?56:this.genVersion>=9?28:this.genVersion===8?48:20'))});
 
-test('Stage 20 exposes twelve deterministic structures and can locate and generate one',()=>{
+test('Stage 20 exposes twelve deterministic structures and places them at the generation 12 terrain surface',()=>{
  assert.equal(STRUCTURES.length,12);
  let hit=null,seed=12345;
  for(let z=-24;z<=24&&!hit;z++)for(let x=-24;x<=24&&!hit;x++){
-  const nearby=structuresNear(seed,11,x*192,z*192,180);
+  const nearby=structuresNear(seed,12,x*192,z*192,180);
   if(nearby.length)hit=nearby[0];
  }
  assert.ok(hit,'deterministic test seed should produce at least one structure');
- const again=findNearestStructure(seed,11,hit.x,hit.z,hit.id,0);
+ const again=findNearestStructure(seed,12,hit.x,hit.z,hit.id,0);
  assert.ok(again);assert.equal(again.id,hit.id);assert.equal(again.x,hit.x);assert.equal(again.z,hit.z);
- const chunk=structureBlocksForChunk(seed,11,Math.floor(hit.x/16),Math.floor(hit.z/16));
+ const chunk=structureBlocksForChunk(seed,12,Math.floor(hit.x/16),Math.floor(hit.z/16));
  assert.ok(chunk.length>0,'structure blocks must be generated in the anchor chunk');
+ assert.equal(hit.base,Math.floor(biomeHeight(seed,hit.x,hit.z,38,180,12)),'structure base must equal the actual generation 12 terrain height');
  assert.ok(chunk.every(b=>Number.isInteger(b.x)&&Number.isInteger(b.y)&&Number.isInteger(b.z)&&Number.isInteger(b.id)));
 });
 test('Stage 20 structures do not appear in legacy generation 10 worlds',()=>{
  assert.equal(structuresNear(12345,10,0,0,8192).length,0);
  assert.equal(structureBlocksForChunk(12345,10,0,0).length,0);
 });
+
+test('generation 11 terrain and structure generation remain on their legacy path',()=>{const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');assert.ok(html.includes('if(gen>=12)return biomeHeight(seed,wx,wz,sea,H-12,gen);if(gen>=5)return biomeHeight(seed,wx,wz,sea,H-12);'));});
