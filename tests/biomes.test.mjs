@@ -25,10 +25,12 @@ assert.ok(liveHtml.includes('function farmingTick')&&liveHtml.includes('MAT.WHEA
 assert.ok(liveHtml.includes('function powerCircuit')&&liveHtml.includes('B.LAMP_ON'),'engineering circuits must exist');
 assert.ok(liveHtml.includes('function cartTick')&&liveHtml.includes('MAT.MINECART'),'minecart transport must exist');
 assert.ok(liveHtml.includes('function tunnelAt')&&liveHtml.includes('function caveNode'),'generation 7 caves must use connected chamber-and-tunnel networks');
+assert.ok(liveHtml.includes('depth<=48')&&liveHtml.includes('h(7711)>.34'),'generation 7 must create shafts that reach the surface and connect deeper');
 assert.ok(liveHtml.includes('const NT=56,S=16,H=192'),'the live world must retain the expanded vertical depth');
 assert.ok(!liveHtml.includes('const leftLeg=new THREE.Group(),rightLeg=new THREE.Group()'),'first-person feet must not be rendered');
-assert.ok(liveHtml.includes('const waterTop=inRiver?h+1:sea'),'river water must stay one block above the carved riverbed');
-assert.ok(!liveHtml.includes('inRiver?h+3:sea'),'river water must not float three blocks above the terrain');
+assert.ok(liveHtml.includes('const waterTop=inRiver?Math.min(sea,h+4):sea'),'river channels must fill to their surrounding bank height');
+assert.ok(liveHtml.includes("(inRiver||biome==='Ocean'||biome==='Beach and Coast'||h<=sea+1)"),'riverbeds and ocean floors must use sand');
+assert.ok(b.includes('riverField>=.016')&&b.includes('>.48'),'generation 7 rivers must be narrower and less frequent');
 assert.ok(liveHtml.includes("document.addEventListener('keydown',e=>{if(e.code!=='KeyE'||!playing||e.repeat)return;")&&liveHtml.includes("invUI.open('inv')"),'E must open the inventory through the capture-phase keyboard handler');
 assert.ok(liveHtml.includes("biome!=='Ocean'&&!inRiver"),'trees must not spawn in oceans or rivers');
 
@@ -67,6 +69,8 @@ for(const id of [W.B.CACTUS,W.B.AUTUMN_LEAVES,W.B.MUSHROOM_CAP,W.B.MUSHROOM_STEM
 }
 console.log('PASS all ten Stage 9 biomes are deterministic and present');
 console.log('PASS Stage 14 ocean, larger biomes, river paths and terrain heights are deterministic and in bounds');
+console.log('PASS generation 7 rivers use sand beds, consistent narrow channels and reduced frequency');
+console.log('PASS generation 7 cave entrances extend from the surface into deeper cave networks');
 console.log('PASS biome terrain heights stay within world bounds');
 console.log('PASS legacy generation classification is unchanged');
 console.log('PASS all five new vegetation blocks are registered and inventory-accessible');
