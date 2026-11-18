@@ -72,7 +72,7 @@ function candidate(seed,gen,gx,gz){
 }
 function makeBuilder(c,seed){
  const out=[],map=new Map(),{x,z,base,id,biome}=c,[log,plank]=woodFor(biome);
- const put=(dx,dy,dz,b)=>{if(dy<0||base+dy>=190)return;map.set((dx+64)+','+dy+','+(dz+64),{x:x+dx,y:base+dy,z:z+dz,id:b})};
+ const put=(dx,dy,dz,b)=>{if(base+dy<1||base+dy>=190)return;map.set((dx+64)+','+dy+','+(dz+64),{x:x+dx,y:base+dy,z:z+dz,id:b})};
  const box=(x1,y1,z1,x2,y2,z2,b)=>{for(let xx=x1;xx<=x2;xx++)for(let yy=y1;yy<=y2;yy++)for(let zz=z1;zz<=z2;zz++)put(xx,yy,zz,b)};
  const shell=(w,d,h,wall,roof=plank)=>{const a=-Math.floor(w/2),b=-Math.floor(d/2);box(a,0,b,a+w-1,0,b+d-1,plank);for(let y=1;y<=h;y++)for(let xx=a;xx<a+w;xx++)for(let zz=b;zz<b+d;zz++)if(xx===a||xx===a+w-1||zz===b||zz===b+d-1)put(xx,y,zz,wall);
   box(a,h+1,b,a+w-1,h+1,b+d-1,roof);};
