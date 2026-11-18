@@ -239,6 +239,18 @@ function hash(x,z,s){let h=(x*374761393+z*668265263+s*982451653)|0;h=(h^(h>>>13)
 const sm=t=>t*t*(3-2*t);
 function vnoise(x,z,s){const xi=Math.floor(x),zi=Math.floor(z),fx=sm(x-xi),fz=sm(z-zi);const a=hash(xi,zi,s),b=hash(xi+1,zi,s),c=hash(xi,zi+1,s),d=hash(xi+1,zi+1,s);return a+(b-a)*fx+(c-a)*fz+(a-b-c+d)*fx*fz}
 function fbm(x,z,s){return vnoise(x,z,s)*.55+vnoise(x*2,z*2,s+1)*.28+vnoise(x*4,z*4,s+2)*.17}
+function caveEntranceAt(x,y,z,seed,surface){
+ const cell=144,gx=Math.floor(x/cell),gz=Math.floor(z/cell);
+ for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){
+  const ax=gx+dx,az=gz+dz,h=n=>hash3(ax,0,az,seed+n);
+  if(h(7711)>.18)continue;
+  const ex=ax*cell+28+h(7712)*88,ez=az*cell+28+h(7713)*88,large=h(7714)<.075,d=Math.hypot(x-ex,z-ez);
+  if(y>=surface-2&&y<=surface&&d<(large?2.25:1.25))return true;
+  if(y>=surface-15&&y<surface-2&&d<(large?2.65:1.55))return true;
+  if(y>=surface-20&&y<surface-15&&d<(large?5.5:3.7))return true;
+ }
+ return false;
+}
 const F=[[[1,0,0],[[1,0,1],[1,0,0],[1,1,0],[1,1,1]],.8],[[-1,0,0],[[0,0,0],[0,0,1],[0,1,1],[0,1,0]],.8],[[0,1,0],[[0,1,1],[1,1,1],[1,1,0],[0,1,0]],1],[[0,-1,0],[[0,0,0],[1,0,0],[1,0,1],[0,0,1]],.5],[[0,0,1],[[0,0,1],[1,0,1],[1,1,1],[0,1,1]],.7],[[0,0,-1],[[1,0,0],[0,0,0],[0,1,0],[1,1,0]],.7]];
 function heightAt(seed,wx,wz,gen=5,sea=25){if(gen>=5)return biomeHeight(seed,wx,wz,sea,H-12);const m=Math.max(0,fbm(wx/220,wz/220,seed+7)-.5)*2;return Math.min(H-8,Math.floor(18+fbm(wx/70,wz/70,seed)*20+m*m*40))}
 // small top-down terrain thumbnail (colours by height) drawn straight from the seed: used on world cards and the create-world screen
@@ -270,7 +282,8 @@ class World{
   for(let y=this.genVersion>=5?2:4;y<=lim;y++){let open;if(this.genVersion>=5){const a=c.A(wx,y,wz),b=c.Bf(wx,y,wz),wide=c.C(wx,y,wz),detail=c.D(wx,y,wz);const caveDensity=a*.36+b*.27+wide*.13+(detail-.5)*.48;open=caveDensity>=.565}else if(this.genVersion>=4){const a=c.A(wx,y,wz),b=c.Bf(wx,y,wz),wide=c.C(wx,y,wz),detail=c.D(wx,y,wz);const caveDensity=a*.42+b*.28+wide*.20+(detail-.5)*.18;open=caveDensity>=.535}else{const a=c.A(wx,y,wz)-.5,b=c.Bf(wx,y,wz)-.5;open=a*a+b*b<TUBE||c.C(wx,y,wz)>CAV}if(!open)continue;
    if(y<=POOLY){if(pm){d[I(y)]=B.WATER;continue}if(wall)continue}   // pools are walled in so water never touches open air sideways
    d[I(y)]=0}
-  for(let y=1,top=Math.min(h-4,56);y<=top;y++)if(d[I(y)]===B.STONE){const o=this.genVersion>=5?oreAt(wx,y,wz,this.seed):oreAtLegacy(wx,y,wz,this.seed);if(o)d[I(y)]=o}}
+  if(this.genVersion>=7&&h>sea+5)for(let y=Math.max(2,h-20);y<=h;y++)if(caveEntranceAt(wx,y,wz,this.seed,h))d[I(y)]=0;
+  for(let y=1,top=Math.min(h-4,145);y<=top;y++)if(d[I(y)]===B.STONE){const o=this.genVersion>=5?oreAt(wx,y,wz,this.seed):oreAtLegacy(wx,y,wz,this.seed);if(o)d[I(y)]=o}}
  gen(cx,cz){const sea=this.sea,d=new Uint8Array(S*H*S);const I=(x,y,z)=>(y*S+z)*S+x;const g3=this.genVersion>=3?this.cavesCtx(cx,cz):null;
   for(let x=0;x<S;x++)for(let z=0;z<S;z++){const wx=cx*S+x,wz=cz*S+z;
    const biome=this.genVersion>=5?biomeAt(this.seed,wx,wz,this.genVersion):'Forest';const h=heightAt(this.seed,wx,wz,this.genVersion,sea);
