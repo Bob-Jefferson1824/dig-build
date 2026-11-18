@@ -78,7 +78,7 @@ export function createBiomeFinder({getWorld,getPlayer,getMode,getWorldKey,toast}
       const biome=biomeAt(w.seed,Math.floor(p.x)+dx*step,Math.floor(p.z)+dz*step,w.genVersion);
       g.fillStyle=COLORS[biome]||'#555';g.fillRect((dx+half)*size,(dz+half)*size,size,size);
       if(dx===0&&dz===0){g.strokeStyle='#fff';g.lineWidth=3;g.strokeRect(1,1,size-2,size-2);g.fillStyle='#fff';g.fillRect(half*size+8,half*size+8,4,4)}
-      else {g.strokeStyle='#0003';g.lineWidth=1;g.strokeRect(dx+half*size,dz+half*size,size,size)}
+      else {g.strokeStyle='#0003';g.lineWidth=1;g.strokeRect((dx+half)*size,(dz+half)*size,size,size)}
     }
   }
   function update(){
