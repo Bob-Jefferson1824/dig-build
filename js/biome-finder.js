@@ -131,5 +131,5 @@ export function createBiomeFinder({getWorld,getPlayer,getMode,getWorldKey,toast,
     };
     scan();
   });
-  return {update,close};
+  return {update,close,isOpen:()=>opened};
 }
