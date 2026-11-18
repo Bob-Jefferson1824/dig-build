@@ -30,11 +30,11 @@ assert.ok(liveHtml.includes('y>=surface-20')&&liveHtml.includes('h(7711)>.18'),'
 assert.ok(liveHtml.includes('const NT=56,S=16,H=192'),'the live world must retain the expanded vertical depth');
 assert.ok(!liveHtml.includes('const leftLeg=new THREE.Group(),rightLeg=new THREE.Group()'),'first-person feet must not be rendered');
 assert.ok(liveHtml.includes('const waterTop=this.genVersion>=8&&inRiver?Math.min(sea,h+4):this.genVersion===7&&riverAt(this.seed,wx,wz,7)?h+1:sea'),'generation 8 rivers must fill to bank height while generation 7 remains unchanged');
-assert.ok(liveHtml.includes('const GEN_VERSION = 9;'),'new worlds must use generation 9');
+assert.ok(liveHtml.includes('const GEN_VERSION = 10;'),'new worlds must use generation 9');
 assert.ok(biomeSource.includes('if(gen>=9)')&&biomeSource.includes('h+=mountain*mountain*19'),'generation 9 must use a gentler mountain profile');
-assert.ok(liveHtml.includes('const cell=192')&&liveHtml.includes('rand(7711)>.085')&&liveHtml.includes('caveNode(nodeCellX,1,nodeCellZ,seed)')&&liveHtml.includes('this.genVersion>=9?56:this.genVersion>=8?48:20'),'generation 9 must create rare ground-level cave mouths that descend into connected chambers');
+assert.ok(liveHtml.includes('const cell=192')&&liveHtml.includes('rand(7711)>.085')&&liveHtml.includes('caveNode(nodeCellX,1,nodeCellZ,seed)')&&liveHtml.includes('this.genVersion>=10?56:this.genVersion>=9?28:this.genVersion===8?48:20'),'generation 9 must create rare ground-level cave mouths that descend into connected chambers');
 assert.ok(liveHtml.includes('tunnelAtV7')&&liveHtml.includes('caveEntranceAtV7'),'generation 7 cave layouts must remain unchanged');
-assert.ok(liveHtml.includes('this.genVersion>=9?caveEntranceAt(wx,y,wz,this.seed,h)'),'generation 8 cave entrances must remain unchanged');
+assert.ok(liveHtml.includes('this.genVersion===9?caveEntranceAtV9(wx,y,wz,this.seed,h)'),'generation 9 cave entrances must remain unchanged');
 assert.ok(liveHtml.includes("(inRiver||biome==='Ocean'||biome==='Beach and Coast'||h<=sea+1)"),'riverbeds and ocean floors must use sand');
 assert.ok(biomeSource.includes('riverField>=.016')&&biomeSource.includes('<=.48')&&biomeSource.includes('>.90'),'generation 8 rivers must be narrower and less frequent');
 assert.ok(biomeSource.includes('if(gen===7)return biomeHeightLegacy')&&biomeSource.includes('const oceanLimit=gen>=8?.20:gen>=7?.23:.30'),'generation 7 biome terrain must remain compatible');
@@ -81,3 +81,5 @@ console.log('PASS generation 7 cave entrances extend from the surface into deepe
 console.log('PASS biome terrain heights stay within world bounds');
 console.log('PASS legacy generation classification is unchanged');
 console.log('PASS all five new vegetation blocks are registered and inventory-accessible');
+
+test('generation 9 cave entrances remain versioned separately from generation 10',()=>{const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');assert.match(html,/function caveEntranceAtV9\(/);assert.match(html,/this\.genVersion===9\?caveEntranceAtV9/);assert.match(html,/const GEN_VERSION = 10;/)});
