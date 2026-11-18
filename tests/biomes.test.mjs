@@ -32,7 +32,7 @@ assert.ok(!liveHtml.includes('const leftLeg=new THREE.Group(),rightLeg=new THREE
 assert.ok(liveHtml.includes('const waterTop=this.genVersion>=8&&inRiver?Math.min(sea,h+4):this.genVersion===7&&riverAt(this.seed,wx,wz,7)?h+1:sea'),'generation 8 rivers must fill to bank height while generation 7 remains unchanged');
 assert.ok(liveHtml.includes('const GEN_VERSION = 9;'),'new worlds must use generation 9');
 assert.ok(biomeSource.includes('if(gen>=9)')&&biomeSource.includes('h+=mountain*mountain*19'),'generation 9 must use a gentler mountain profile');
-assert.ok(liveHtml.includes('const cell=192')&&liveHtml.includes('rand(7711)>.085')&&liveHtml.includes('endY=surface-25'),'generation 9 must create occasional shallow ground-level cave mouths');
+assert.ok(liveHtml.includes('const cell=192')&&liveHtml.includes('rand(7711)>.085')&&liveHtml.includes('caveNode(nodeCellX,1,nodeCellZ,seed)')&&liveHtml.includes('this.genVersion>=9?56:this.genVersion>=8?48:20'),'generation 9 must create rare ground-level cave mouths that descend into connected chambers');
 assert.ok(liveHtml.includes('tunnelAtV7')&&liveHtml.includes('caveEntranceAtV7'),'generation 7 cave layouts must remain unchanged');
 assert.ok(liveHtml.includes('this.genVersion>=9?caveEntranceAt(wx,y,wz,this.seed,h)'),'generation 8 cave entrances must remain unchanged');
 assert.ok(liveHtml.includes("(inRiver||biome==='Ocean'||biome==='Beach and Coast'||h<=sea+1)"),'riverbeds and ocean floors must use sand');
