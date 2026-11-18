@@ -654,6 +654,8 @@ function sfx(k){if(muted)return;try{AC=AC||new (window.AudioContext||window.webk
 addEventListener('keydown',e=>{if(e.code==='KeyM'&&playing){muted=!muted;toast(muted?'Sound off':'Sound on')}});
 function breakBlock(x,y,z,b){sfx('break');const d=dropOf(b,IS.inv[slot]&&IS.inv[slot].id),k=x+','+y+','+z,fr=b===B.FURNACE?world.furnaces.get(k):null;
  if(mode==='survival'){const items=[...(d?[{id:d,n:1}]:[]),...(fr?fr.s.filter(Boolean):[])],t=IS.inv.map(s=>s&&{...s});
+  if(b===B.GRASS&&Math.random()<.12)items.push({id:MAT.WHEAT_SEEDS,n:1});
+  if(b===B.WHEAT_3)items.push({id:MAT.WHEAT_SEEDS,n:1+Math.floor(Math.random()*3)});
   if(items.some(it=>addItem(t,it.id,it.n,false,it.d)>0)){toast('Inventory full - make room first');finishMine();return}      // nothing is ever lost: refuse to break instead
   world.set(x,y,z,0);mpBlockChange(x,y,z,0);items.forEach(it=>addItem(IS.inv,it.id,it.n,false,it.d));if(wearTool(IS.inv,slot,false))toast('Your tool broke!')}
  else {world.set(x,y,z,0);mpBlockChange(x,y,z,0)}
@@ -668,7 +670,10 @@ function finishMine(){mine=null;crack.visible=false;$('mineUI').style.display='n
 function showMine(p){$('mineUI').style.display='block';$('mineName').textContent=INFO[mine.block][0];$('mineFill').style.width=(p*100).toFixed(0)+'%'}
 function camInWater(){return isWater(world.get(Math.floor(cam.position.x),Math.floor(cam.position.y),Math.floor(cam.position.z)))}
 function setUnder(on){const el=$('uw');el.classList.toggle('on',on);el.classList.add('pulse');setTimeout(()=>el.classList.remove('pulse'),220);const c=on?0x2f86c8:0x9bc9e8;scene.fog.color.set(c);scene.fog.near=on?1:75;scene.fog.far=on?70:180;scene.background.set(c)}
-addEventListener('mousedown',e=>{if(e.button===0&&!uiOpen&&caps().mine){if(damageAnimal()){holding=false;finishMine();return}holding=true;beginMine()}if(e.button===2&&playing&&!uiOpen&&caps().interact&&document.pointerLockElement){const r=ray();if(!r)return;{const hb=world.get(r.hit[0],r.hit[1],r.hit[2]);if(hb===B.WORKBENCH){invUI.open('bench');return}if(hb===B.FURNACE){invUI.open('furnace',r.hit.join(','));return}}if(!r.prev)return;const [x,y,z]=r.prev,sl=IS.inv[slot];if(!sl||!isBlockItem(sl.id))return;world.set(x,y,z,sl.id);if(hits(P.x,P.y,P.z)){world.set(x,y,z,0);return}mpBlockChange(x,y,z,sl.id);if(mode==='survival'&&--sl.n<=0)IS.inv[slot]=null;dirty=true;ui()}});
+addEventListener('mousedown',e=>{if(e.button===0&&!uiOpen&&caps().mine){if(damageAnimal()){holding=false;finishMine();return}holding=true;beginMine()}if(e.button===2&&playing&&!uiOpen&&caps().interact&&document.pointerLockElement){const r=ray();if(!r)return;const [hx,hy,hz]=r.hit,hitBlock=world.get(hx,hy,hz),sl=IS.inv[slot];if(hitBlock===B.WORKBENCH){invUI.open('bench');return}if(hitBlock===B.FURNACE){invUI.open('furnace',r.hit.join(','));return}
+ if(sl&&isTool(sl.id)&&toolInfo(sl.id).type===4&&(hitBlock===B.GRASS||hitBlock===B.DIRT)){world.set(hx,hy,hz,B.FARMLAND);mpBlockChange(hx,hy,hz,B.FARMLAND);if(mode==='survival'&&wearTool(IS.inv,slot,false))toast('Your hoe broke!');dirty=true;ui();return}
+ const seedCrop=sl&&({[MAT.WHEAT_SEEDS]:B.WHEAT_1,[MAT.CARROT_SEEDS]:B.CARROT_1,[MAT.POTATO_SEEDS]:B.POTATO_1})[sl.id];if(seedCrop&&hitBlock===B.FARMLAND&&world.get(hx,hy+1,hz)===0){world.set(hx,hy+1,hz,seedCrop);mpBlockChange(hx,hy+1,hz,seedCrop);if(mode==='survival'&&--sl.n<=0)IS.inv[slot]=null;dirty=true;ui();return}
+ if(!r.prev)return;const [x,y,z]=r.prev;if(!sl||!isBlockItem(sl.id))return;world.set(x,y,z,sl.id);if(hits(P.x,P.y,P.z)){world.set(x,y,z,0);return}mpBlockChange(x,y,z,sl.id);if(mode==='survival'&&--sl.n<=0)IS.inv[slot]=null;dirty=true;ui()}});
 addEventListener('mouseup',e=>{if(e.button===0){holding=false;denyKey='';finishMine()}});
 addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('mousemove',e=>{if(document.pointerLockElement){P.yaw-=e.movementX*.0022;P.pitch=Math.max(-1.55,Math.min(1.55,P.pitch-e.movementY*.0022))}});
@@ -876,6 +881,21 @@ function damageAnimal(){
  }else toast(target.type[0].toUpperCase()+target.type.slice(1)+' · '+target.health+'/'+target.maxHealth+' health');
  dirty=true;ui();return true;
 }
+let farmingClock=0;
+function farmingTick(dt){
+ if(!world||!playing||mode==='spectator')return;
+ farmingClock+=dt;if(farmingClock<12)return;farmingClock=0;
+ const cx=Math.floor(P.x),cz=Math.floor(P.z);
+ for(let x=cx-42;x<=cx+42;x++)for(let z=cz-42;z<=cz+42;z++){
+  const top=world.surface(x,z),cropY=top-1,soilY=top-2,crop=world.get(x,cropY,z),soil=world.get(x,soilY,z);
+  if(soil!==B.FARMLAND)continue;
+  const next=({[B.WHEAT_1]:B.WHEAT_2,[B.WHEAT_2]:B.WHEAT_3,[B.CARROT_1]:B.CARROT_2,[B.POTATO_1]:B.POTATO_2})[crop];
+  if(!next)continue;
+  let watered=false;
+  for(let dx=-4;dx<=4&&!watered;dx++)for(let dz=-4;dz<=4&&!watered;dz++)for(let dy=0;dy<=1;dy++)if(isWater(world.get(x+dx,soilY+dy,z+dz))){watered=true;break}
+  if(Math.random()<(watered?.58:.12)){world.set(x,cropY,z,next);mpBlockChange(x,cropY,z,next);dirty=true}
+ }
+}
 function wildlifeTick(dt){
  if(!world)return;
  wildlife.spawnClock-=dt;
@@ -900,7 +920,7 @@ function wildlifeTick(dt){
 let last=performance.now(),fps=60;
 (function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000)||.016;last=t;fps=fps*.9+.1/dt;if(playing)playSecs+=dt;if(world){world.wtex.offset.set((t*.00004)%1,(t*.00011)%1);world.wmat.opacity=.8+Math.sin(t*.0014)*.03}
  if(world&&playing){if(mode!=='spectator')for(const f of world.furnaces.values())if(furnaceTick(f,dt))dirty=true;invUI.tick(dt);if(world.xray)world.xmat.glow.opacity=.2+Math.sin(t*.004)*.08}
- if(playing){world.update(P.x,P.z,6);wildlifeTick(dt);multiplayerTick(dt);const st=uiOpen?{swim:false}:mode==='spectator'?stepSpectator(P,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),up:!!keys.Space,down:!!(keys.ShiftLeft||keys.ShiftRight),yaw:P.yaw},dt):stepPlayer(P,world,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),space:!!keys.Space,sprint:!!keys.ShiftLeft,down:!!(fly?(keys.ShiftLeft||keys.ShiftRight):(keys.ControlLeft||keys.ControlRight)),fly,yaw:P.yaw},dt),inW=st.swim;
+ if(playing){world.update(P.x,P.z,6);wildlifeTick(dt);farmingTick(dt);multiplayerTick(dt);const st=uiOpen?{swim:false}:mode==='spectator'?stepSpectator(P,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),up:!!keys.Space,down:!!(keys.ShiftLeft||keys.ShiftRight),yaw:P.yaw},dt):stepPlayer(P,world,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),space:!!keys.Space,sprint:!!keys.ShiftLeft,down:!!(fly?(keys.ShiftLeft||keys.ShiftRight):(keys.ControlLeft||keys.ControlRight)),fly,yaw:P.yaw},dt),inW=st.swim;
   cam.position.set(P.x,P.y+1.62,P.z);cam.rotation.set(P.pitch,P.yaw,0,'YXZ');biomeFinderTick(dt);viewModel.visible=mode!=='spectator';{const walking=Math.hypot(P.vx,P.vz)>.35,phase=t*.012;leftLeg.rotation.x=walking?Math.sin(phase)*.45:0;rightLeg.rotation.x=walking?Math.sin(phase+Math.PI)*.45:0;leftArm.rotation.x=walking?Math.sin(phase+Math.PI)*.18:0;rightArm.rotation.x=(holding?-.7:0)+(walking?Math.sin(phase+Math.PI)*.16:0)}{const cw=mode!=='spectator'&&camInWater();if(cw!==uwOn){uwOn=cw;setUnder(cw)}}const r=ray();sel.visible=!!r;if(r)sel.position.set(r.hit[0]+.5,r.hit[1]+.5,r.hit[2]+.5);
   if(mine){const current=ray(),same=current&&current.hit.join(',')===mine.pos;if(!same||world.get(...mine.hit)!==mine.block)finishMine();else{mine.elapsed+=dt;mine.snd=(mine.snd||0)+dt;if(mine.snd>.22){mine.snd=0;sfx('hit')}const progress=Math.min(1,mine.elapsed/mine.required);crack.visible=true;crack.position.set(mine.hit[0]+.5,mine.hit[1]+.5,mine.hit[2]+.5);crack.material.map=crackTex[Math.min(9,Math.floor(progress*10))];showMine(progress);if(progress>=1){const [x,y,z]=mine.hit,b=mine.block;breakBlock(x,y,z,b)}}}
   if(!mine&&holding)beginMine();if(mode!=='spectator')world.stepWater(10);
