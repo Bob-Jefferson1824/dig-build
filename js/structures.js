@@ -54,7 +54,7 @@ function siteFor(seed,gen,x,z,type,biome){
   return {base:Math.round((bankHeights[0]+bankHeights[1])/2),orient};
  }
  const r=radius[type],samples=[];for(let dx=-r;dx<=r;dx+=Math.max(3,Math.floor(r/3)))for(let dz=-r;dz<=r;dz+=Math.max(3,Math.floor(r/3)))samples.push(height(seed,x+dx,z+dz,gen));
- const lo=Math.min(...samples),hi=Math.max(...samples),base=Math.round(samples.reduce((a,b)=>a+b,0)/samples.length);
+ const lo=Math.min(...samples),hi=Math.max(...samples),base=gen>=12?Math.floor(height(seed,x,z,gen)):Math.round(samples.reduce((a,b)=>a+b,0)/samples.length);
  const maxSlope=type==='village'||type==='castle'?7:type==='desert-pyramid'?6:5;
  if(hi-lo>maxSlope||base<SEA+2||base>155)return null;
  return {base,orient:'z'};
@@ -69,7 +69,7 @@ function candidate(seed,gen,gx,gz){
   const oxp=ox*CELL+28+Math.floor(hash(ox,oz,seed+2042)*136),ozp=oz*CELL+28+Math.floor(hash(ox,oz,seed+2043)*136),or=radius[otherType];
   if(Math.hypot(x-oxp,z-ozp)<r+or+8&&hash(ox,oz,seed+2044)<rank)return null;
  }
- return {id:type,name:STRUCTURES.find(s=>s.id===type).name,x,z,base:site.base,biome,orient:site.orient,cellX:gx,cellZ:gz};
+ return {id:type,name:STRUCTURES.find(s=>s.id===type).name,x,z,base:site.base,biome,orient:site.orient,cellX:gx,cellZ:gz,gen};
 }
 function makeBuilder(c,seed){
  const out=[],map=new Map(),{x,z,base,id,biome}=c,[log,plank]=woodFor(biome);
@@ -89,7 +89,7 @@ function makeBuilder(c,seed){
  if(id==='bridge'){const along=c.orient==='z';for(let i=-7;i<=7;i++)for(let w=-2;w<=2;w++){const dx=along?w:i,dz=along?i:w;put(dx,0,dz,plank);if(Math.abs(w)===2&&i%3===0)put(dx,1,dz,log)}}
  if(id==='ruined-temple'){for(let xx=-9;xx<=9;xx++)for(let zz=-9;zz<=9;zz++)if(Math.abs(xx)===9||Math.abs(zz)===9){if(hash(xx,zz,seed+401)>.22)put(xx,0,zz,B.MOSSY_COBBLE);if(hash(xx,zz,seed+402)>.42)put(xx,1,zz,B.MOSSY_COBBLE);if(Math.abs(xx)%4===0&&Math.abs(zz)%4===0)for(let y=1;y<7;y++)if(hash(xx,y+zz,seed+403)>.12)put(xx,y,zz,B.STONE_BRICKS)}box(-3,0,-3,3,0,3,B.MOSSY_COBBLE);for(let xx=-2;xx<=2;xx++)for(let zz=-2;zz<=2;zz++)if(xx*xx+zz*zz<6)put(xx,1,zz,0)}
  if(id==='village'){house(-11,-9,7,7,log,plank);house(11,-9,7,7,log,plank);house(-11,10,7,7,log,plank);house(11,10,7,7,log,plank);box(-2,0,-2,2,0,2,B.COBBLE);for(let xx=-2;xx<=2;xx++)for(let zz=-2;zz<=2;zz++)if(Math.abs(xx)===2||Math.abs(zz)===2)put(xx,1,zz,B.COBBLE);box(-1,1,-1,1,1,1,B.WATER);for(let i=-8;i<=8;i++)for(let w=-1;w<=1;w++)put(w,0,i,B.COBBLE);put(0,0,0,B.COBBLE)}
- if(id==='abandoned-mine'){for(let i=0;i<24;i++){const dx=Math.round(Math.sin(i*.18)*i*.18),dz=-i,dy=-Math.floor(i*.28);for(let xx=-1;xx<=1;xx++)for(let yy=1;yy<=3;yy++)put(dx+xx,dy+yy,dz,0);put(dx,dy+1,dz,B.RAIL);if(i%4===0){put(dx-2,dy+1,dz,log);put(dx+2,dy+1,dz,log);put(dx-2,dy+2,dz,log);put(dx+2,dy+2,dz,log);put(dx,dy+4,dz,log)}}for(let xx=-3;xx<=3;xx++)for(let yy=0;yy<=5;yy++)if(Math.abs(xx)===3||yy===5)put(xx,yy,1,log)}
+ if(id==='abandoned-mine'){if(c.gen<12){for(let i=0;i<24;i++){const dx=Math.round(Math.sin(i*.18)*i*.18),dz=-i,dy=-Math.floor(i*.28);for(let xx=-1;xx<=1;xx++)for(let yy=1;yy<=3;yy++)put(dx+xx,dy+yy,dz,0);put(dx,dy+1,dz,B.RAIL);if(i%4===0){put(dx-2,dy+1,dz,log);put(dx+2,dy+1,dz,log);put(dx-2,dy+2,dz,log);put(dx+2,dy+2,dz,log);put(dx,dy+4,dz,log)}}}else{for(let i=0;i<30;i++){const dx=Math.round(Math.sin(i*.16)*i*.12),dz=-i,dy=-Math.floor(i*.52),floorY=dy;for(let xx=-1;xx<=1;xx++)for(let yy=1;yy<=3;yy++)put(dx+xx,floorY+yy,dz,0);put(dx,floorY,dz,B.RAIL);if(i%4===0){put(dx-2,floorY+1,dz,log);put(dx+2,floorY+1,dz,log);put(dx-2,floorY+2,dz,log);put(dx+2,floorY+2,dz,log);for(let xx=-2;xx<=2;xx++)put(dx+xx,floorY+4,dz,log)}}}}
  if(id==='castle'){box(-22,0,-22,22,0,22,B.STONE_BRICKS);for(let i=-22;i<=22;i++)for(const side of [-22,22])for(let y=1;y<=9;y++)put(i,y,side,B.STONE_BRICKS);for(let i=-21;i<=21;i++)for(const side of [-22,22])put(i,10,side,B.COBBLE);for(let i=-21;i<=21;i++)for(const side of [-22,22]){put(side,10,i,B.COBBLE);for(let y=1;y<=9;y++)put(side,y,i,B.STONE_BRICKS)}for(const [xx,zz] of [[-22,-22],[22,-22],[-22,22],[22,22]])tower(xx,zz,14,B.STONE_BRICKS);house(0,0,15,15,B.STONE_BRICKS,B.COBBLE)}
  if(id==='desert-pyramid'){for(let y=0;y<10;y++){const half=12-y;for(let xx=-half;xx<=half;xx++)for(let zz=-half;zz<=half;zz++)if(Math.abs(xx)===half||Math.abs(zz)===half)put(xx,y,zz,B.SAND)}for(let y=1;y<8;y++)for(let xx=-2;xx<=2;xx++)for(let zz=-2;zz<=2;zz++)put(xx,y,zz,0);box(-3,-1,-3,3,-1,3,B.COBBLE);box(-2,-1,-2,2,-1,2,0)}
  return [...map.values()];

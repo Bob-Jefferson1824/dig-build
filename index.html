@@ -110,7 +110,7 @@ import {STRUCTURES,structuresNear,findNearestStructure,structureBlocksForChunk} 
 // Public values only (anon/publishable key is safe in the browser; RLS protects data). NEVER put a service-role key here.
 const SUPABASE_URL = '';      // e.g. https://xxxx.supabase.co
 const SUPABASE_ANON_KEY = ''; // anon / publishable key
-const GEN_VERSION = 11;        // Stage 20 structures. Existing saved worlds keep their own generation and terrain.
+const GEN_VERSION = 12;        // Stage 20 structures. Existing saved worlds keep their own generation and terrain.
 const SAVE_FORMAT = 4;        // bump + add a migration in save.js when save shape changes
 
 // Save-format migrations (pure functions; storage lives in worlds.js). Add a step per format bump, never drop old steps.
@@ -347,7 +347,7 @@ function caveEntranceAt(x,y,z,seed,surface){
  return false;
 }
 const F=[[[1,0,0],[[1,0,1],[1,0,0],[1,1,0],[1,1,1]],.8],[[-1,0,0],[[0,0,0],[0,0,1],[0,1,1],[0,1,0]],.8],[[0,1,0],[[0,1,1],[1,1,1],[1,1,0],[0,1,0]],1],[[0,-1,0],[[0,0,0],[1,0,0],[1,0,1],[0,0,1]],.5],[[0,0,1],[[0,0,1],[1,0,1],[1,1,1],[0,1,1]],.7],[[0,0,-1],[[1,0,0],[0,0,0],[0,1,0],[1,1,0]],.7]];
-function heightAt(seed,wx,wz,gen=5,sea=25){if(gen>=5)return biomeHeight(seed,wx,wz,sea,H-12);const m=Math.max(0,fbm(wx/220,wz/220,seed+7)-.5)*2;return Math.min(H-8,Math.floor(18+fbm(wx/70,wz/70,seed)*20+m*m*40))}
+function heightAt(seed,wx,wz,gen=5,sea=25){if(gen>=12)return biomeHeight(seed,wx,wz,sea,H-12,gen);if(gen>=5)return biomeHeight(seed,wx,wz,sea,H-12);const m=Math.max(0,fbm(wx/220,wz/220,seed+7)-.5)*2;return Math.min(H-8,Math.floor(18+fbm(wx/70,wz/70,seed)*20+m*m*40))}
 // small top-down terrain thumbnail (colours by height) drawn straight from the seed: used on world cards and the create-world screen
 function drawPreview(cv,seed,gen,cx=0,cz=0,N=40,step=4){cv.width=cv.height=N;const g=cv.getContext('2d'),sea=gen>=2?25:22;
  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const h=heightAt(seed|0,Math.floor(cx+(i-N/2)*step),Math.floor(cz+(j-N/2)*step),gen,sea);let c;
