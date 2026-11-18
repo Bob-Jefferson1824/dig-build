@@ -187,10 +187,10 @@ const resetPw=e=>sb.auth.resetPasswordForEmail(e);
 async function cloudSave(w){const u=await user();if(!u)return false;const {error}=await sb.from('worlds').upsert({...w,user_id:u.id,last_played:new Date().toISOString()},{onConflict:'user_id,name'});if(error)throw error;return true}
 async function cloudLoad(name){const u=await user();if(!u)return null;const {data,error}=await sb.from('worlds').select('*').eq('name',name).maybeSingle();if(error)throw error;return data}
 
-const B={AIR:0,GRASS:1,DIRT:2,STONE:3,SAND:4,SNOW:5,LOG:6,LEAVES:7,WATER:8,PLANKS:9,BEDROCK:10,COBBLE:11,GLASS:12,BRICK:13,FLOWING_WATER:14,WORKBENCH:15,COAL_ORE:16,IRON_ORE:17,GOLD_ORE:18,DIAMOND_ORE:19,FURNACE:20,STONE_BRICKS:21,MOSSY_COBBLE:22,CACTUS:23,AUTUMN_LEAVES:24,MUSHROOM_CAP:25,MUSHROOM_STEM:26,REEDS:27,BIRCH_LOG:28,BIRCH_PLANKS:29,PINE_LOG:30,PINE_PLANKS:31,JUNGLE_LOG:32,JUNGLE_PLANKS:33,ACACIA_LOG:34,ACACIA_PLANKS:35,MANGROVE_LOG:36,MANGROVE_PLANKS:37,MUD:38};
+const B={AIR:0,GRASS:1,DIRT:2,STONE:3,SAND:4,SNOW:5,LOG:6,LEAVES:7,WATER:8,PLANKS:9,BEDROCK:10,COBBLE:11,GLASS:12,BRICK:13,FLOWING_WATER:14,WORKBENCH:15,COAL_ORE:16,IRON_ORE:17,GOLD_ORE:18,DIAMOND_ORE:19,FURNACE:20,STONE_BRICKS:21,MOSSY_COBBLE:22,CACTUS:23,AUTUMN_LEAVES:24,MUSHROOM_CAP:25,MUSHROOM_STEM:26,REEDS:27,BIRCH_LOG:28,BIRCH_PLANKS:29,PINE_LOG:30,PINE_PLANKS:31,JUNGLE_LOG:32,JUNGLE_PLANKS:33,ACACIA_LOG:34,ACACIA_PLANKS:35,MANGROVE_LOG:36,MANGROVE_PLANKS:37,MUD:38,FARMLAND:39,WHEAT_1:40,WHEAT_2:41,WHEAT_3:42,CARROT_1:43,CARROT_2:44,POTATO_1:45,POTATO_2:46,LEVER_OFF:47,LEVER_ON:48,LAMP_OFF:49,LAMP_ON:50,PRESSURE_PLATE_OFF:51,PRESSURE_PLATE_ON:52,REDSTONE_WIRE:53,RAIL:54,POWERED_RAIL:55};
 const isWater=id=>id===B.WATER||id===B.FLOWING_WATER;
-const INFO={1:['Grass',[84,150,58]],2:['Dirt',[120,84,52]],3:['Stone',[125,125,128]],4:['Sand',[218,205,150]],5:['Snow',[240,244,250]],6:['Log',[98,72,40]],7:['Leaves',[48,120,40]],8:['Water',[60,160,240]],9:['Planks',[170,132,80]],10:['Bedrock',[45,45,48]],11:['Cobble',[100,100,104]],12:['Glass',[190,225,235]],13:['Bricks',[150,70,58]],14:['Water',[60,160,240]],15:['Workbench',[150,105,58]],16:['Coal Ore',[40,40,44]],17:['Iron Ore',[222,176,146]],18:['Gold Ore',[252,214,60]],19:['Diamond Ore',[96,236,236]],20:['Furnace',[112,112,116]],21:['Stone Bricks',[135,135,138]],22:['Mossy Cobble',[85,112,72]],23:['Cactus',[55,145,65]],24:['Autumn Leaves',[205,105,35]],25:['Mushroom Cap',[175,45,55]],26:['Mushroom Stem',[225,215,185]],27:['Reeds',[105,150,65]],28:['Birch Log',[205,190,150]],29:['Birch Planks',[205,185,130]],30:['Pine Log',[92,67,43]],31:['Pine Planks',[145,105,65]],32:['Jungle Log',[115,75,42]],33:['Jungle Planks',[170,115,65]],34:['Acacia Log',[120,75,45]],35:['Acacia Planks',[195,112,55]],36:['Mangrove Log',[92,55,48]],37:['Mangrove Planks',[145,75,65]],38:['Mud',[105,79,55]]};
-const NT=39,S=16,H=192,SEA=22;
+const INFO={1:['Grass',[84,150,58]],2:['Dirt',[120,84,52]],3:['Stone',[125,125,128]],4:['Sand',[218,205,150]],5:['Snow',[240,244,250]],6:['Log',[98,72,40]],7:['Leaves',[48,120,40]],8:['Water',[60,160,240]],9:['Planks',[170,132,80]],10:['Bedrock',[45,45,48]],11:['Cobble',[100,100,104]],12:['Glass',[190,225,235]],13:['Bricks',[150,70,58]],14:['Water',[60,160,240]],15:['Workbench',[150,105,58]],16:['Coal Ore',[40,40,44]],17:['Iron Ore',[222,176,146]],18:['Gold Ore',[252,214,60]],19:['Diamond Ore',[96,236,236]],20:['Furnace',[112,112,116]],21:['Stone Bricks',[135,135,138]],22:['Mossy Cobble',[85,112,72]],23:['Cactus',[55,145,65]],24:['Autumn Leaves',[205,105,35]],25:['Mushroom Cap',[175,45,55]],26:['Mushroom Stem',[225,215,185]],27:['Reeds',[105,150,65]],28:['Birch Log',[205,190,150]],29:['Birch Planks',[205,185,130]],30:['Pine Log',[92,67,43]],31:['Pine Planks',[145,105,65]],32:['Jungle Log',[115,75,42]],33:['Jungle Planks',[170,115,65]],34:['Acacia Log',[120,75,45]],35:['Acacia Planks',[195,112,55]],36:['Mangrove Log',[92,55,48]],37:['Mangrove Planks',[145,75,65]],38:['Mud',[105,79,55]],39:['Farmland',[112,83,48]],40:['Wheat Sprout',[94,160,55]],41:['Growing Wheat',[130,180,62]],42:['Mature Wheat',[205,176,62]],43:['Carrot Sprout',[95,155,52]],44:['Carrot Plant',[110,170,55]],45:['Potato Sprout',[90,145,48]],46:['Potato Plant',[105,160,55]],47:['Lever',[120,85,45]],48:['Lever (On)',[205,145,65]],49:['Redstone Lamp',[100,85,55]],50:['Lit Redstone Lamp',[255,205,85]],51:['Pressure Plate',[150,120,80]],52:['Pressed Plate',[190,150,90]],53:['Redstone Wire',[160,35,35]],54:['Rail',[115,120,130]],55:['Powered Rail',[190,145,45]]};
+const NT=56,S=16,H=192,SEA=22;
 const solid=id=>id!==0&&!isWater(id);
 const see=id=>id===0||isWater(id)||id===7||id===12||id===B.AUTUMN_LEAVES;
 function makeAtlas(){const c=document.createElement('canvas');c.width=NT*16;c.height=16;const g=c.getContext('2d');let r=12345;const rnd=()=>(r=(r*16807)%2147483647)/2147483647;
@@ -348,19 +348,19 @@ class World{
 }
 
 // ---- item registry. Blocks use their block id (1..99). Materials 100+. Tools 200+ (200 + type*10 + tier). Slots are {id,n,d?}. ----
-const MAXSTACK=64,MAT={STICK:100,IRON:101,GOLD:102,DIAMOND:103,COAL:104};
-const TYPES=['Pickaxe','Axe','Shovel','Sword'],TIERS=['Wooden','Stone','Iron','Gold','Diamond'];
+const MAXSTACK=64,MAT={STICK:100,IRON:101,GOLD:102,DIAMOND:103,COAL:104,WHEAT_SEEDS:112,CARROT_SEEDS:113,POTATO_SEEDS:114,WHEAT:115,CARROT:116,POTATO:117,MINECART:118};
+const TYPES=['Pickaxe','Axe','Shovel','Sword','Hoe'],TIERS=['Wooden','Stone','Iron','Gold','Diamond'];
 const TIER={speed:[2,3.5,5,7,8],dur:[59,131,250,32,1561]};   // gold: fast but fragile; diamond: best overall
 const toolId=(t,r)=>200+t*10+r,isTool=id=>id>=200;
 const toolInfo=id=>isTool(id)?{type:Math.floor((id-200)/10),tier:(id-200)%10}:null;
 const maxDur=id=>isTool(id)?TIER.dur[toolInfo(id).tier]:0,stackMax=id=>isTool(id)?1:MAXSTACK;
 const isBlockItem=id=>id>0&&id<100&&id!==B.WATER&&id!==B.FLOWING_WATER;
-const MATN={100:'Stick',101:'Iron Ingot',102:'Gold Ingot',103:'Diamond',104:'Coal',105:'Raw Mutton',106:'Raw Beef',107:'Raw Pork',108:'Raw Chicken',109:'Leather',110:'Feather',111:'Wool'};
+const MATN={100:'Stick',101:'Iron Ingot',102:'Gold Ingot',103:'Diamond',104:'Coal',105:'Raw Mutton',106:'Raw Beef',107:'Raw Pork',108:'Raw Chicken',109:'Leather',110:'Feather',111:'Wool',112:'Wheat Seeds',113:'Carrot Seeds',114:'Potato Seeds',115:'Wheat',116:'Carrot',117:'Potato',118:'Minecart'};
 const itemName=id=>isTool(id)?TIERS[toolInfo(id).tier]+' '+TYPES[toolInfo(id).type]:MATN[id]||(INFO[id]&&INFO[id][0])||'Item';
-const allItems=()=>{const a=[];for(let i=1;i<100;i++)if(isBlockItem(i)&&INFO[i])a.push(i);a.push(100,101,102,103,104,105,106,107,108,109,110,111);for(let t=0;t<4;t++)for(let r=0;r<5;r++)a.push(toolId(t,r));return a};
-const EFFECT=[[B.STONE,B.COBBLE,B.BRICK,B.STONE_BRICKS,B.MOSSY_COBBLE,B.COAL_ORE,B.IRON_ORE,B.GOLD_ORE,B.DIAMOND_ORE,B.FURNACE],[B.LOG,B.PLANKS,B.BIRCH_LOG,B.BIRCH_PLANKS,B.PINE_LOG,B.PINE_PLANKS,B.JUNGLE_LOG,B.JUNGLE_PLANKS,B.ACACIA_LOG,B.ACACIA_PLANKS,B.MANGROVE_LOG,B.MANGROVE_PLANKS,B.WORKBENCH],[B.DIRT,B.GRASS,B.SAND,B.SNOW,B.MUD],[]];
+const allItems=()=>{const a=[];for(let i=1;i<100;i++)if(isBlockItem(i)&&INFO[i])a.push(i);a.push(100,101,102,103,104,105,106,107,108,109,110,111);a.push(112,113,114,115,116,117,118);for(let t=0;t<5;t++)for(let r=0;r<5;r++)a.push(toolId(t,r));return a};
+const EFFECT=[[B.STONE,B.COBBLE,B.BRICK,B.STONE_BRICKS,B.MOSSY_COBBLE,B.COAL_ORE,B.IRON_ORE,B.GOLD_ORE,B.DIAMOND_ORE,B.FURNACE,B.LAMP_OFF,B.LAMP_ON,B.RAIL,B.POWERED_RAIL],[B.LOG,B.PLANKS,B.BIRCH_LOG,B.BIRCH_PLANKS,B.PINE_LOG,B.PINE_PLANKS,B.JUNGLE_LOG,B.JUNGLE_PLANKS,B.ACACIA_LOG,B.ACACIA_PLANKS,B.MANGROVE_LOG,B.MANGROVE_PLANKS,B.WORKBENCH],[B.DIRT,B.GRASS,B.SAND,B.SNOW,B.MUD],[],[]];
 const toolSpeed=(id,block)=>{if(!id||!isTool(id))return 1;const i=toolInfo(id);return EFFECT[i.type].includes(block)?TIER.speed[i.tier]:.8};
-const DROPS={[B.GRASS]:B.DIRT,[B.STONE]:B.COBBLE,[B.COAL_ORE]:MAT.COAL,[B.DIAMOND_ORE]:MAT.DIAMOND};
+const DROPS={[B.LEVER_ON]:B.LEVER_OFF,[B.LAMP_ON]:B.LAMP_OFF,[B.PRESSURE_PLATE_ON]:B.PRESSURE_PLATE_OFF,[B.GRASS]:B.DIRT,[B.STONE]:B.COBBLE,[B.COAL_ORE]:MAT.COAL,[B.DIAMOND_ORE]:MAT.DIAMOND,[B.WHEAT_1]:MAT.WHEAT_SEEDS,[B.WHEAT_2]:MAT.WHEAT_SEEDS,[B.WHEAT_3]:MAT.WHEAT,[B.CARROT_1]:MAT.CARROT_SEEDS,[B.CARROT_2]:MAT.CARROT,[B.POTATO_1]:MAT.POTATO_SEEDS,[B.POTATO_2]:MAT.POTATO};
 // Leaves and glass do not drop themselves. Stone-family blocks require a pickaxe for drops.
 const PICKAXE_DROPS=new Set([B.STONE,B.COBBLE,B.BRICK,B.STONE_BRICKS,B.MOSSY_COBBLE,B.COAL_ORE,B.IRON_ORE,B.GOLD_ORE,B.DIAMOND_ORE,B.FURNACE]);
 const dropOf=(b,held)=>{if(b===B.LEAVES||b===B.GLASS)return 0;if(PICKAXE_DROPS.has(b)&&(!held||!isTool(held)||toolInfo(held).type!==0))return 0;return DROPS[b]||b};
@@ -368,7 +368,7 @@ const NEED={[B.COAL_ORE]:0,[B.IRON_ORE]:1,[B.GOLD_ORE]:2,[B.DIAMOND_ORE]:3};   /
 const needTier=b=>NEED[b];
 const canMine=(b,toolId)=>{const n=NEED[b];if(n===undefined)return true;if(!toolId||!isTool(toolId))return false;const i=toolInfo(toolId);return i.type===0&&i.tier>=n};
 const needMsg=b=>`Needs a ${TIERS[NEED[b]].toLowerCase()} pickaxe or better`;
-function describe(s){if(!s)return '';let t=itemName(s.id);if(isTool(s.id)){const i=toolInfo(s.id);t+=`\nDurability ${s.d}/${maxDur(s.id)}\nMining speed x${TIER.speed[i.tier]} on ${['stone & bricks','wood','dirt, sand & snow','(sword: for future combat)'][i.type]}`}else if(s.id===MAT.STICK)t+='\nCrafting material';else if(s.id>=100)t+='\nCrafting material';else if(s.id===B.WORKBENCH)t+='\nPlace it, then right-click to craft';else if(s.id===B.FURNACE)t+='\nPlace it, then right-click to smelt';else if(NEED[s.id]!==undefined)t+=`\nNeeds a ${TIERS[NEED[s.id]].toLowerCase()} pickaxe or better`;else if(s.id===MAT.COAL)t+='\nFurnace fuel (smelts 8 items)';else t+='\nBlock';return t}
+function describe(s){if(!s)return '';let t=itemName(s.id);if(isTool(s.id)){const i=toolInfo(s.id);t+=`\nDurability ${s.d}/${maxDur(s.id)}\nMining speed x${TIER.speed[i.tier]} on ${['stone & bricks','wood','dirt, sand & snow','(sword: for future combat)','soil and farmland'][i.type]}`}else if(s.id===MAT.STICK)t+='\nCrafting material';else if(s.id>=100)t+='\nCrafting material';else if(s.id===B.WORKBENCH)t+='\nPlace it, then right-click to craft';else if(s.id===B.FURNACE)t+='\nPlace it, then right-click to smelt';else if(NEED[s.id]!==undefined)t+=`\nNeeds a ${TIERS[NEED[s.id]].toLowerCase()} pickaxe or better`;else if(s.id===MAT.COAL)t+='\nFurnace fuel (smelts 8 items)';else t+='\nBlock';return t}
 const newStack=(id,n=1,d)=>isTool(id)?{id,n:1,d:d==null?maxDur(id):d}:{id,n};
 const same=(a,b)=>!!a&&!!b&&a.id===b.id&&!isTool(a.id);
 // ---- inventory: 36 slots, 0-8 hotbar, 9-35 backpack ----
@@ -391,11 +391,19 @@ const addRecipe=(out,n,pat,shapeless=false)=>RECIPES.push({out,n,pat,shapeless})
 (function(){const ST=MAT.STICK,woods=[[B.LOG,B.PLANKS],[B.BIRCH_LOG,B.BIRCH_PLANKS],[B.PINE_LOG,B.PINE_PLANKS],[B.JUNGLE_LOG,B.JUNGLE_PLANKS],[B.ACACIA_LOG,B.ACACIA_PLANKS],[B.MANGROVE_LOG,B.MANGROVE_PLANKS]],planks=woods.map(w=>w[1]);
  for(const [log,plank] of woods){addRecipe(plank,4,[[log]]);addRecipe(ST,4,[[plank],[plank]]);addRecipe(B.WORKBENCH,1,[plank,plank,plank,plank],true);}
  const materials=[...planks,B.COBBLE,MAT.IRON,MAT.GOLD,MAT.DIAMOND];
- for(const M of materials){const tier=planks.includes(M)?0:([B.COBBLE,MAT.IRON,MAT.GOLD,MAT.DIAMOND].indexOf(M)+1);addRecipe(toolId(0,tier),1,[[M,M,M],[0,ST,0],[0,ST,0]]);addRecipe(toolId(1,tier),1,[[M,M],[M,ST],[0,ST]]);addRecipe(toolId(2,tier),1,[[M],[ST],[ST]]);addRecipe(toolId(3,tier),1,[[M],[M],[ST]])}
+ for(const M of materials){const tier=planks.includes(M)?0:([B.COBBLE,MAT.IRON,MAT.GOLD,MAT.DIAMOND].indexOf(M)+1);addRecipe(toolId(0,tier),1,[[M,M,M],[0,ST,0],[0,ST,0]]);addRecipe(toolId(1,tier),1,[[M,M],[M,ST],[0,ST]]);addRecipe(toolId(2,tier),1,[[M],[ST],[ST]]);addRecipe(toolId(3,tier),1,[[M],[M],[ST]]);addRecipe(toolId(4,tier),1,[[M,M],[0,ST],[0,ST]])}
 })();
 addRecipe(B.FURNACE,1,[[B.COBBLE,B.COBBLE,B.COBBLE],[B.COBBLE,0,B.COBBLE],[B.COBBLE,B.COBBLE,B.COBBLE]]);
 addRecipe(B.STONE_BRICKS,4,[[B.STONE,B.STONE],[B.STONE,B.STONE]]);
 addRecipe(B.MOSSY_COBBLE,1,[[B.COBBLE,B.LEAVES],[B.LEAVES,B.COBBLE]]);
+addRecipe(MAT.CARROT_SEEDS,2,[[MAT.CARROT]]);addRecipe(MAT.POTATO_SEEDS,2,[[MAT.POTATO]]);
+addRecipe(B.LEVER_OFF,1,[[MAT.STICK],[B.COBBLE]]);
+addRecipe(B.LAMP_OFF,1,[[B.GLASS,B.GLASS,B.GLASS],[B.GLASS,MAT.COAL,B.GLASS],[B.GLASS,B.GLASS,B.GLASS]]);
+addRecipe(B.PRESSURE_PLATE_OFF,1,[[B.PLANKS,B.PLANKS]]);
+addRecipe(B.REDSTONE_WIRE,8,[[MAT.IRON,MAT.COAL,MAT.IRON]]);
+addRecipe(B.RAIL,8,[[MAT.IRON,0,MAT.IRON],[MAT.IRON,MAT.STICK,MAT.IRON],[MAT.IRON,0,MAT.IRON]]);
+addRecipe(B.POWERED_RAIL,6,[[MAT.GOLD,0,MAT.GOLD],[MAT.GOLD,MAT.STICK,MAT.GOLD],[MAT.GOLD,0,MAT.GOLD]]);
+addRecipe(MAT.MINECART,1,[[MAT.IRON,0,MAT.IRON],[MAT.IRON,MAT.IRON,MAT.IRON]]);
 // ---- furnace: {s:[input,fuel,output], prog, burn, burnMax}. Fuel is only burned while something is actually smelting. ----
 const SMELT={[B.IRON_ORE]:MAT.IRON,[B.GOLD_ORE]:MAT.GOLD},FUEL={[MAT.COAL]:48},SMELT_TIME=6;
 const newFurnace=()=>({s:[null,null,null],prog:0,burn:0,burnMax:0});
@@ -591,8 +599,8 @@ const crackTex=(()=>{let r=4242;const rnd=()=>(r=(r*16807)%2147483647)/214748364
 const crack=new THREE.Mesh(new THREE.BoxGeometry(1.008,1.008,1.008),new THREE.MeshBasicMaterial({map:crackTex[0],transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));crack.visible=false;crack.renderOrder=3;scene.add(crack);
 let world,mode='survival',name='world',playing=false,slot=0,fly=false,dirty=false,wid,status='-',mine=null,holding=false,uwOn=false,denyKey='',xray=true,readOnly=false;const caps=()=>MODES[mode]||MODES.survival;
 const P={x:8,y:50,z:8,vx:0,vy:0,vz:0,yaw:0,pitch:0,ground:false};
-const IS={inv:newInv(),craft:Array(9).fill(null),held:null};let uiOpen=false;const CREATIVE_START=[B.GRASS,B.DIRT,B.STONE,B.PLANKS,B.LOG,B.BIRCH_LOG,B.PINE_LOG,B.JUNGLE_LOG,B.ACACIA_LOG,B.MANGROVE_LOG,B.COBBLE,B.GLASS,B.BRICK,B.WORKBENCH,B.STONE_BRICKS,B.MOSSY_COBBLE,B.MUD];
-const mineTime={[B.GRASS]:.55,[B.DIRT]:.5,[B.SAND]:.45,[B.SNOW]:.3,[B.LEAVES]:.25,[B.GLASS]:.25,[B.PLANKS]:1.0,[B.LOG]:1.3,[B.BIRCH_LOG]:1.3,[B.BIRCH_PLANKS]:1.0,[B.PINE_LOG]:1.3,[B.PINE_PLANKS]:1.0,[B.JUNGLE_LOG]:1.3,[B.JUNGLE_PLANKS]:1.0,[B.ACACIA_LOG]:1.3,[B.ACACIA_PLANKS]:1.0,[B.MANGROVE_LOG]:1.3,[B.MANGROVE_PLANKS]:1.0,[B.MUD]:.5,[B.BRICK]:2.0,[B.STONE]:2.0,[B.WORKBENCH]:1.2,[B.COAL_ORE]:2.6,[B.IRON_ORE]:3.0,[B.GOLD_ORE]:3.2,[B.DIAMOND_ORE]:3.6,[B.FURNACE]:2.2,[B.COBBLE]:2.3,[B.BEDROCK]:Infinity};
+const IS={inv:newInv(),craft:Array(9).fill(null),held:null};let uiOpen=false;const CREATIVE_START=[B.GRASS,B.DIRT,B.STONE,B.PLANKS,B.LOG,B.BIRCH_LOG,B.PINE_LOG,B.JUNGLE_LOG,B.ACACIA_LOG,B.MANGROVE_LOG,B.COBBLE,B.GLASS,B.BRICK,B.WORKBENCH,B.STONE_BRICKS,B.MOSSY_COBBLE,B.MUD,B.FARMLAND,MAT.WHEAT_SEEDS,MAT.CARROT_SEEDS,MAT.POTATO_SEEDS,toolId(4,0),B.LEVER_OFF,B.LAMP_OFF,B.PRESSURE_PLATE_OFF,B.REDSTONE_WIRE,B.RAIL,B.POWERED_RAIL,MAT.MINECART];
+const mineTime={[B.GRASS]:.55,[B.DIRT]:.5,[B.SAND]:.45,[B.SNOW]:.3,[B.LEAVES]:.25,[B.GLASS]:.25,[B.PLANKS]:1.0,[B.LOG]:1.3,[B.BIRCH_LOG]:1.3,[B.BIRCH_PLANKS]:1.0,[B.PINE_LOG]:1.3,[B.PINE_PLANKS]:1.0,[B.JUNGLE_LOG]:1.3,[B.JUNGLE_PLANKS]:1.0,[B.ACACIA_LOG]:1.3,[B.ACACIA_PLANKS]:1.0,[B.MANGROVE_LOG]:1.3,[B.MANGROVE_PLANKS]:1.0,[B.MUD]:.5,[B.FARMLAND]:.5,[B.WHEAT_1]:.2,[B.WHEAT_2]:.2,[B.WHEAT_3]:.2,[B.CARROT_1]:.2,[B.CARROT_2]:.2,[B.POTATO_1]:.2,[B.POTATO_2]:.2,[B.LEVER_OFF]:.5,[B.LEVER_ON]:.5,[B.LAMP_OFF]:1,[B.LAMP_ON]:1,[B.PRESSURE_PLATE_OFF]:.5,[B.PRESSURE_PLATE_ON]:.5,[B.REDSTONE_WIRE]:.2,[B.RAIL]:1,[B.POWERED_RAIL]:1,[B.BRICK]:2.0,[B.STONE]:2.0,[B.WORKBENCH]:1.2,[B.COAL_ORE]:2.6,[B.IRON_ORE]:3.0,[B.GOLD_ORE]:3.2,[B.DIAMOND_ORE]:3.6,[B.FURNACE]:2.2,[B.COBBLE]:2.3,[B.BEDROCK]:Infinity};
 const keys={};addEventListener('keydown',e=>{if(chatOpen){keys[e.code]=false;return}keys[e.code]=true;if(e.code.startsWith('Digit')&&e.code!=='Digit0'&&caps().inventory){slot=+e.code.slice(5)-1;finishMine();ui()}if(e.code==='KeyF'&&mode==='creative'&&!uiOpen&&!e.repeat){fly=!fly;P.vy=0;toast(fly?'Creative flight enabled · Space up · Shift down':'Creative flight disabled')}});
 addEventListener('keyup',e=>keys[e.code]=false);
 // ---- Stage 7: multiplayer transport + T-to-chat ----
@@ -653,6 +661,8 @@ function sfx(k){if(muted)return;try{AC=AC||new (window.AudioContext||window.webk
 addEventListener('keydown',e=>{if(e.code==='KeyM'&&playing){muted=!muted;toast(muted?'Sound off':'Sound on')}});
 function breakBlock(x,y,z,b){sfx('break');const d=dropOf(b,IS.inv[slot]&&IS.inv[slot].id),k=x+','+y+','+z,fr=b===B.FURNACE?world.furnaces.get(k):null;
  if(mode==='survival'){const items=[...(d?[{id:d,n:1}]:[]),...(fr?fr.s.filter(Boolean):[])],t=IS.inv.map(s=>s&&{...s});
+  if(b===B.GRASS&&Math.random()<.12)items.push({id:MAT.WHEAT_SEEDS,n:1});
+  if(b===B.WHEAT_3)items.push({id:MAT.WHEAT_SEEDS,n:1+Math.floor(Math.random()*3)});
   if(items.some(it=>addItem(t,it.id,it.n,false,it.d)>0)){toast('Inventory full - make room first');finishMine();return}      // nothing is ever lost: refuse to break instead
   world.set(x,y,z,0);mpBlockChange(x,y,z,0);items.forEach(it=>addItem(IS.inv,it.id,it.n,false,it.d));if(wearTool(IS.inv,slot,false))toast('Your tool broke!')}
  else {world.set(x,y,z,0);mpBlockChange(x,y,z,0)}
@@ -667,7 +677,17 @@ function finishMine(){mine=null;crack.visible=false;$('mineUI').style.display='n
 function showMine(p){$('mineUI').style.display='block';$('mineName').textContent=INFO[mine.block][0];$('mineFill').style.width=(p*100).toFixed(0)+'%'}
 function camInWater(){return isWater(world.get(Math.floor(cam.position.x),Math.floor(cam.position.y),Math.floor(cam.position.z)))}
 function setUnder(on){const el=$('uw');el.classList.toggle('on',on);el.classList.add('pulse');setTimeout(()=>el.classList.remove('pulse'),220);const c=on?0x2f86c8:0x9bc9e8;scene.fog.color.set(c);scene.fog.near=on?1:75;scene.fog.far=on?70:180;scene.background.set(c)}
-addEventListener('mousedown',e=>{if(e.button===0&&!uiOpen&&caps().mine){if(damageAnimal()){holding=false;finishMine();return}holding=true;beginMine()}if(e.button===2&&playing&&!uiOpen&&caps().interact&&document.pointerLockElement){const r=ray();if(!r)return;{const hb=world.get(r.hit[0],r.hit[1],r.hit[2]);if(hb===B.WORKBENCH){invUI.open('bench');return}if(hb===B.FURNACE){invUI.open('furnace',r.hit.join(','));return}}if(!r.prev)return;const [x,y,z]=r.prev,sl=IS.inv[slot];if(!sl||!isBlockItem(sl.id))return;world.set(x,y,z,sl.id);if(hits(P.x,P.y,P.z)){world.set(x,y,z,0);return}mpBlockChange(x,y,z,sl.id);if(mode==='survival'&&--sl.n<=0)IS.inv[slot]=null;dirty=true;ui()}});
+addEventListener('mousedown',e=>{if(e.button===0&&!uiOpen&&caps().mine){if(damageAnimal()){holding=false;finishMine();return}holding=true;beginMine()}if(e.button===2&&playing&&!uiOpen&&caps().interact&&document.pointerLockElement){const r=ray();if(!r)return;const [hx,hy,hz]=r.hit,hitBlock=world.get(hx,hy,hz),sl=IS.inv[slot];if(hitBlock===B.WORKBENCH){invUI.open('bench');return}if(hitBlock===B.FURNACE){invUI.open('furnace',r.hit.join(','));return}
+ if((hitBlock===B.RAIL||hitBlock===B.POWERED_RAIL)&&sl&&sl.id===MAT.MINECART&&!cart){
+  cart={x:hx+.5,y:hy+1,z:hz+.5,railY:hy,yaw:P.yaw,speed:0,mesh:makeMinecart(hx+.5,hy+1,hz+.5)};
+  P.x=cart.x;P.y=cart.y;P.z=cart.z;if(mode==='survival'&&--sl.n<=0)IS.inv[slot]=null;dirty=true;ui();toast('Minecart mounted · W/S move · A/D steer · Space exit');return
+ }
+ if(hitBlock===B.LEVER_OFF||hitBlock===B.LEVER_ON){
+  const on=hitBlock===B.LEVER_OFF,next=on?B.LEVER_ON:B.LEVER_OFF;world.set(hx,hy,hz,next);mpBlockChange(hx,hy,hz,next);powerCircuit(hx,hy,hz,on);dirty=true;toast(on?'Circuit powered':'Circuit switched off');return
+ }
+ if(sl&&isTool(sl.id)&&toolInfo(sl.id).type===4&&(hitBlock===B.GRASS||hitBlock===B.DIRT)){world.set(hx,hy,hz,B.FARMLAND);mpBlockChange(hx,hy,hz,B.FARMLAND);if(mode==='survival'&&wearTool(IS.inv,slot,false))toast('Your hoe broke!');dirty=true;ui();return}
+ const seedCrop=sl&&({[MAT.WHEAT_SEEDS]:B.WHEAT_1,[MAT.CARROT_SEEDS]:B.CARROT_1,[MAT.POTATO_SEEDS]:B.POTATO_1})[sl.id];if(seedCrop&&hitBlock===B.FARMLAND&&world.get(hx,hy+1,hz)===0){world.set(hx,hy+1,hz,seedCrop);mpBlockChange(hx,hy+1,hz,seedCrop);if(mode==='survival'&&--sl.n<=0)IS.inv[slot]=null;dirty=true;ui();return}
+ if(!r.prev)return;const [x,y,z]=r.prev;if(!sl||!isBlockItem(sl.id))return;world.set(x,y,z,sl.id);if(hits(P.x,P.y,P.z)){world.set(x,y,z,0);return}mpBlockChange(x,y,z,sl.id);if(mode==='survival'&&--sl.n<=0)IS.inv[slot]=null;dirty=true;ui()}});
 addEventListener('mouseup',e=>{if(e.button===0){holding=false;denyKey='';finishMine()}});
 addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('mousemove',e=>{if(document.pointerLockElement){P.yaw-=e.movementX*.0022;P.pitch=Math.max(-1.55,Math.min(1.55,P.pitch-e.movementY*.0022))}});
@@ -681,7 +701,7 @@ async function doPersist(){if(readOnly||!curRec||!world)return;const rec=curRec;
  if(await cloudPush(snap)){dirty=false;status='saved + cloud'}else{dirty=!!(sb&&rec.owner!==GUEST);status=rec.owner===GUEST?'saved (this device)':'saved locally - cloud will retry'}}
 const persist=()=>saveChain=saveChain.then(doPersist,doPersist);     // saves run one at a time, so a delete can never be overtaken by a late save
 setInterval(()=>{if(playing&&dirty)persist()},15000);addEventListener('pagehide',()=>{if(playing)persist()});
-function unloadWorld(){clearWildlife();if(world)for(const c of world.chunks.values()){c.meshes.forEach(m=>scene.remove(m));(c.xm||[]).forEach(m=>scene.remove(m))}world=null;finishMine()}
+function unloadWorld(){clearWildlife();if(cart){scene.remove(cart.mesh);cart=null}pressedPlateKey=null;if(world)for(const c of world.chunks.values()){c.meshes.forEach(m=>scene.remove(m));(c.xm||[]).forEach(m=>scene.remove(m))}world=null;finishMine()}
 async function enterWorld(rec,spectate){
  if(curRec&&world&&!readOnly)await persist();                                     // 1. save the world we are leaving (inventory, position, edits ...)
  unloadWorld();const R=JSON.parse(JSON.stringify(rec));curRec=R;                  // 2. load the chosen world from its own record only
@@ -875,6 +895,57 @@ function damageAnimal(){
  }else toast(target.type[0].toUpperCase()+target.type.slice(1)+' · '+target.health+'/'+target.maxHealth+' health');
  dirty=true;ui();return true;
 }
+let cart=null,pressedPlateKey=null;
+const circuitDirs=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+function powerCircuit(x,y,z,on){
+ const queue=circuitDirs.map(([dx,dy,dz])=>[x+dx,y+dy,z+dz]),seen=new Set();let steps=0;
+ while(queue.length&&steps++<180){
+  const [px,py,pz]=queue.shift(),key=px+','+py+','+pz;if(seen.has(key))continue;seen.add(key);
+  const id=world.get(px,py,pz);
+  if(id===B.REDSTONE_WIRE){for(const [dx,dy,dz] of circuitDirs)queue.push([px+dx,py+dy,pz+dz]);continue}
+  if((on&&id===B.LAMP_OFF)||(!on&&id===B.LAMP_ON)){const next=on?B.LAMP_ON:B.LAMP_OFF;world.set(px,py,pz,next);mpBlockChange(px,py,pz,next);dirty=true}
+ }
+}
+function engineeringTick(){
+ if(!world||!playing||mode==='spectator')return;
+ const x=Math.floor(P.x),y=Math.floor(P.y-1),z=Math.floor(P.z),id=world.get(x,y,z),key=id===B.PRESSURE_PLATE_OFF||id===B.PRESSURE_PLATE_ON?x+','+y+','+z:null;
+ if(pressedPlateKey&&pressedPlateKey!==key){const [px,py,pz]=pressedPlateKey.split(',').map(Number);if(world.get(px,py,pz)===B.PRESSURE_PLATE_ON){world.set(px,py,pz,B.PRESSURE_PLATE_OFF);mpBlockChange(px,py,pz,B.PRESSURE_PLATE_OFF);powerCircuit(px,py,pz,false)}pressedPlateKey=null}
+ if(key&&pressedPlateKey!==key&&id===B.PRESSURE_PLATE_OFF){world.set(x,y,z,B.PRESSURE_PLATE_ON);mpBlockChange(x,y,z,B.PRESSURE_PLATE_ON);powerCircuit(x,y,z,true);pressedPlateKey=key;dirty=true}
+}
+function makeMinecart(x,y,z){
+ const g=new THREE.Group(),metal=new THREE.MeshStandardMaterial({color:0x69737c,metalness:.65,roughness:.4}),dark=new THREE.MeshStandardMaterial({color:0x252a30});
+ const body=new THREE.Mesh(new THREE.BoxGeometry(.9,.42,1.05),metal);body.position.y=.32;g.add(body);
+ const inside=new THREE.Mesh(new THREE.BoxGeometry(.72,.08,.82),dark);inside.position.set(0,.55,0);g.add(inside);
+ for(const xx of [-.43,.43])for(const zz of [-.34,.34]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,.1,10),dark);w.rotation.z=Math.PI/2;w.position.set(xx,.12,zz);g.add(w)}
+ g.position.set(x,y-.25,z);scene.add(g);return g;
+}
+function cartTick(dt){
+ if(!cart)return;
+ if(keys.Space){scene.remove(cart.mesh);cart=null;P.vx=P.vy=P.vz=0;P.y+=.25;toast('Left minecart');return}
+ const steer=(keys.KeyD?1:0)-(keys.KeyA?1:0);if(steer)cart.yaw+=steer*dt*1.5;
+ const drive=(keys.KeyW?1:0)-(keys.KeyS?1:0);cart.speed=Math.max(-3,Math.min(7,cart.speed+drive*dt*4));
+ if(Math.abs(cart.speed)>.015){
+  const nx=cart.x+Math.sin(cart.yaw)*cart.speed*dt,nz=cart.z+Math.cos(cart.yaw)*cart.speed*dt,rx=Math.floor(nx),rz=Math.floor(nz),rail=world.get(rx,cart.railY,rz);
+  if(rail===B.RAIL||rail===B.POWERED_RAIL){cart.x=nx;cart.z=nz;if(rail===B.POWERED_RAIL)cart.speed=Math.min(9,cart.speed+dt*3)}
+  else cart.speed=0;
+ }
+ cart.speed*=Math.max(0,1-dt*.28);P.x=cart.x;P.y=cart.y;P.z=cart.z;P.yaw=cart.yaw;P.vx=P.vy=P.vz=0;cart.mesh.position.set(cart.x,cart.y-.25,cart.z);cart.mesh.rotation.y=cart.yaw;
+}
+let farmingClock=0;
+function farmingTick(dt){
+ if(!world||!playing||mode==='spectator')return;
+ farmingClock+=dt;if(farmingClock<12)return;farmingClock=0;
+ const cx=Math.floor(P.x),cz=Math.floor(P.z);
+ for(let x=cx-42;x<=cx+42;x++)for(let z=cz-42;z<=cz+42;z++){
+  const top=world.surface(x,z),cropY=top-1,soilY=top-2,crop=world.get(x,cropY,z),soil=world.get(x,soilY,z);
+  if(soil!==B.FARMLAND)continue;
+  const next=({[B.WHEAT_1]:B.WHEAT_2,[B.WHEAT_2]:B.WHEAT_3,[B.CARROT_1]:B.CARROT_2,[B.POTATO_1]:B.POTATO_2})[crop];
+  if(!next)continue;
+  let watered=false;
+  for(let dx=-4;dx<=4&&!watered;dx++)for(let dz=-4;dz<=4&&!watered;dz++)for(let dy=0;dy<=1;dy++)if(isWater(world.get(x+dx,soilY+dy,z+dz))){watered=true;break}
+  if(Math.random()<(watered ? .58 : .12)){world.set(x,cropY,z,next);mpBlockChange(x,cropY,z,next);dirty=true}
+ }
+}
 function wildlifeTick(dt){
  if(!world)return;
  wildlife.spawnClock-=dt;
@@ -899,11 +970,11 @@ function wildlifeTick(dt){
 let last=performance.now(),fps=60;
 (function loop(t){requestAnimationFrame(loop);const dt=Math.min(.05,(t-last)/1000)||.016;last=t;fps=fps*.9+.1/dt;if(playing)playSecs+=dt;if(world){world.wtex.offset.set((t*.00004)%1,(t*.00011)%1);world.wmat.opacity=.8+Math.sin(t*.0014)*.03}
  if(world&&playing){if(mode!=='spectator')for(const f of world.furnaces.values())if(furnaceTick(f,dt))dirty=true;invUI.tick(dt);if(world.xray)world.xmat.glow.opacity=.2+Math.sin(t*.004)*.08}
- if(playing){world.update(P.x,P.z,6);wildlifeTick(dt);multiplayerTick(dt);const st=uiOpen?{swim:false}:mode==='spectator'?stepSpectator(P,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),up:!!keys.Space,down:!!(keys.ShiftLeft||keys.ShiftRight),yaw:P.yaw},dt):stepPlayer(P,world,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),space:!!keys.Space,sprint:!!keys.ShiftLeft,down:!!(fly?(keys.ShiftLeft||keys.ShiftRight):(keys.ControlLeft||keys.ControlRight)),fly,yaw:P.yaw},dt),inW=st.swim;
+ if(playing){world.update(P.x,P.z,6);wildlifeTick(dt);farmingTick(dt);engineeringTick();multiplayerTick(dt);const st=uiOpen?{swim:false}:mode==='spectator'?stepSpectator(P,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),up:!!keys.Space,down:!!(keys.ShiftLeft||keys.ShiftRight),yaw:P.yaw},dt):stepPlayer(P,world,{fx:(keys.KeyD?1:0)-(keys.KeyA?1:0),fz:(keys.KeyS?1:0)-(keys.KeyW?1:0),space:!!keys.Space,sprint:!!keys.ShiftLeft,down:!!(fly?(keys.ShiftLeft||keys.ShiftRight):(keys.ControlLeft||keys.ControlRight)),fly,yaw:P.yaw},dt),inW=st.swim;if(cart)cartTick(dt);
   cam.position.set(P.x,P.y+1.62,P.z);cam.rotation.set(P.pitch,P.yaw,0,'YXZ');biomeFinderTick(dt);viewModel.visible=mode!=='spectator';{const walking=Math.hypot(P.vx,P.vz)>.35,phase=t*.012;leftLeg.rotation.x=walking?Math.sin(phase)*.45:0;rightLeg.rotation.x=walking?Math.sin(phase+Math.PI)*.45:0;leftArm.rotation.x=walking?Math.sin(phase+Math.PI)*.18:0;rightArm.rotation.x=(holding?-.7:0)+(walking?Math.sin(phase+Math.PI)*.16:0)}{const cw=mode!=='spectator'&&camInWater();if(cw!==uwOn){uwOn=cw;setUnder(cw)}}const r=ray();sel.visible=!!r;if(r)sel.position.set(r.hit[0]+.5,r.hit[1]+.5,r.hit[2]+.5);
   if(mine){const current=ray(),same=current&&current.hit.join(',')===mine.pos;if(!same||world.get(...mine.hit)!==mine.block)finishMine();else{mine.elapsed+=dt;mine.snd=(mine.snd||0)+dt;if(mine.snd>.22){mine.snd=0;sfx('hit')}const progress=Math.min(1,mine.elapsed/mine.required);crack.visible=true;crack.position.set(mine.hit[0]+.5,mine.hit[1]+.5,mine.hit[2]+.5);crack.material.map=crackTex[Math.min(9,Math.floor(progress*10))];showMine(progress);if(progress>=1){const [x,y,z]=mine.hit,b=mine.block;breakBlock(x,y,z,b)}}}
   if(!mine&&holding)beginMine();if(mode!=='spectator')world.stepWater(10);
-  $('hud').textContent=`DIG BUILD · ${curRec?curRec.name+' · ':''}${mode==='spectator'?'SPECTATOR · X-RAY '+(xray?'ON':'OFF'):mode} · seed ${world.seed} · ${P.x|0},${P.y|0},${P.z|0} · ${fps|0}fps · wildlife: ${wildlife.animals.length} · ${mpConnected?'players: '+(mpPlayers.size+1)+' · ':'T chat · '}save: ${status}${fly&&mode==='creative'?' · FLIGHT ON (F off)':''}${uwOn?' · UNDERWATER':inW?' · SWIMMING':''}`}
+  $('hud').textContent=`DIG BUILD · ${curRec?curRec.name+' · ':''}${mode==='spectator'?'SPECTATOR · X-RAY '+(xray?'ON':'OFF'):mode} · seed ${world.seed} · ${P.x|0},${P.y|0},${P.z|0} · ${fps|0}fps · wildlife: ${wildlife.animals.length} · ${mpConnected?'players: '+(mpPlayers.size+1)+' · ':'T chat · '}save: ${status}${fly&&mode==='creative'?' · FLIGHT ON (F off)':''}${uwOn?' · UNDERWATER':inW?' · SWIMMING':''}${cart?' · MINECART (W/S move · A/D steer · Space exit)':''}`}
  renderer.render(scene,cam)})(last);
 
 </script></body></html>
