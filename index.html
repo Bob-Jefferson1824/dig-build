@@ -358,7 +358,7 @@ class World{
  gen(cx,cz){const sea=this.sea,d=new Uint8Array(S*H*S);const I=(x,y,z)=>(y*S+z)*S+x;const g3=this.genVersion>=3?this.cavesCtx(cx,cz):null;
   for(let x=0;x<S;x++)for(let z=0;z<S;z++){const wx=cx*S+x,wz=cz*S+z;
    const biome=this.genVersion>=5?biomeAt(this.seed,wx,wz,this.genVersion):'Forest';const h=heightAt(this.seed,wx,wz,this.genVersion,sea);
-   const inRiver=this.genVersion>=8&&riverAt(this.seed,wx,wz,this.genVersion)&&h>sea+2;
+   const inRiver=this.genVersion>=7&&riverAt(this.seed,wx,wz,this.genVersion)&&h>sea+2;
    for(let y=0;y<=h;y++){let b=B.STONE;if(y===0)b=B.BEDROCK;else if(y>h-4)b=B.DIRT;
     if(y===h){if(this.genVersion>=8&&(inRiver||biome==='Ocean'||biome==='Beach and Coast'||h<=sea+1))b=B.SAND;else if(this.genVersion>=5){if(biome==='Desert'||biome==='Beach and Coast'||biome==='Ocean')b=B.SAND;else if(biome==='Snowy Mountains'||h>46)b=B.SNOW;else if(biome==='Swamp')b=B.MUD;else b=B.GRASS}else b=h<=sea+1?B.SAND:h>46?B.SNOW:B.GRASS}d[I(x,y,z)]=b}
    // The channel is cut about five blocks below the surrounding terrain; fill it back to bank height.
