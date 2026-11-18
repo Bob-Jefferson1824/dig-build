@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
 
 const root=path.resolve(import.meta.dirname,'..');
@@ -12,6 +13,14 @@ fs.writeFileSync(path.join(tmp,'world.mjs'),worldSource);
 let itemSource=fs.readFileSync(path.join(root,'js/items.js'),'utf8').replace("from './world.js'","from './world.mjs'");
 fs.writeFileSync(path.join(tmp,'items.mjs'),itemSource);
 const W=await import(pathToFileURL(path.join(tmp,'world.mjs')));
+const liveHtml=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const liveScript=liveHtml.match(/<script type="module">([\\s\\S]*?)<\\/script>/);
+assert.ok(liveScript,'live game module script must exist');
+const liveScriptPath=path.join(tmp,'live-game.mjs');
+fs.writeFileSync(liveScriptPath,liveScript[1]);
+const syntax=spawnSync(process.execPath,['--check',liveScriptPath],{encoding:'utf8'});
+assert.equal(syntax.status,0,'live game module must parse: '+syntax.stderr);
+
 const I=await import(pathToFileURL(path.join(tmp,'items.mjs')));
 
 const names=Object.values(W.BIOME).filter(n=>n!==W.BIOME.OCEAN),seen=new Set();
