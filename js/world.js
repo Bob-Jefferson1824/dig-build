@@ -69,6 +69,20 @@ function tunnelAt(x,y,z,seed){const ix=Math.floor(x/44),iy=Math.floor((y-12)/28)
    if(segmentDistanceSq(x,y,z,a.x,a.y,a.z,mx,my,mz)<r2||segmentDistanceSq(x,y,z,mx,my,mz,b.x,b.y,b.z)<r2)return true;
   }
  }return false}
+export const surfaceCaveCap=h=>h-12;
+function entranceAt(x,y,z,seed,surface){
+ const cell=144,gx=Math.floor(x/cell),gz=Math.floor(z/cell);
+ for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){
+  const ax=gx+dx,az=gz+dz,h=n=>hash3(ax,0,az,seed+n),chance=h(7711);
+  if(chance>.18)continue;
+  const ex=ax*cell+28+h(7712)*88,ez=az*cell+28+h(7713)*88,large=h(7714)<.075;
+  const d=Math.hypot(x-ex,z-ez),mouth=large?2.35:1.35,shaft=large?2.7:1.65;
+  if(y>=surface-2&&y<=surface&&d<mouth)return true;
+  if(y>=surface-15&&y<surface-2&&d<shaft)return true;
+  if(y>=surface-20&&y<surface-15&&d<(large?5.8:3.9))return true;
+ }
+ return false;
+}
 function hash(x,z,s){let h=(x*374761393+z*668265263+s*982451653)|0;h=(h^(h>>>13))*1274126177|0;return((h^(h>>>16))>>>0)/4294967295}
 const sm=t=>t*t*(3-2*t);
 function vnoise(x,z,s){const xi=Math.floor(x),zi=Math.floor(z),fx=sm(x-xi),fz=sm(z-zi);const a=hash(xi,zi,s),b=hash(xi+1,zi,s),c=hash(xi,zi+1,s),d=hash(xi+1,zi+1,s);return a+(b-a)*fx+(c-a)*fz+(a-b-c+d)*fx*fz}
@@ -81,7 +95,7 @@ export function biomeAt(seed,wx,wz,gen=5){
  const climateScale=gen>=6?1.75:1,temperature=fbm(wx/(520*climateScale),wz/(520*climateScale),seed+1701),moisture=fbm(wx/(390*climateScale),wz/(390*climateScale),seed+2701),rare=fbm(wx/(700*climateScale),wz/(700*climateScale),seed+3701);
  const coast=fbm(wx/(gen>=6?900:420),wz/(gen>=6?900:420),seed+91);
  if(gen>=6&&coast<.30)return BIOME.OCEAN;
- if(rare>.84&&moisture>.58&&temperature>.38&&temperature<.72)return BIOME.MUSHROOM_FIELDS;
+ if(rare>(gen>=7?.78:.84)&&moisture>.54&&temperature>.34&&temperature<.76)return BIOME.MUSHROOM_FIELDS;
  if(gen>=6?coast>=.30&&coast<.35:coast>=.22&&coast<.27)return BIOME.BEACH;
  if(temperature<.27)return BIOME.SNOWY_MOUNTAINS;
  if(temperature>.69&&moisture<.39)return BIOME.DESERT;
@@ -93,8 +107,33 @@ export function biomeAt(seed,wx,wz,gen=5){
  return BIOME.FOREST;
 }
 export function riverAt(seed,wx,wz){const warpX=(fbm(wx/360,wz/360,seed+801)-.5)*150,warpZ=(fbm(wx/360,wz/360,seed+802)-.5)*150;return Math.abs(fbm((wx+warpX)/230,(wz+warpZ)/230,seed+803)-.5)<.018}
+function band(v,lo,hi,fade=.10){return sm(Math.max(0,Math.min(1,(v-lo)/fade)))*sm(Math.max(0,Math.min(1,(hi-v)/fade)))}
+export function riverStrength(seed,wx,wz){
+ const warpX=(fbm(wx/360,wz/360,seed+801)-.5)*150,warpZ=(fbm(wx/360,wz/360,seed+802)-.5)*150;
+ const d=Math.abs(fbm((wx+warpX)/230,(wz+warpZ)/230,seed+803)-.5);
+ return 1-sm(Math.max(0,Math.min(1,d/.035)));
+}
 export function heightAt(seed,wx,wz,gen=3){
  const m=Math.max(0,fbm(wx/220,wz/220,seed+7)-.5)*2;
+ if(gen>=7){
+  const continent=fbm(wx/900,wz/900,seed+91),broad=fbm(wx/145,wz/145,seed),detail=fbm(wx/38,wz/38,seed+611);
+  const temperature=fbm(wx/910,wz/910,seed+1701),moisture=fbm(wx/682,wz/682,seed+2701);
+  if(continent<.30)return Math.max(10,GEN6_SEA-17+sm(continent/.30)*16+Math.floor(fbm(wx/125,wz/125,seed+123)*2));
+  const mountain=1-sm(Math.max(0,Math.min(1,(temperature-.17)/.31)));
+  const desert=band(temperature,.66,1,.16)*(1-sm(Math.max(0,Math.min(1,(moisture-.30)/.25))));
+  const jungle=band(temperature,.56,1,.19)*sm(Math.max(0,Math.min(1,(moisture-.48)/.28)));
+  const swamp=band(temperature,.30,.82,.18)*sm(Math.max(0,Math.min(1,(moisture-.64)/.24)));
+  const taiga=sm(Math.max(0,Math.min(1,(.49-temperature)/.18)))*sm(Math.max(0,Math.min(1,(moisture-.34)/.22)));
+  const mushroom=band(temperature,.36,.76,.18)*band(moisture,.56,.90,.15)*sm(Math.max(0,Math.min(1,(fbm(wx/700,wz/700,seed+3701)-.78)/.12)));
+  let h=NEW_SURFACE_BASE+broad*18+m*m*22+(detail-.5)*3;
+  h+=mountain*mountain*35;
+  h-=desert*5;h+=jungle*7;h-=swamp*18;h+=taiga*4+mushroom*3;
+  const coastBlend=sm(Math.max(0,Math.min(1,(continent-.30)/.13)));
+  h=(GEN6_SEA-1)+(h-(GEN6_SEA-1))*coastBlend;
+  const river=riverStrength(seed,wx,wz);
+  h-=river*5;
+  return Math.max(GEN6_SEA-7,Math.min(H-18,Math.floor(h)));
+ }
  if(gen>=6){
   const continent=fbm(wx/900,wz/900,seed+91),climate=biomeAt(seed,wx,wz,gen),broad=fbm(wx/105,wz/105,seed),detail=fbm(wx/34,wz/34,seed+611),temperature=fbm(wx/910,wz/910,seed+1701),moisture=fbm(wx/682,wz/682,seed+2701);
   if(continent<.30)return Math.max(10,GEN6_SEA-15+sm(continent/.30)*14+Math.floor(fbm(wx/125,wz/125,seed+123)*2));
@@ -146,8 +185,8 @@ export class World{
  // ---- Stage 9: connected underground tunnel networks. Every tunnel is derived from world coordinates and seed, so adjacent chunks join perfectly. ----
  cavesCtx(cx,cz){const s=this.seed;if(this.genVersion>=4)return {seed:s};return {seed:s,A:field(s+1001,14,10,cx,cz),Bf:field(s+2002,16,8,cx,cz),C:field(s+3003,22,14,cx,cz),P:field(s+4004,18,H,cx,cz)}}
  carve(d,c,cx,cz,x,z,h){const wx=cx*S+x,wz=cz*S+z,I=y=>(y*S+z)*S+x;
-  if(this.genVersion>=4){for(let y=10;y<=h-12;y++)if(tunnelAt(wx,y,wz,c.seed))d[I(y)]=0;
-   for(let y=1,top=Math.min(h-4,145);y<=top;y++)if(d[I(y)]===B.STONE){const o=oreAt(wx,y,wz,this.seed);if(o)d[I(y)]=o}
+  if(this.genVersion>=4){for(let y=10;y<=h-12;y++)if(tunnelAt(wx,y,wz,c.seed)||(this.genVersion>=7&&entranceAt(wx,y,wz,c.seed,h)))d[I(y)]=0;
+   for(let y=1,top=Math.min(h-4,145);y<=top;y++)if(d[I(y)]===B.STONE){const o=oreAt(wx,y,wz,this.seed,this.genVersion);if(o)d[I(y)]=o}
    return}
   const sea=this.sea,at=(dx,dz)=>this.height(wx+dx,wz+dz);let lim=h>sea+4?h:h-4;for(const [dx,dz] of N4){const hn=at(dx,dz);if(hn<=sea)lim=Math.min(lim,hn-3)}
   const pm=c.P(wx,0,wz)>PT;

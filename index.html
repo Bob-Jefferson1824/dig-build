@@ -103,11 +103,11 @@
  <div id="dlgDelete" class="dlg" hidden><div class="box"><h3>Delete world?</h3><p id="delText"></p><p id="delNote" class="note"></p><div class="bar"><button id="btnDelCancel" class="big">Cancel</button><button id="btnDelOk" class="danger">Delete World</button></div></div></div>
 </div>
 <script type="module">
-import {BIOMES,biomeAt,biomeHeight,biomeColor,findNearestBiome,bearingLabel} from "./js/biome-finder.js";
+import {BIOMES,biomeAt,biomeHeight,biomeColor,findNearestBiome,bearingLabel,riverAt} from "./js/biome-finder.js";
 // Public values only (anon/publishable key is safe in the browser; RLS protects data). NEVER put a service-role key here.
 const SUPABASE_URL = '';      // e.g. https://xxxx.supabase.co
 const SUPABASE_ANON_KEY = ''; // anon / publishable key
-const GEN_VERSION = 5;        // generation used for NEW worlds (v2 = more water, v3 = caves + ores). Saved worlds keep their own gen_version (v1 stays identical).
+const GEN_VERSION = 7;        // generation used for NEW worlds. Saved worlds keep their own gen_version and terrain.
 const SAVE_FORMAT = 4;        // bump + add a migration in save.js when save shape changes
 
 // Save-format migrations (pure functions; storage lives in worlds.js). Add a step per format bump, never drop old steps.
@@ -187,10 +187,10 @@ const resetPw=e=>sb.auth.resetPasswordForEmail(e);
 async function cloudSave(w){const u=await user();if(!u)return false;const {error}=await sb.from('worlds').upsert({...w,user_id:u.id,last_played:new Date().toISOString()},{onConflict:'user_id,name'});if(error)throw error;return true}
 async function cloudLoad(name){const u=await user();if(!u)return null;const {data,error}=await sb.from('worlds').select('*').eq('name',name).maybeSingle();if(error)throw error;return data}
 
-const B={AIR:0,GRASS:1,DIRT:2,STONE:3,SAND:4,SNOW:5,LOG:6,LEAVES:7,WATER:8,PLANKS:9,BEDROCK:10,COBBLE:11,GLASS:12,BRICK:13,FLOWING_WATER:14,WORKBENCH:15,COAL_ORE:16,IRON_ORE:17,GOLD_ORE:18,DIAMOND_ORE:19,FURNACE:20,STONE_BRICKS:21,MOSSY_COBBLE:22,CACTUS:23,AUTUMN_LEAVES:24,MUSHROOM_CAP:25,MUSHROOM_STEM:26,REEDS:27};
+const B={AIR:0,GRASS:1,DIRT:2,STONE:3,SAND:4,SNOW:5,LOG:6,LEAVES:7,WATER:8,PLANKS:9,BEDROCK:10,COBBLE:11,GLASS:12,BRICK:13,FLOWING_WATER:14,WORKBENCH:15,COAL_ORE:16,IRON_ORE:17,GOLD_ORE:18,DIAMOND_ORE:19,FURNACE:20,STONE_BRICKS:21,MOSSY_COBBLE:22,CACTUS:23,AUTUMN_LEAVES:24,MUSHROOM_CAP:25,MUSHROOM_STEM:26,REEDS:27,BIRCH_LOG:28,BIRCH_PLANKS:29,PINE_LOG:30,PINE_PLANKS:31,JUNGLE_LOG:32,JUNGLE_PLANKS:33,ACACIA_LOG:34,ACACIA_PLANKS:35,MANGROVE_LOG:36,MANGROVE_PLANKS:37,MUD:38};
 const isWater=id=>id===B.WATER||id===B.FLOWING_WATER;
-const INFO={1:['Grass',[84,150,58]],2:['Dirt',[120,84,52]],3:['Stone',[125,125,128]],4:['Sand',[218,205,150]],5:['Snow',[240,244,250]],6:['Log',[98,72,40]],7:['Leaves',[48,120,40]],8:['Water',[60,160,240]],9:['Planks',[170,132,80]],10:['Bedrock',[45,45,48]],11:['Cobble',[100,100,104]],12:['Glass',[190,225,235]],13:['Bricks',[150,70,58]],14:['Water',[60,160,240]],15:['Workbench',[150,105,58]],16:['Coal Ore',[40,40,44]],17:['Iron Ore',[222,176,146]],18:['Gold Ore',[252,214,60]],19:['Diamond Ore',[96,236,236]],20:['Furnace',[112,112,116]],21:['Stone Bricks',[135,135,138]],22:['Mossy Cobble',[85,112,72]],23:['Cactus',[55,145,65]],24:['Autumn Leaves',[205,105,35]],25:['Mushroom Cap',[175,45,55]],26:['Mushroom Stem',[225,215,185]],27:['Reeds',[105,150,65]]};
-const NT=28,S=16,H=64,SEA=22;
+const INFO={1:['Grass',[84,150,58]],2:['Dirt',[120,84,52]],3:['Stone',[125,125,128]],4:['Sand',[218,205,150]],5:['Snow',[240,244,250]],6:['Log',[98,72,40]],7:['Leaves',[48,120,40]],8:['Water',[60,160,240]],9:['Planks',[170,132,80]],10:['Bedrock',[45,45,48]],11:['Cobble',[100,100,104]],12:['Glass',[190,225,235]],13:['Bricks',[150,70,58]],14:['Water',[60,160,240]],15:['Workbench',[150,105,58]],16:['Coal Ore',[40,40,44]],17:['Iron Ore',[222,176,146]],18:['Gold Ore',[252,214,60]],19:['Diamond Ore',[96,236,236]],20:['Furnace',[112,112,116]],21:['Stone Bricks',[135,135,138]],22:['Mossy Cobble',[85,112,72]],23:['Cactus',[55,145,65]],24:['Autumn Leaves',[205,105,35]],25:['Mushroom Cap',[175,45,55]],26:['Mushroom Stem',[225,215,185]],27:['Reeds',[105,150,65]],28:['Birch Log',[205,190,150]],29:['Birch Planks',[205,185,130]],30:['Pine Log',[92,67,43]],31:['Pine Planks',[145,105,65]],32:['Jungle Log',[115,75,42]],33:['Jungle Planks',[170,115,65]],34:['Acacia Log',[120,75,45]],35:['Acacia Planks',[195,112,55]],36:['Mangrove Log',[92,55,48]],37:['Mangrove Planks',[145,75,65]],38:['Mud',[105,79,55]]};
+const NT=39,S=16,H=192,SEA=22;
 const solid=id=>id!==0&&!isWater(id);
 const see=id=>id===0||isWater(id)||id===7||id===12||id===B.AUTUMN_LEAVES;
 function makeAtlas(){const c=document.createElement('canvas');c.width=NT*16;c.height=16;const g=c.getContext('2d');let r=12345;const rnd=()=>(r=(r*16807)%2147483647)/2147483647;
@@ -205,6 +205,16 @@ function makeAtlas(){const c=document.createElement('canvas');c.width=NT*16;c.he
  {const o=21*16;for(let y=0;y<16;y++)for(let x=0;x<16;x++){const v=.88+rnd()*.22;g.fillStyle=`rgb(${[132,134,138].map(k=>Math.min(255,k*v|0))})`;g.fillRect(o+x,y,1,1)}g.fillStyle='#77797d';g.fillRect(o,0,16,1);g.fillRect(o,8,16,1);g.fillRect(o+7,0,1,8);g.fillRect(o+3,9,1,7);g.fillStyle='#aeb0b3';g.fillRect(o+1,1,5,1);g.fillRect(o+8,9,7,1)}
  // Mossy cobblestone with irregular stones and green crevices.
  {const o=22*16;for(let y=0;y<16;y++)for(let x=0;x<16;x++){const v=.82+rnd()*.3;g.fillStyle=`rgb(${[105,107,105].map(k=>Math.min(255,k*v|0))})`;g.fillRect(o+x,y,1,1)}for(const [x,y,w,h] of [[1,1,5,4],[9,2,5,3],[5,9,6,5],[12,11,3,3]]){g.fillStyle='#4e7540';g.fillRect(o+x,y,w,h);g.fillStyle='#72965a';g.fillRect(o+x+1,y+1,Math.max(1,w-2),1)}g.fillStyle='#55585a';for(const [x,y,w] of [[0,6,6],[8,6,8],[6,14,5]])g.fillRect(o+x,y,w,1)}
+ // Dedicated bark/plank patterns for the additional wood species, plus a rough mud tile.
+ for(const [log,plank,bark,wood] of [[28,29,[205,190,150],[205,185,130]],[30,31,[92,67,43],[145,105,65]],[32,33,[115,75,42],[170,115,65]],[34,35,[120,75,45],[195,112,55]],[36,37,[92,55,48],[145,75,65]]]){
+  for(let y=0;y<16;y++)for(let x=0;x<16;x++){
+   const v=.88+hash(x,y,log)*.24,grain=x%5===0||x%7===0;
+   g.fillStyle=`rgb(${(grain?bark:wood).map(k=>Math.min(255,k*v)|0)})`;g.fillRect(log*16+x,y,1,1);
+   const pv=.88+hash(x,y,plank)*.2,edge=(y%5===0);
+   g.fillStyle=`rgb(${wood.map(k=>Math.min(255,k*(edge?.78:pv))|0)})`;g.fillRect(plank*16+x,y,1,1);
+  }
+ }
+ for(let y=0;y<16;y++)for(let x=0;x<16;x++){const v=.82+hash(x,y,38)*.3;g.fillStyle=`rgb(${[105,79,55].map(k=>Math.min(255,k*v)|0)})`;g.fillRect(38*16+x,y,1,1)}
  const t=new THREE.CanvasTexture(c);t.magFilter=t.minFilter=THREE.NearestFilter;t.colorSpace=THREE.SRGBColorSpace;return t}
 // Water has its own 2-tile texture (source | flowing) that wraps vertically so it can scroll for a subtle wave effect.
 function makeWaterTex(){const c=document.createElement('canvas');c.width=16;c.height=16;const g=c.getContext('2d'),TP=Math.PI*2;
@@ -239,6 +249,18 @@ function hash(x,z,s){let h=(x*374761393+z*668265263+s*982451653)|0;h=(h^(h>>>13)
 const sm=t=>t*t*(3-2*t);
 function vnoise(x,z,s){const xi=Math.floor(x),zi=Math.floor(z),fx=sm(x-xi),fz=sm(z-zi);const a=hash(xi,zi,s),b=hash(xi+1,zi,s),c=hash(xi,zi+1,s),d=hash(xi+1,zi+1,s);return a+(b-a)*fx+(c-a)*fz+(a-b-c+d)*fx*fz}
 function fbm(x,z,s){return vnoise(x,z,s)*.55+vnoise(x*2,z*2,s+1)*.28+vnoise(x*4,z*4,s+2)*.17}
+function caveEntranceAt(x,y,z,seed,surface){
+ const cell=144,gx=Math.floor(x/cell),gz=Math.floor(z/cell);
+ for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){
+  const ax=gx+dx,az=gz+dz,h=n=>hash3(ax,0,az,seed+n);
+  if(h(7711)>.18)continue;
+  const ex=ax*cell+28+h(7712)*88,ez=az*cell+28+h(7713)*88,large=h(7714)<.075,d=Math.hypot(x-ex,z-ez);
+  if(y>=surface-2&&y<=surface&&d<(large?2.25:1.25))return true;
+  if(y>=surface-15&&y<surface-2&&d<(large?2.65:1.55))return true;
+  if(y>=surface-20&&y<surface-15&&d<(large?5.5:3.7))return true;
+ }
+ return false;
+}
 const F=[[[1,0,0],[[1,0,1],[1,0,0],[1,1,0],[1,1,1]],.8],[[-1,0,0],[[0,0,0],[0,0,1],[0,1,1],[0,1,0]],.8],[[0,1,0],[[0,1,1],[1,1,1],[1,1,0],[0,1,0]],1],[[0,-1,0],[[0,0,0],[1,0,0],[1,0,1],[0,0,1]],.5],[[0,0,1],[[0,0,1],[1,0,1],[1,1,1],[0,1,1]],.7],[[0,0,-1],[[1,0,0],[0,0,0],[0,1,0],[1,1,0]],.7]];
 function heightAt(seed,wx,wz,gen=5,sea=25){if(gen>=5)return biomeHeight(seed,wx,wz,sea,H-12);const m=Math.max(0,fbm(wx/220,wz/220,seed+7)-.5)*2;return Math.min(H-8,Math.floor(18+fbm(wx/70,wz/70,seed)*20+m*m*40))}
 // small top-down terrain thumbnail (colours by height) drawn straight from the seed: used on world cards and the create-world screen
@@ -247,7 +269,7 @@ function drawPreview(cv,seed,gen,cx=0,cz=0,N=40,step=4){cv.width=cv.height=N;con
   if(h<=sea){const d=Math.min(1,(sea-h)/10);c=[40-d*20|0,110-d*40|0,200-d*50|0]}else if(h<=sea+1)c=[216,200,140];else if(h>46)c=[240,244,250];else if(h>38)c=[125,125,130];else{const s=.75+(h-sea)/60;c=[70*s|0,150*s|0,60*s|0]}
   g.fillStyle=`rgb(${c})`;g.fillRect(i,j,1,1)}g.fillStyle='#fff';g.fillRect(N/2-1,N/2-1,2,2)}
 class World{
- constructor(seed,scene,gen=1){this.genVersion=gen;this.sea=gen>=2?25:SEA;this.seed=seed|0;this.scene=scene;this.chunks=new Map();this.mods=new Map();this.furnaces=new Map();this.dirty=new Set();
+ constructor(seed,scene,gen=1){this.genVersion=gen;this.sea=gen>=7?38:gen>=2?25:SEA;this.seed=seed|0;this.scene=scene;this.chunks=new Map();this.mods=new Map();this.furnaces=new Map();this.dirty=new Set();
   this.atlas=makeAtlas();this.fluidQueue=[];this.fluidSeen=new Set();this.flowDistance=new Map();this.mat=new THREE.MeshBasicMaterial({map:this.atlas,vertexColors:true,alphaTest:.1});
   this.wtex=makeWaterTex();this.wmat=new THREE.MeshBasicMaterial({map:this.wtex,vertexColors:true,transparent:true,opacity:.8,depthWrite:false,side:THREE.DoubleSide});this.xray=false;
   // X-ray overlay materials: drawn after everything else with depth testing OFF, so ores show through any number of blocks.
@@ -265,18 +287,19 @@ class World{
  cavesCtx(cx,cz){const s=this.seed,hs=new Int16Array(18*18);for(let z=-1;z<=16;z++)for(let x=-1;x<=16;x++)hs[(z+1)*18+x+1]=this.height(cx*S+x,cz*S+z);
   return {hs,A:field(s+1001,14,10,cx,cz),Bf:field(s+2002,16,8,cx,cz),C:field(s+3003,22,14,cx,cz),D:field(s+5005,7,5,cx,cz),P:field(s+4004,18,H,cx,cz)}}
  carve(d,c,cx,cz,x,z,h){const sea=this.sea,wx=cx*S+x,wz=cz*S+z,at=(dx,dz)=>c.hs[(z+dz+1)*18+x+dx+1];
-  let lim=h>sea+4?h:h-4;for(const [dx,dz] of N4){const hn=at(dx,dz);if(hn<=sea)lim=Math.min(lim,hn-3)}   // never open into lakes/rivers: keep rock between caves and surface water
+  let lim=this.genVersion>=7?h-12:(h>sea+4?h:h-4);for(const [dx,dz] of N4){const hn=at(dx,dz);if(hn<=sea)lim=Math.min(lim,hn-3)}   // never open into lakes/rivers: keep rock between caves and surface water
   const I=y=>(y*S+z)*S+x,pm=c.P(wx,0,wz)>PT;let wall=false;if(!pm)for(const [dx,dz] of N4)if(c.P(wx+dx,0,wz+dz)>PT)wall=true;
   for(let y=this.genVersion>=5?2:4;y<=lim;y++){let open;if(this.genVersion>=5){const a=c.A(wx,y,wz),b=c.Bf(wx,y,wz),wide=c.C(wx,y,wz),detail=c.D(wx,y,wz);const caveDensity=a*.36+b*.27+wide*.13+(detail-.5)*.48;open=caveDensity>=.565}else if(this.genVersion>=4){const a=c.A(wx,y,wz),b=c.Bf(wx,y,wz),wide=c.C(wx,y,wz),detail=c.D(wx,y,wz);const caveDensity=a*.42+b*.28+wide*.20+(detail-.5)*.18;open=caveDensity>=.535}else{const a=c.A(wx,y,wz)-.5,b=c.Bf(wx,y,wz)-.5;open=a*a+b*b<TUBE||c.C(wx,y,wz)>CAV}if(!open)continue;
    if(y<=POOLY){if(pm){d[I(y)]=B.WATER;continue}if(wall)continue}   // pools are walled in so water never touches open air sideways
    d[I(y)]=0}
-  for(let y=1,top=Math.min(h-4,56);y<=top;y++)if(d[I(y)]===B.STONE){const o=this.genVersion>=5?oreAt(wx,y,wz,this.seed):oreAtLegacy(wx,y,wz,this.seed);if(o)d[I(y)]=o}}
+  if(this.genVersion>=7&&h>sea+5)for(let y=Math.max(2,h-20);y<=h;y++)if(caveEntranceAt(wx,y,wz,this.seed,h))d[I(y)]=0;
+  for(let y=1,top=Math.min(h-4,145);y<=top;y++)if(d[I(y)]===B.STONE){const o=this.genVersion>=5?oreAt(wx,y,wz,this.seed):oreAtLegacy(wx,y,wz,this.seed);if(o)d[I(y)]=o}}
  gen(cx,cz){const sea=this.sea,d=new Uint8Array(S*H*S);const I=(x,y,z)=>(y*S+z)*S+x;const g3=this.genVersion>=3?this.cavesCtx(cx,cz):null;
   for(let x=0;x<S;x++)for(let z=0;z<S;z++){const wx=cx*S+x,wz=cz*S+z;
    const biome=this.genVersion>=5?biomeAt(this.seed,wx,wz,this.genVersion):'Forest';const h=heightAt(this.seed,wx,wz,this.genVersion,sea);
    for(let y=0;y<=h;y++){let b=B.STONE;if(y===0)b=B.BEDROCK;else if(y>h-4)b=B.DIRT;
-    if(y===h){if(this.genVersion>=5){if(biome==='Desert'||biome==='Beach and Coast')b=B.SAND;else if(biome==='Snowy Mountains'||h>46)b=B.SNOW;else if(biome==='Swamp')b=B.DIRT;else b=B.GRASS}else b=h<=sea+1?B.SAND:h>46?B.SNOW:B.GRASS}d[I(x,y,z)]=b}
-   for(let y=h+1;y<=sea;y++)d[I(x,y,z)]=B.WATER;
+    if(y===h){if(this.genVersion>=5){if(biome==='Desert'||biome==='Beach and Coast')b=B.SAND;else if(biome==='Snowy Mountains'||h>46)b=B.SNOW;else if(biome==='Swamp')b=B.MUD;else b=B.GRASS}else b=h<=sea+1?B.SAND:h>46?B.SNOW:B.GRASS}d[I(x,y,z)]=b}
+   const waterTop=this.genVersion>=7&&riverAt(this.seed,wx,wz)?h+3:sea;for(let y=h+1;y<=waterTop;y++)d[I(x,y,z)]=B.WATER;
    if(g3)this.carve(d,g3,cx,cz,x,z,h);
    if(this.genVersion>=5){
     const r=hash(wx,wz,this.seed+509);
@@ -284,12 +307,12 @@ class World{
     else if(biome==='Swamp'&&h>sea-2&&r<.045){for(let t=0;t<2+(r*20|0)&&h+t+1<H;t++)d[I(x,h+1+t,z)]=B.REEDS}
     else if(biome==='Mushroom Fields'&&h>sea+1&&x>=2&&x<=13&&z>=2&&z<=13&&r<.026){const stem=2+(hash(wx,wz,this.seed+511)*3|0);for(let t=0;t<stem;t++)d[I(x,h+1+t,z)]=B.MUSHROOM_STEM;for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)if(dx*dx+dz*dz<=4)d[I(x+dx,h+stem,z+dz)]=B.MUSHROOM_CAP}
     else if(biome!=='Beach and Coast'&&h>sea+1&&h<H-12&&x>2&&x<13&&z>2&&z<13){
-     const chance=biome==='Jungle'?.085:biome==='Forest'?.035:biome==='Autumn Forest'?.04:biome==='Taiga'?.055:biome==='Swamp'?.025:biome==='Plains'?.006:.012;
-     if(r<chance){const jungle=biome==='Jungle',taiga=biome==='Taiga',autumn=biome==='Autumn Forest',swamp=biome==='Swamp',trunk=(jungle?8:taiga?7:autumn?5:swamp?4:4)+(hash(wx,wz,this.seed+512)*3|0);
-      for(let t=1;t<=trunk;t++)d[I(x,h+t,z)]=B.LOG;
-      const radius=jungle?3:taiga?1:2,leaf=autumn?B.AUTUMN_LEAVES:B.LEAVES;
+     const chance=biome==='Jungle'?.085:biome==='Forest'?.035:biome==='Autumn Forest'?.04:biome==='Taiga'?.055:biome==='Swamp'?.04:biome==='Plains'?.006:.012;
+     if(r<chance){const jungle=biome==='Jungle',taiga=biome==='Taiga'||biome==='Snowy Mountains',autumn=biome==='Autumn Forest',swamp=biome==='Swamp',birch=biome==='Forest'&&hash(wx,wz,this.seed+513)<.24,wood=jungle?B.JUNGLE_LOG:taiga?B.PINE_LOG:autumn?B.ACACIA_LOG:swamp?B.MANGROVE_LOG:birch?B.BIRCH_LOG:B.LOG,trunk=(jungle?8:taiga?7:autumn?5:swamp?4:birch?6:4)+(hash(wx,wz,this.seed+512)*3|0);
+      for(let t=1;t<=trunk;t++)d[I(x,h+t,z)]=wood;
+      const radius=jungle?3:taiga?1:swamp?2:2,leaf=autumn?B.AUTUMN_LEAVES:B.LEAVES;
       for(let dy=trunk-2;dy<=trunk+2;dy++){const rad=dy===trunk+2?1:radius;for(let dx=-rad;dx<=rad;dx++)for(let dz=-rad;dz<=rad;dz++)if(dx*dx+dz*dz<=rad*rad+1&&!d[I(x+dx,h+dy,z+dz)])d[I(x+dx,h+dy,z+dz)]=leaf}
-      if(swamp)for(const [dx,dz] of [[-1,0],[1,0],[0,-1],[0,1]])for(let t=0;t<2;t++)if(!d[I(x+dx,h+t,z+dz)])d[I(x+dx,h+t,z+dz)]=B.LOG;
+      if(swamp)for(const [dx,dz] of [[-1,0],[1,0],[0,-1],[0,1]])for(let t=0;t<3;t++)if(!d[I(x+dx,h+t,z+dz)])d[I(x+dx,h+t,z+dz)]=B.MANGROVE_LOG;
      }
     }
    }else if(h>sea+1&&h<40&&(!g3||d[I(x,h,z)])&&x>2&&x<13&&z>2&&z<13&&hash(wx,wz,this.seed+99)<.012){for(let t=1;t<=5;t++)d[I(x,h+t,z)]=B.LOG;
@@ -335,7 +358,7 @@ const isBlockItem=id=>id>0&&id<100&&id!==B.WATER&&id!==B.FLOWING_WATER;
 const MATN={100:'Stick',101:'Iron Ingot',102:'Gold Ingot',103:'Diamond',104:'Coal',105:'Raw Mutton',106:'Raw Beef',107:'Raw Pork',108:'Raw Chicken',109:'Leather',110:'Feather',111:'Wool'};
 const itemName=id=>isTool(id)?TIERS[toolInfo(id).tier]+' '+TYPES[toolInfo(id).type]:MATN[id]||(INFO[id]&&INFO[id][0])||'Item';
 const allItems=()=>{const a=[];for(let i=1;i<100;i++)if(isBlockItem(i)&&INFO[i])a.push(i);a.push(100,101,102,103,104,105,106,107,108,109,110,111);for(let t=0;t<4;t++)for(let r=0;r<5;r++)a.push(toolId(t,r));return a};
-const EFFECT=[[B.STONE,B.COBBLE,B.BRICK,B.STONE_BRICKS,B.MOSSY_COBBLE,B.COAL_ORE,B.IRON_ORE,B.GOLD_ORE,B.DIAMOND_ORE,B.FURNACE],[B.LOG,B.PLANKS,B.WORKBENCH],[B.DIRT,B.GRASS,B.SAND,B.SNOW],[]];
+const EFFECT=[[B.STONE,B.COBBLE,B.BRICK,B.STONE_BRICKS,B.MOSSY_COBBLE,B.COAL_ORE,B.IRON_ORE,B.GOLD_ORE,B.DIAMOND_ORE,B.FURNACE],[B.LOG,B.PLANKS,B.BIRCH_LOG,B.BIRCH_PLANKS,B.PINE_LOG,B.PINE_PLANKS,B.JUNGLE_LOG,B.JUNGLE_PLANKS,B.ACACIA_LOG,B.ACACIA_PLANKS,B.MANGROVE_LOG,B.MANGROVE_PLANKS,B.WORKBENCH],[B.DIRT,B.GRASS,B.SAND,B.SNOW,B.MUD],[]];
 const toolSpeed=(id,block)=>{if(!id||!isTool(id))return 1;const i=toolInfo(id);return EFFECT[i.type].includes(block)?TIER.speed[i.tier]:.8};
 const DROPS={[B.GRASS]:B.DIRT,[B.STONE]:B.COBBLE,[B.COAL_ORE]:MAT.COAL,[B.DIAMOND_ORE]:MAT.DIAMOND};
 // Leaves and glass do not drop themselves. Stone-family blocks require a pickaxe for drops.
@@ -365,9 +388,11 @@ function wearTool(inv,i,creative,amt=1){const s=inv[i];if(creative||!s||!isTool(
 // ---- recipes (modular: call addRecipe from anywhere). pat = rows of ids (0 = empty); shaped recipes match anywhere in the grid, mirrored too ----
 const RECIPES=[];
 const addRecipe=(out,n,pat,shapeless=false)=>RECIPES.push({out,n,pat,shapeless});
-(function(){const L=B.LOG,PL=B.PLANKS,ST=MAT.STICK;
- addRecipe(PL,4,[[L]]);addRecipe(ST,4,[[PL],[PL]]);addRecipe(B.WORKBENCH,1,[PL,PL,PL,PL],true);
- [PL,B.COBBLE,MAT.IRON,MAT.GOLD,MAT.DIAMOND].forEach((M,t)=>{addRecipe(toolId(0,t),1,[[M,M,M],[0,ST,0],[0,ST,0]]);addRecipe(toolId(1,t),1,[[M,M],[M,ST],[0,ST]]);addRecipe(toolId(2,t),1,[[M],[ST],[ST]]);addRecipe(toolId(3,t),1,[[M],[M],[ST]])})})();
+(function(){const ST=MAT.STICK,woods=[[B.LOG,B.PLANKS],[B.BIRCH_LOG,B.BIRCH_PLANKS],[B.PINE_LOG,B.PINE_PLANKS],[B.JUNGLE_LOG,B.JUNGLE_PLANKS],[B.ACACIA_LOG,B.ACACIA_PLANKS],[B.MANGROVE_LOG,B.MANGROVE_PLANKS]],planks=woods.map(w=>w[1]);
+ for(const [log,plank] of woods){addRecipe(plank,4,[[log]]);addRecipe(ST,4,[[plank],[plank]]);addRecipe(B.WORKBENCH,1,[plank,plank,plank,plank],true);}
+ const materials=[...planks,B.COBBLE,MAT.IRON,MAT.GOLD,MAT.DIAMOND];
+ for(const M of materials){const tier=planks.includes(M)?0:([B.COBBLE,MAT.IRON,MAT.GOLD,MAT.DIAMOND].indexOf(M)+1);addRecipe(toolId(0,tier),1,[[M,M,M],[0,ST,0],[0,ST,0]]);addRecipe(toolId(1,tier),1,[[M,M],[M,ST],[0,ST]]);addRecipe(toolId(2,tier),1,[[M],[ST],[ST]]);addRecipe(toolId(3,tier),1,[[M],[M],[ST]])}
+})();
 addRecipe(B.FURNACE,1,[[B.COBBLE,B.COBBLE,B.COBBLE],[B.COBBLE,0,B.COBBLE],[B.COBBLE,B.COBBLE,B.COBBLE]]);
 addRecipe(B.STONE_BRICKS,4,[[B.STONE,B.STONE],[B.STONE,B.STONE]]);
 addRecipe(B.MOSSY_COBBLE,1,[[B.COBBLE,B.LEAVES],[B.LEAVES,B.COBBLE]]);
@@ -566,8 +591,8 @@ const crackTex=(()=>{let r=4242;const rnd=()=>(r=(r*16807)%2147483647)/214748364
 const crack=new THREE.Mesh(new THREE.BoxGeometry(1.008,1.008,1.008),new THREE.MeshBasicMaterial({map:crackTex[0],transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));crack.visible=false;crack.renderOrder=3;scene.add(crack);
 let world,mode='survival',name='world',playing=false,slot=0,fly=false,dirty=false,wid,status='-',mine=null,holding=false,uwOn=false,denyKey='',xray=true,readOnly=false;const caps=()=>MODES[mode]||MODES.survival;
 const P={x:8,y:50,z:8,vx:0,vy:0,vz:0,yaw:0,pitch:0,ground:false};
-const IS={inv:newInv(),craft:Array(9).fill(null),held:null};let uiOpen=false;const CREATIVE_START=[B.GRASS,B.DIRT,B.STONE,B.PLANKS,B.LOG,B.COBBLE,B.GLASS,B.BRICK,B.WORKBENCH,B.STONE_BRICKS,B.MOSSY_COBBLE];
-const mineTime={[B.GRASS]:.55,[B.DIRT]:.5,[B.SAND]:.45,[B.SNOW]:.3,[B.LEAVES]:.25,[B.GLASS]:.25,[B.PLANKS]:1.0,[B.LOG]:1.3,[B.BRICK]:2.0,[B.STONE]:2.0,[B.WORKBENCH]:1.2,[B.COAL_ORE]:2.6,[B.IRON_ORE]:3.0,[B.GOLD_ORE]:3.2,[B.DIAMOND_ORE]:3.6,[B.FURNACE]:2.2,[B.COBBLE]:2.3,[B.BEDROCK]:Infinity};
+const IS={inv:newInv(),craft:Array(9).fill(null),held:null};let uiOpen=false;const CREATIVE_START=[B.GRASS,B.DIRT,B.STONE,B.PLANKS,B.LOG,B.BIRCH_LOG,B.PINE_LOG,B.JUNGLE_LOG,B.ACACIA_LOG,B.MANGROVE_LOG,B.COBBLE,B.GLASS,B.BRICK,B.WORKBENCH,B.STONE_BRICKS,B.MOSSY_COBBLE,B.MUD];
+const mineTime={[B.GRASS]:.55,[B.DIRT]:.5,[B.SAND]:.45,[B.SNOW]:.3,[B.LEAVES]:.25,[B.GLASS]:.25,[B.PLANKS]:1.0,[B.LOG]:1.3,[B.BIRCH_LOG]:1.3,[B.BIRCH_PLANKS]:1.0,[B.PINE_LOG]:1.3,[B.PINE_PLANKS]:1.0,[B.JUNGLE_LOG]:1.3,[B.JUNGLE_PLANKS]:1.0,[B.ACACIA_LOG]:1.3,[B.ACACIA_PLANKS]:1.0,[B.MANGROVE_LOG]:1.3,[B.MANGROVE_PLANKS]:1.0,[B.MUD]:.5,[B.BRICK]:2.0,[B.STONE]:2.0,[B.WORKBENCH]:1.2,[B.COAL_ORE]:2.6,[B.IRON_ORE]:3.0,[B.GOLD_ORE]:3.2,[B.DIAMOND_ORE]:3.6,[B.FURNACE]:2.2,[B.COBBLE]:2.3,[B.BEDROCK]:Infinity};
 const keys={};addEventListener('keydown',e=>{if(chatOpen){keys[e.code]=false;return}keys[e.code]=true;if(e.code.startsWith('Digit')&&e.code!=='Digit0'&&caps().inventory){slot=+e.code.slice(5)-1;finishMine();ui()}if(e.code==='KeyF'&&mode==='creative'&&!uiOpen&&!e.repeat){fly=!fly;P.vy=0;toast(fly?'Creative flight enabled · Space up · Shift down':'Creative flight disabled')}});
 addEventListener('keyup',e=>keys[e.code]=false);
 // ---- Stage 7: multiplayer transport + T-to-chat ----

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
 
 const root=path.resolve(import.meta.dirname,'..');
@@ -12,6 +13,14 @@ fs.writeFileSync(path.join(tmp,'world.mjs'),worldSource);
 let itemSource=fs.readFileSync(path.join(root,'js/items.js'),'utf8').replace("from './world.js'","from './world.mjs'");
 fs.writeFileSync(path.join(tmp,'items.mjs'),itemSource);
 const W=await import(pathToFileURL(path.join(tmp,'world.mjs')));
+const liveHtml=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const scriptStart=liveHtml.indexOf('<script type="module">'),scriptEnd=liveHtml.indexOf('</script>',scriptStart);
+assert.ok(scriptStart>=0&&scriptEnd>scriptStart,'live game module script must exist');
+const liveScriptPath=path.join(tmp,'live-game.mjs');
+fs.writeFileSync(liveScriptPath,liveHtml.slice(scriptStart+'<script type="module">'.length,scriptEnd));
+const syntax=spawnSync(process.execPath,['--check',liveScriptPath],{encoding:'utf8'});
+assert.equal(syntax.status,0,'live game module must parse: '+syntax.stderr);
+
 const I=await import(pathToFileURL(path.join(tmp,'items.mjs')));
 
 const names=Object.values(W.BIOME).filter(n=>n!==W.BIOME.OCEAN),seen=new Set();
@@ -28,6 +37,17 @@ for(let x=-12000;x<=12000;x+=733){
 assert.deepEqual([...seen].sort(),[...names].sort(),'all ten biomes must appear in the deterministic test region');
 assert.equal(W.biomeAt(1234,500,500,4),W.BIOME.FOREST,'older generation versions must retain legacy biome classification');
 const seen6=new Set();let riverCells=0;for(let x=-24000;x<=24000;x+=1301)for(let z=-24000;z<=24000;z+=1609){const biome=W.biomeAt(1234,x,z,6),h=W.heightAt(1234,x,z,6);assert.ok(Object.values(W.BIOME).includes(biome),'unknown Stage 14 biome: '+biome);assert.ok(Number.isFinite(h)&&h>=10&&h<=174,'invalid Stage 14 terrain height: '+h);seen6.add(biome);if(W.riverAt(1234,x,z))riverCells++}assert.deepEqual([...seen6].sort(),Object.values(W.BIOME).sort(),'all Stage 14 biomes, including Ocean, must appear');assert.ok(riverCells>0,'Stage 14 must generate river paths');
+const seen7=new Set();let riverStrengthSeen=false;
+for(let x=-30000;x<=30000;x+=1499)for(let z=-30000;z<=30000;z+=1777){
+ const biome=W.biomeAt(4321,x,z,7),h=W.heightAt(4321,x,z,7);
+ assert.ok(Object.values(W.BIOME).includes(biome),'unknown generation 7 biome: '+biome);
+ assert.ok(Number.isFinite(h)&&h>=10&&h<=174,'invalid generation 7 terrain height: '+h);
+ seen7.add(biome);
+ const rs=W.riverStrength(4321,x,z);assert.ok(rs>=0&&rs<=1,'river strength must be normalized');if(rs>0)riverStrengthSeen=true;
+}
+assert.deepEqual([...seen7].sort(),Object.values(W.BIOME).sort(),'generation 7 must contain every biome');
+assert.ok(riverStrengthSeen,'generation 7 must contain smoothly blended river channels');
+assert.equal(W.surfaceCaveCap(90),78,'caves must remain at least twelve blocks below the surface except at designed entrances');
 for(const id of [W.B.CACTUS,W.B.AUTUMN_LEAVES,W.B.MUSHROOM_CAP,W.B.MUSHROOM_STEM,W.B.REEDS,W.B.BIRCH_LOG,W.B.BIRCH_PLANKS,W.B.PINE_LOG,W.B.PINE_PLANKS,W.B.JUNGLE_LOG,W.B.JUNGLE_PLANKS,W.B.ACACIA_LOG,W.B.ACACIA_PLANKS,W.B.MANGROVE_LOG,W.B.MANGROVE_PLANKS,W.B.MUD]){
   assert.ok(W.INFO[id],'missing block information for '+id);
   assert.ok(I.allItems().includes(id),'new biome block missing from inventory item registry: '+id);
