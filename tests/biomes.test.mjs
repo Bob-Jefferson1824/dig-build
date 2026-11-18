@@ -14,10 +14,10 @@ let itemSource=fs.readFileSync(path.join(root,'js/items.js'),'utf8').replace("fr
 fs.writeFileSync(path.join(tmp,'items.mjs'),itemSource);
 const W=await import(pathToFileURL(path.join(tmp,'world.mjs')));
 const liveHtml=fs.readFileSync(path.join(root,'index.html'),'utf8');
-const liveScript=liveHtml.match(/<script type="module">([\\s\\S]*?)<\\/script>/);
-assert.ok(liveScript,'live game module script must exist');
+const scriptStart=liveHtml.indexOf('<script type="module">'),scriptEnd=liveHtml.indexOf('</script>',scriptStart);
+assert.ok(scriptStart>=0&&scriptEnd>scriptStart,'live game module script must exist');
 const liveScriptPath=path.join(tmp,'live-game.mjs');
-fs.writeFileSync(liveScriptPath,liveScript[1]);
+fs.writeFileSync(liveScriptPath,liveHtml.slice(scriptStart+'<script type="module">'.length,scriptEnd));
 const syntax=spawnSync(process.execPath,['--check',liveScriptPath],{encoding:'utf8'});
 assert.equal(syntax.status,0,'live game module must parse: '+syntax.stderr);
 
