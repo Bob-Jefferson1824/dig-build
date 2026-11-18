@@ -313,16 +313,16 @@ function caveEntranceAt(x,y,z,seed,surface){
  for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){
   const ax=gx+dx,az=gz+dz,rand=n=>hash3(ax,0,az,seed+n);
   if(rand(7711)>.085)continue;
-  const ex=ax*cell+24+rand(7712)*144,ez=az*cell+24+rand(7713)*144;
-  const depth=surface-y;if(depth<0||depth>28)continue;
-  const endX=ex+5+(rand(7714)-.5)*12,endZ=ez-4+(rand(7715)-.5)*12;
-  const endY=surface-25;
-  const vx=endX-ex,vy=endY-surface,vz=endZ-ez,len=vx*vx+vy*vy+vz*vz;
+  const nodeCellX=Math.floor((ax*cell+96)/44),nodeCellZ=Math.floor((az*cell+96)/44);
+  const node=caveNode(nodeCellX,1,nodeCellZ,seed);
+  const ex=node.x-6,ez=node.z+4,endY=Math.min(node.y,surface-5);
+  if(surface-endY<5)continue;
+  if(y>surface||y<endY-2)continue;
+  const vx=node.x-ex,vy=endY-surface,vz=node.z-ez,len=vx*vx+vy*vy+vz*vz;
   const t=Math.max(0,Math.min(1,((x-ex)*vx+(y-surface)*vy+(z-ez)*vz)/len));
   const px=ex+vx*t,py=surface+vy*t,pz=ez+vz*t;
-  const wobble=(hash3(Math.floor(x/4),Math.floor(z/4),seed+7716)-.5)*.7;
-  const radius=depth<3?2.0:depth<10?1.65:depth<20?1.9:2.5;
-  if((x-px)**2+(y-py)**2+(z-pz)**2<(radius+wobble)**2)return true;
+  const radius=t>.82?3.0:t>.35?2.2:2.5;
+  if((x-px)**2+(y-py)**2+(z-pz)**2<radius*radius)return true;
  }
  return false;
 }
@@ -357,7 +357,7 @@ class World{
   for(let y=this.genVersion>=7?10:this.genVersion>=5?2:4;y<=lim;y++){let open;if(this.genVersion>=7){open=this.genVersion>=8?tunnelAt(wx,y,wz,this.seed):tunnelAtV7(wx,y,wz,this.seed)}else if(this.genVersion>=5){const a=c.A(wx,y,wz),b=c.Bf(wx,y,wz),wide=c.C(wx,y,wz),detail=c.D(wx,y,wz);const caveDensity=a*.36+b*.27+wide*.13+(detail-.5)*.48;open=caveDensity>=.565}else if(this.genVersion>=4){const a=c.A(wx,y,wz),b=c.Bf(wx,y,wz),wide=c.C(wx,y,wz),detail=c.D(wx,y,wz);const caveDensity=a*.42+b*.28+wide*.20+(detail-.5)*.18;open=caveDensity>=.535}else{const a=c.A(wx,y,wz)-.5,b=c.Bf(wx,y,wz)-.5;open=a*a+b*b<TUBE||c.C(wx,y,wz)>CAV}if(!open)continue;
    if(y<=POOLY){if(pm){d[I(y)]=B.WATER;continue}if(wall)continue}   // pools are walled in so water never touches open air sideways
    d[I(y)]=0}
-  if(this.genVersion>=7&&h>sea+5)for(let y=Math.max(2,h-(this.genVersion>=9?28:this.genVersion>=8?48:20));y<=h;y++)if((this.genVersion>=9?caveEntranceAt(wx,y,wz,this.seed,h):this.genVersion===8?caveEntranceAtV7(wx,y,wz,this.seed,h):caveEntranceAtV7(wx,y,wz,this.seed,h)))d[I(y)]=0;
+  if(this.genVersion>=7&&h>sea+5)for(let y=Math.max(2,h-(this.genVersion>=9?56:this.genVersion>=8?48:20));y<=h;y++)if((this.genVersion>=9?caveEntranceAt(wx,y,wz,this.seed,h):this.genVersion===8?caveEntranceAtV7(wx,y,wz,this.seed,h):caveEntranceAtV7(wx,y,wz,this.seed,h)))d[I(y)]=0;
   for(let y=1,top=Math.min(h-4,145);y<=top;y++)if(d[I(y)]===B.STONE){const o=this.genVersion>=5?oreAt(wx,y,wz,this.seed):oreAtLegacy(wx,y,wz,this.seed);if(o)d[I(y)]=o}}
  gen(cx,cz){const sea=this.sea,d=new Uint8Array(S*H*S);const I=(x,y,z)=>(y*S+z)*S+x;const g3=this.genVersion>=3?this.cavesCtx(cx,cz):null;
   for(let x=0;x<S;x++)for(let z=0;z<S;z++){const wx=cx*S+x,wz=cz*S+z;
@@ -716,7 +716,7 @@ function updateBiomeDiscovery(){if(!world||(mode!=='creative'&&mode!=='spectator
 function toggleBiomeFinder(force){if(!playing||(mode!=='creative'&&mode!=='spectator'))return;const open=typeof force==='boolean'?force:!finderOpen;if(open===finderOpen)return;finderOpen=open;$('biomeFinder').hidden=!open;if(open){uiOpen=true;holding=false;finishMine();for(const k in keys)keys[k]=false;if(document.pointerLockElement)document.exitPointerLock();renderBiomeFinder()}else{uiOpen=false;if(playing)$('c').requestPointerLock()}}
 $('biomeClose').addEventListener('click',()=>toggleBiomeFinder(false));
 $('biomeSearch').addEventListener('click',()=>{if(!world)return;biomeTarget=$('biomeTarget').value;biomeHit=findNearestBiome(world.seed,Math.floor(P.x),Math.floor(P.z),biomeTarget,world.genVersion,1024,16);$('biomeTeleport').disabled=!biomeHit;if(!biomeHit){$('biomeResult').textContent='No '+biomeTarget+' found within 1,024 blocks.';$('biomeArrow').style.transform='rotate(0deg)';return}const dx=biomeHit.x-P.x,dz=biomeHit.z-P.z,angle=(Math.atan2(dx,-dz)*180/Math.PI+360)%360;$('biomeArrow').style.transform='rotate('+angle+'deg)';$('biomeResult').textContent=biomeTarget+' · '+Math.round(Math.hypot(dx,dz))+' blocks '+bearingLabel(dx,dz)+' · X '+biomeHit.x+', Z '+biomeHit.z});
-$('biomeTeleport').addEventListener('click',()=>{if(!world||!biomeHit||mode!=='creative'&&mode!=='spectator')return;const target={...biomeHit};world.update(target.x,target.z,6);let safe=null;for(let r=0;r<=5&&!safe;r++)for(let dx=-r;dx<=r&&!safe;dx++)for(let dz=-r;dz<=r&&!safe;dz++){if(Math.max(Math.abs(dx),Math.abs(dz))!==r)continue;const x=target.x+dx,z=target.z+dz;if(Math.floor(x/16)!==Math.floor(target.x/16)||Math.floor(z/16)!==Math.floor(target.z/16))continue;const y=world.ground(x,z);if(y>0&&y<62&&!isWater(world.get(x,y,z))&&!hits(x+.5,y+.05,z+.5))safe={x,z,y}}if(!safe){$('biomeResult').textContent='Could not find a safe landing spot near that biome. Try FIND BIOME again.';return}P.x=safe.x+.5;P.z=safe.z+.5;P.y=safe.y+.05;P.vx=P.vy=P.vz=0;P.ground=false;P.blocked=false;P.leap=0;world.update(P.x,P.z,6);if(mode==='creative'&&!readOnly)dirty=true;mpSendClock=0;$('biomeResult').textContent='Teleported to '+biomeTarget+' · X '+safe.x+', Z '+safe.z;renderBiomeFinder();toast('Teleported to '+biomeTarget)});
+$('biomeTeleport').addEventListener('click',()=>{if(!world||!biomeHit||mode!=='creative'&&mode!=='spectator')return;const target={...biomeHit};world.update(target.x,target.z,6);let safe=null;for(let r=0;r<=12&&!safe;r++)for(let dx=-r;dx<=r&&!safe;dx++)for(let dz=-r;dz<=r&&!safe;dz++){if(Math.max(Math.abs(dx),Math.abs(dz))!==r)continue;const x=target.x+dx,z=target.z+dz,y=world.ground(x,z);if(y>1&&y<H-2&&world.get(x,y,z)===0&&world.get(x,y+1,z)===0&&!isWater(world.get(x,y-1,z))&&!hits(x+.5,y+.05,z+.5))safe={x,z,y}}if(!safe){$('biomeResult').textContent='No clear landing area found in this part of the biome. Try FIND BIOME again.';return}P.x=safe.x+.5;P.z=safe.z+.5;P.y=safe.y+.05;P.vx=P.vy=P.vz=0;P.ground=false;P.blocked=false;P.leap=0;world.update(P.x,P.z,6);if(mode==='creative'&&!readOnly)dirty=true;mpSendClock=0;$('biomeResult').textContent='Teleported to '+biomeTarget+' · X '+safe.x+', Z '+safe.z;renderBiomeFinder();toast('Teleported to '+biomeTarget)});
 $('biomeTarget').addEventListener('change',()=>{biomeTarget=$('biomeTarget').value;biomeHit=null;$('biomeTeleport').disabled=true;$('biomeResult').textContent='Press FIND BIOME to locate '+biomeTarget+'.'});
 document.addEventListener('keydown',e=>{const typing=e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable);if(e.code==='KeyB'&&playing&&(mode==='creative'||mode==='spectator')&&(!uiOpen||finderOpen)&&!chatOpen&&!typing){e.preventDefault();e.stopImmediatePropagation();toggleBiomeFinder()}else if(e.code==='Escape'&&finderOpen){e.preventDefault();e.stopImmediatePropagation();toggleBiomeFinder(false)}},true);
 function biomeFinderTick(dt){if(!playing||!world)return;updateBiomeDiscovery();if(finderOpen){biomeFinderClock+=dt;if(biomeFinderClock>=.8){biomeFinderClock=0;renderBiomeFinder()}}}
