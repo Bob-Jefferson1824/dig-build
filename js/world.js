@@ -97,12 +97,11 @@ export function heightAt(seed,wx,wz,gen=3){
  const m=Math.max(0,fbm(wx/220,wz/220,seed+7)-.5)*2;
  if(gen>=6){
   const continent=fbm(wx/900,wz/900,seed+91),climate=biomeAt(seed,wx,wz,gen),broad=fbm(wx/105,wz/105,seed),detail=fbm(wx/34,wz/34,seed+611),temperature=fbm(wx/910,wz/910,seed+1701),moisture=fbm(wx/682,wz/682,seed+2701);
-  if(continent<.30)return Math.max(10,GEN6_SEA-15+Math.floor(fbm(wx/125,wz/125,seed+123)*8));
+  if(continent<.30)return Math.max(10,GEN6_SEA-15+sm(continent/.30)*14+Math.floor(fbm(wx/125,wz/125,seed+123)*2));
   let h=NEW_SURFACE_BASE+broad*17+m*m*24+(detail-.5)*3;
-  const coastBlend=sm(Math.max(0,Math.min(1,(continent-.28)/.14)));h=(GEN6_SEA-1)+(h-(GEN6_SEA-1))*coastBlend;
+  const coastBlend=sm(Math.max(0,Math.min(1,(continent-.30)/.12)));h=(GEN6_SEA-1)+(h-(GEN6_SEA-1))*coastBlend;
   const mountain=Math.max(0,Math.min(1,(.39-temperature)/.39));h+=mountain*mountain*30;
-  if(climate===BIOME.DESERT)h-=2;if(climate===BIOME.JUNGLE)h+=3;if(climate===BIOME.SWAMP)h-=Math.max(0,moisture-.68)*24;
-  if(climate===BIOME.BEACH)h=Math.min(h,GEN6_SEA+2+broad*2);
+  if(climate===BIOME.DESERT)h-=2;if(climate===BIOME.JUNGLE)h+=3;if(climate===BIOME.SWAMP)h-=sm(Math.max(0,Math.min(1,(moisture-.70)/.28)))*38;
   if(riverAt(seed,wx,wz))h-=4;
   return Math.max(GEN6_SEA-6,Math.min(H-18,Math.floor(h)));
  }
