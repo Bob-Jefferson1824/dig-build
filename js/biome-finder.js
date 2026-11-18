@@ -6,7 +6,7 @@ function noise(x,z,s){const xi=Math.floor(x),zi=Math.floor(z),fx=smooth(x-xi),fz
 function fbm(x,z,s){return noise(x,z,s)*.55+noise(x*2,z*2,s+1)*.28+noise(x*4,z*4,s+2)*.17}
 export function biomeAt(seed,x,z,gen=5){if(gen<5)return 'Forest';const scale=gen>=6?1.75:1,temperature=fbm(x/(520*scale),z/(520*scale),seed+1701),moisture=fbm(x/(390*scale),z/(390*scale),seed+2701),rare=fbm(x/(700*scale),z/(700*scale),seed+3701),coast=fbm(x/(gen>=6?900:420),z/(gen>=6?900:420),seed+91);if(gen>=6&&coast<(gen>=7?.20:.30))return 'Ocean';if(rare>(gen>=7?.78:.84)&&moisture>.54&&temperature>.34&&temperature<.76)return 'Mushroom Fields';if(gen>=6?(gen>=7?coast<.48:coast<.35):coast<.29)return 'Beach and Coast';if(temperature<.27)return 'Snowy Mountains';if(temperature>.69&&moisture<.39)return 'Desert';if(moisture>.76&&temperature>.35&&temperature<.75)return 'Swamp';if(temperature>.62&&moisture>.59)return 'Jungle';if(temperature<.43&&moisture>.43)return 'Taiga';if(temperature>.46&&temperature<.7&&moisture<.49)return 'Autumn Forest';if(moisture<.43)return 'Plains';return 'Forest'}
 export function biomeHeight(seed,x,z,sea=25,maxHeight=52,gen=5){if(gen>=7){
- const continent=fbm(x/900,z/900,seed+91),m=Math.max(0,fbm(x/220,z/220,seed+7)-.5)*2,broad=fbm(x/145,z/145,seed),detail=fbm(x/38,z/38,seed+611),temperature=fbm(x/910,z/910,seed+1701),moisture=fbm(x/682,z/682,seed+2701);
+ const continent=fbm(x/900,z/900,seed+91),m=Math.max(0,fbm(x/220,z/220,seed+7)-.5)*2,broad=fbm(x/145,z/145,seed),detail=fbm(x/38,z/38,seed+611),temperature=fbm(x/520,z/520,seed+1701),moisture=fbm(x/390,z/390,seed+2701);
  const band=(v,lo,hi,fade=.10)=>smooth(Math.max(0,Math.min(1,(v-lo)/fade)))*smooth(Math.max(0,Math.min(1,(hi-v)/fade)));
  if(continent<.20)return Math.max(10,sea-18+smooth(continent/.20)*17+Math.floor(fbm(x/150,z/150,seed+123)*1.5));
  const mountain=1-smooth(Math.max(0,Math.min(1,(temperature-.17)/.31))),desert=band(temperature,.66,1,.16)*(1-smooth(Math.max(0,Math.min(1,(moisture-.30)/.25)))),jungle=band(temperature,.56,1,.19)*smooth(Math.max(0,Math.min(1,(moisture-.48)/.28))),swamp=band(temperature,.30,.82,.18)*smooth(Math.max(0,Math.min(1,(moisture-.64)/.24))),taiga=smooth(Math.max(0,Math.min(1,(.49-temperature)/.18)))*smooth(Math.max(0,Math.min(1,(moisture-.34)/.22))),mushroom=band(temperature,.36,.76,.18)*band(moisture,.56,.90,.15)*smooth(Math.max(0,Math.min(1,(fbm(x/700,z/700,seed+3701)-.78)/.12)));
@@ -23,7 +23,7 @@ export function riverStrength(seed,x,z){
  const t=Math.max(0,Math.min(1,1-riverField/.016));
  return t*t*(3-2*t);
 }
-export function riverAt(seed,x,z){return riverStrength(seed,x,z)>.05}
+export function riverAt(seed,x,z){return riverStrength(seed,x,z)>.90}
 export function biomeColor(name){return ({'Forest':'#397d3c','Desert':'#d7bd68','Jungle':'#176b36','Snowy Mountains':'#dcebf4','Swamp':'#536b42','Plains':'#8dbb55','Autumn Forest':'#bd6b32','Taiga':'#547b69','Beach and Coast':'#e4d59b','Mushroom Fields':'#a75b9a','Ocean':'#2364a8'})[name]||'#333'}
 export function findNearestBiome(seed,x,z,target,gen=5,radius=1024,step=16){let best=null,bestD=Infinity;for(let dz=-radius;dz<=radius;dz+=step)for(let dx=-radius;dx<=radius;dx+=step){const d=dx*dx+dz*dz;if(d>=bestD*bestD)continue;if(biomeAt(seed,x+dx,z+dz,gen)===target){best={x:x+dx,z:z+dz};bestD=Math.sqrt(d)}}return best}
 export function bearingLabel(dx,dz){const a=(Math.atan2(dx,-dz)*180/Math.PI+360)%360;return ['N','NE','E','SE','S','SW','W','NW'][Math.round(a/45)%8]}
