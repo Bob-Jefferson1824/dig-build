@@ -107,7 +107,7 @@ import {BIOMES,biomeAt,biomeHeight,biomeColor,findNearestBiome,bearingLabel} fro
 // Public values only (anon/publishable key is safe in the browser; RLS protects data). NEVER put a service-role key here.
 const SUPABASE_URL = '';      // e.g. https://xxxx.supabase.co
 const SUPABASE_ANON_KEY = ''; // anon / publishable key
-const GEN_VERSION = 5;        // generation used for NEW worlds (v2 = more water, v3 = caves + ores). Saved worlds keep their own gen_version (v1 stays identical).
+const GEN_VERSION = 7;        // generation used for NEW worlds. Saved worlds keep their own gen_version and terrain.
 const SAVE_FORMAT = 4;        // bump + add a migration in save.js when save shape changes
 
 // Save-format migrations (pure functions; storage lives in worlds.js). Add a step per format bump, never drop old steps.
