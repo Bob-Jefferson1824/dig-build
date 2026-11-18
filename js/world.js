@@ -81,6 +81,7 @@ export function biomeAt(seed,wx,wz,gen=5){
  const climateScale=gen>=6?1.75:1,temperature=fbm(wx/(520*climateScale),wz/(520*climateScale),seed+1701),moisture=fbm(wx/(390*climateScale),wz/(390*climateScale),seed+2701),rare=fbm(wx/(700*climateScale),wz/(700*climateScale),seed+3701);
  if(rare>.84&&moisture>.58&&temperature>.38&&temperature<.72)return BIOME.MUSHROOM_FIELDS;
  const coast=fbm(wx/(gen>=6?900:420),wz/(gen>=6?900:420),seed+91);
+ if(gen>=6&&coast<.30)return BIOME.OCEAN;
  if(gen>=6?coast>=.30&&coast<.35:coast>=.22&&coast<.27)return BIOME.BEACH;
  if(temperature<.27)return BIOME.SNOWY_MOUNTAINS;
  if(temperature>.69&&moisture<.39)return BIOME.DESERT;
@@ -98,9 +99,10 @@ export function heightAt(seed,wx,wz,gen=3){
   const continent=fbm(wx/900,wz/900,seed+91),climate=biomeAt(seed,wx,wz,gen),broad=fbm(wx/105,wz/105,seed),detail=fbm(wx/34,wz/34,seed+611),temperature=fbm(wx/910,wz/910,seed+1701),moisture=fbm(wx/682,wz/682,seed+2701);
   if(continent<.30)return Math.max(10,GEN6_SEA-15+Math.floor(fbm(wx/125,wz/125,seed+123)*8));
   let h=NEW_SURFACE_BASE+broad*17+m*m*24+(detail-.5)*3;
+  const coastBlend=sm(Math.max(0,Math.min(1,(continent-.30)/.12)));h=(GEN6_SEA-1)+(h-(GEN6_SEA-1))*coastBlend;
   const mountain=Math.max(0,Math.min(1,(.39-temperature)/.39));h+=mountain*mountain*30;
   if(climate===BIOME.DESERT)h-=2;if(climate===BIOME.JUNGLE)h+=3;if(climate===BIOME.SWAMP)h-=Math.max(0,moisture-.68)*24;
-  if(climate===BIOME.BEACH)h=GEN6_SEA-1+broad*3;
+  if(climate===BIOME.BEACH)h=Math.min(h,GEN6_SEA+2+broad*2);
   if(riverAt(seed,wx,wz))h-=4;
   return Math.max(GEN6_SEA-6,Math.min(H-18,Math.floor(h)));
  }
@@ -166,7 +168,7 @@ export class World{
     }
     if(this.genVersion>=5&&biome===BIOME.SWAMP&&y===h)b=this.genVersion>=6?B.MUD:B.DIRT;
     d[I(x,y,z)]=b}
-   const waterTop=river?Math.min(h+3,sea+10):sea;for(let y=h+1;y<=waterTop;y++)d[I(x,y,z)]=B.WATER;
+   const waterTop=river?h+3:sea;for(let y=h+1;y<=waterTop;y++)d[I(x,y,z)]=B.WATER;
    if(g3)this.carve(d,g3,cx,cz,x,z,h);
    if(this.genVersion>=5){
     const r=hash(wx,wz,this.seed+509),surface=h+1;
