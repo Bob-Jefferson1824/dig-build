@@ -10,7 +10,7 @@ export const isBlockItem=id=>id>0&&id<100&&id!==B.WATER&&id!==B.FLOWING_WATER;
 const MATN={100:'Stick',101:'Iron Ingot',102:'Gold Ingot',103:'Diamond',104:'Coal'};
 export const itemName=id=>isTool(id)?TIERS[toolInfo(id).tier]+' '+TYPES[toolInfo(id).type]:MATN[id]||(INFO[id]&&INFO[id][0])||'Item';
 export const allItems=()=>{const a=[];for(let i=1;i<100;i++)if(isBlockItem(i)&&INFO[i])a.push(i);a.push(100,101,102,103,104);for(let t=0;t<4;t++)for(let r=0;r<5;r++)a.push(toolId(t,r));return a};
-const EFFECT=[[B.STONE,B.COBBLE,B.BRICK,B.COAL_ORE,B.IRON_ORE,B.GOLD_ORE,B.DIAMOND_ORE,B.FURNACE],[B.LOG,B.PLANKS,B.WORKBENCH],[B.DIRT,B.GRASS,B.SAND,B.SNOW],[]];
+const EFFECT=[[B.STONE,B.COBBLE,B.BRICK,B.COAL_ORE,B.IRON_ORE,B.GOLD_ORE,B.DIAMOND_ORE,B.FURNACE],[B.LOG,B.PLANKS,B.BIRCH_LOG,B.BIRCH_PLANKS,B.PINE_LOG,B.PINE_PLANKS,B.JUNGLE_LOG,B.JUNGLE_PLANKS,B.ACACIA_LOG,B.ACACIA_PLANKS,B.MANGROVE_LOG,B.MANGROVE_PLANKS,B.WORKBENCH],[B.DIRT,B.GRASS,B.SAND,B.SNOW,B.MUD],[]];
 export const toolSpeed=(id,block)=>{if(!id||!isTool(id))return 1;const i=toolInfo(id);return EFFECT[i.type].includes(block)?TIER.speed[i.tier]:.8};
 const DROPS={[B.GRASS]:B.DIRT,[B.STONE]:B.COBBLE,[B.COAL_ORE]:MAT.COAL,[B.DIAMOND_ORE]:MAT.DIAMOND};   // iron/gold ore drop themselves (smelt them in a furnace)
 export const dropOf=b=>DROPS[b]||b;
@@ -38,9 +38,11 @@ export function wearTool(inv,i,creative,amt=1){const s=inv[i];if(creative||!s||!
 // ---- recipes (modular: call addRecipe from anywhere). pat = rows of ids (0 = empty); shaped recipes match anywhere in the grid, mirrored too ----
 export const RECIPES=[];
 export const addRecipe=(out,n,pat,shapeless=false)=>RECIPES.push({out,n,pat,shapeless});
-(function(){const L=B.LOG,PL=B.PLANKS,ST=MAT.STICK;
- addRecipe(PL,4,[[L]]);addRecipe(ST,4,[[PL],[PL]]);addRecipe(B.WORKBENCH,1,[PL,PL,PL,PL],true);
- [PL,B.COBBLE,MAT.IRON,MAT.GOLD,MAT.DIAMOND].forEach((M,t)=>{addRecipe(toolId(0,t),1,[[M,M,M],[0,ST,0],[0,ST,0]]);addRecipe(toolId(1,t),1,[[M,M],[M,ST],[0,ST]]);addRecipe(toolId(2,t),1,[[M],[ST],[ST]]);addRecipe(toolId(3,t),1,[[M],[M],[ST]])})})();
+(function(){const ST=MAT.STICK,woods=[[B.LOG,B.PLANKS],[B.BIRCH_LOG,B.BIRCH_PLANKS],[B.PINE_LOG,B.PINE_PLANKS],[B.JUNGLE_LOG,B.JUNGLE_PLANKS],[B.ACACIA_LOG,B.ACACIA_PLANKS],[B.MANGROVE_LOG,B.MANGROVE_PLANKS]],planks=woods.map(w=>w[1]);
+ for(const [log,plank] of woods){addRecipe(plank,4,[[log]]);addRecipe(ST,4,[[plank],[plank]]);addRecipe(B.WORKBENCH,1,[plank,plank,plank,plank],true);}
+ const materials=[...planks,B.COBBLE,MAT.IRON,MAT.GOLD,MAT.DIAMOND];
+ for(const M of materials){const tier=planks.includes(M)?0:([B.COBBLE,MAT.IRON,MAT.GOLD,MAT.DIAMOND].indexOf(M)+1);addRecipe(toolId(0,tier),1,[[M,M,M],[0,ST,0],[0,ST,0]]);addRecipe(toolId(1,tier),1,[[M,M],[M,ST],[0,ST]]);addRecipe(toolId(2,tier),1,[[M],[ST],[ST]]);addRecipe(toolId(3,tier),1,[[M],[M],[ST]])}
+})();
 addRecipe(B.FURNACE,1,[[B.COBBLE,B.COBBLE,B.COBBLE],[B.COBBLE,0,B.COBBLE],[B.COBBLE,B.COBBLE,B.COBBLE]]);
 // ---- furnace: {s:[input,fuel,output], prog, burn, burnMax}. Fuel is only burned while something is actually smelting. ----
 export const SMELT={[B.IRON_ORE]:MAT.IRON,[B.GOLD_ORE]:MAT.GOLD},FUEL={[MAT.COAL]:48},SMELT_TIME=6;
