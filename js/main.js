@@ -110,7 +110,7 @@ const DIG=globalThis.DIG={
  resume(){if(!(curRec&&world))return;$('menu').style.display='none';playing=true;$('c').requestPointerLock()},
  persist};
 const menu=createMenu(DIG);
-document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockElement&&playing&&!uiOpen){playing=false;holding=false;finishMine();persist();menu.showMain(true);$('menu').style.display='flex'}});
+document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockElement&&playing&&!uiOpen&&!biomeFinder.isOpen()){playing=false;holding=false;finishMine();persist();menu.showMain(true);$('menu').style.display='flex'}});
 await initCloud();$('auth').style.display=sb?'flex':'none';try{await migrateLegacy()}catch(e){console.warn('legacy migration failed (existing saves are untouched)',e)}
 async function onAuth(){curOwner=await ownerNow();if(curRec&&curRec.owner!==curOwner){if(world&&!readOnly)await persist();playing=false;unloadWorld();curRec=null}menu.showMain(!!curRec)}   // never carry one account's world into another account
 if(sb){$('login').onclick=async()=>{const r=await signIn($('email').value,$('pw').value);$('who').textContent=r.error?r.error.message:'Logged in';if(!r.error)await onAuth()};$('signup').onclick=async()=>{const r=await signUp($('email').value,$('pw').value);$('who').textContent=r.error?r.error.message:'Check your email to confirm'};$('logout').onclick=async()=>{await signOut();$('who').textContent='Logged out';await onAuth()};const u=await user();if(u)$('who').textContent=u.email}
