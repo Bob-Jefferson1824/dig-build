@@ -1,4 +1,4 @@
-import {biomeAt,biomeHeight,riverAt} from './biome-finder.js';
+import {biomeAt,biomeHeight,riverAt,riverStrength} from './biome-finder.js';
 
 export const STRUCTURES=[
  {id:'abandoned-hut',name:'Abandoned Hut',rarity:'Common'},
@@ -44,9 +44,10 @@ function siteFor(seed,gen,x,z,type,biome){
  if(!type||!allowed[type]?.includes(biome))return null;
  if(biome==='Ocean'||biome==='Beach and Coast'&&type!=='campsite'&&type!=='bridge')return null;
  if(type==='bridge'){
-  const alongX=Array.from({length:5},(_,i)=>riverAt(seed,x+(i-2)*4,z,gen)).filter(Boolean).length;
-  const alongZ=Array.from({length:5},(_,i)=>riverAt(seed,x,z+(i-2)*4,gen)).filter(Boolean).length;
-  if(Math.max(alongX,alongZ)<3)return null;
+  if(!riverAt(seed,x,z,gen))return null;
+  const alongX=Array.from({length:9},(_,i)=>riverStrength(seed,x+(i-4)*2,z)).filter(v=>v>.45).length;
+  const alongZ=Array.from({length:9},(_,i)=>riverStrength(seed,x,z+(i-4)*2)).filter(v=>v>.45).length;
+  if(Math.max(alongX,alongZ)<2)return null;
   const orient=alongX>=alongZ?'z':'x';
   const bankHeights=orient==='z'?[height(seed,x,z-10,gen),height(seed,x,z+10,gen)]:[height(seed,x-10,z,gen),height(seed,x+10,z,gen)];
   if(Math.abs(bankHeights[0]-bankHeights[1])>5||Math.max(...bankHeights)<SEA+1)return null;
@@ -88,9 +89,9 @@ function makeBuilder(c,seed){
  if(id==='bridge'){const along=c.orient==='z';for(let i=-7;i<=7;i++)for(let w=-2;w<=2;w++){const dx=along?w:i,dz=along?i:w;put(dx,0,dz,plank);if(Math.abs(w)===2&&i%3===0)put(dx,1,dz,log)}}
  if(id==='ruined-temple'){for(let xx=-9;xx<=9;xx++)for(let zz=-9;zz<=9;zz++)if(Math.abs(xx)===9||Math.abs(zz)===9){if(hash(xx,zz,seed+401)>.22)put(xx,0,zz,B.MOSSY_COBBLE);if(hash(xx,zz,seed+402)>.42)put(xx,1,zz,B.MOSSY_COBBLE);if(Math.abs(xx)%4===0&&Math.abs(zz)%4===0)for(let y=1;y<7;y++)if(hash(xx,y+zz,seed+403)>.12)put(xx,y,zz,B.STONE_BRICKS)}box(-3,0,-3,3,0,3,B.MOSSY_COBBLE);for(let xx=-2;xx<=2;xx++)for(let zz=-2;zz<=2;zz++)if(xx*xx+zz*zz<6)put(xx,1,zz,0)}
  if(id==='village'){house(-11,-9,7,7,log,plank);house(11,-9,7,7,log,plank);house(-11,10,7,7,log,plank);house(11,10,7,7,log,plank);box(-2,0,-2,2,0,2,B.COBBLE);for(let xx=-2;xx<=2;xx++)for(let zz=-2;zz<=2;zz++)if(Math.abs(xx)===2||Math.abs(zz)===2)put(xx,1,zz,B.COBBLE);box(-1,1,-1,1,1,1,B.WATER);for(let i=-8;i<=8;i++)for(let w=-1;w<=1;w++)put(w,0,i,B.COBBLE);put(0,0,0,B.COBBLE)}
- if(id==='abandoned-mine'){for(let i=0;i<24;i++){const dx=Math.round(Math.sin(i*.18)*i*.18),dz=-i,dy=-Math.floor(i*.28);put(dx,dy, dz,B.RAIL);if(i%4===0){put(dx-2,dy,dz,log);put(dx+2,dy,dz,log);put(dx-2,dy+1,dz,log);put(dx+2,dy+1,dz,log);put(dx,dy+3,dz,log)}for(let xx=-1;xx<=1;xx++)for(let yy=0;yy<=2;yy++)put(dx+xx,dy+yy,dz,0)}for(let xx=-3;xx<=3;xx++)for(let yy=0;yy<=5;yy++)if(Math.abs(xx)===3||yy===5)put(xx,yy,1,log)}
+ if(id==='abandoned-mine'){for(let i=0;i<24;i++){const dx=Math.round(Math.sin(i*.18)*i*.18),dz=-i,dy=-Math.floor(i*.28);for(let xx=-1;xx<=1;xx++)for(let yy=1;yy<=3;yy++)put(dx+xx,dy+yy,dz,0);put(dx,dy+1,dz,B.RAIL);if(i%4===0){put(dx-2,dy+1,dz,log);put(dx+2,dy+1,dz,log);put(dx-2,dy+2,dz,log);put(dx+2,dy+2,dz,log);put(dx,dy+4,dz,log)}}for(let xx=-3;xx<=3;xx++)for(let yy=0;yy<=5;yy++)if(Math.abs(xx)===3||yy===5)put(xx,yy,1,log)}
  if(id==='castle'){box(-22,0,-22,22,0,22,B.STONE_BRICKS);for(let i=-22;i<=22;i++)for(const side of [-22,22])for(let y=1;y<=9;y++)put(i,y,side,B.STONE_BRICKS);for(let i=-21;i<=21;i++)for(const side of [-22,22])put(i,10,side,B.COBBLE);for(let i=-21;i<=21;i++)for(const side of [-22,22]){put(side,10,i,B.COBBLE);for(let y=1;y<=9;y++)put(side,y,i,B.STONE_BRICKS)}for(const [xx,zz] of [[-22,-22],[22,-22],[-22,22],[22,22]])tower(xx,zz,14,B.STONE_BRICKS);house(0,0,15,15,B.STONE_BRICKS,B.COBBLE)}
- if(id==='desert-pyramid'){for(let y=0;y<10;y++){const half=12-y;box(-half,y,-half,half,y,half,B.SAND)}for(let y=1;y<8;y++)for(let xx=-2;xx<=2;xx++)for(let zz=-2;zz<=2;zz++)put(xx,y,zz,0);box(-3,-1,-3,3,-1,3,B.COBBLE);box(-2,-1,-2,2,-1,2,0)}
+ if(id==='desert-pyramid'){for(let y=0;y<10;y++){const half=12-y;for(let xx=-half;xx<=half;xx++)for(let zz=-half;zz<=half;zz++)if(Math.abs(xx)===half||Math.abs(zz)===half)put(xx,y,zz,B.SAND)}for(let y=1;y<8;y++)for(let xx=-2;xx<=2;xx++)for(let zz=-2;zz<=2;zz++)put(xx,y,zz,0);box(-3,-1,-3,3,-1,3,B.COBBLE);box(-2,-1,-2,2,-1,2,0)}
  return [...map.values()];
 }
 export function structureForCell(seed,gen,gx,gz){if(gen<11)return null;return candidate(seed,gen,gx,gz)}
