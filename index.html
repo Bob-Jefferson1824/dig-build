@@ -107,7 +107,7 @@ import {BIOMES,biomeAt,biomeHeight,biomeColor,findNearestBiome,bearingLabel,rive
 // Public values only (anon/publishable key is safe in the browser; RLS protects data). NEVER put a service-role key here.
 const SUPABASE_URL = '';      // e.g. https://xxxx.supabase.co
 const SUPABASE_ANON_KEY = ''; // anon / publishable key
-const GEN_VERSION = 7;        // generation used for NEW worlds. Saved worlds keep their own gen_version and terrain.
+const GEN_VERSION = 8;        // generation used for NEW worlds. Saved worlds keep their own gen_version and terrain.
 const SAVE_FORMAT = 4;        // bump + add a migration in save.js when save shape changes
 
 // Save-format migrations (pure functions; storage lives in worlds.js). Add a step per format bump, never drop old steps.
@@ -234,6 +234,27 @@ function segmentDistanceSq(px,py,pz,ax,ay,az,bx,by,bz){
  const vx=bx-ax,vy=by-ay,vz=bz-az,wx=px-ax,wy=py-ay,wz=pz-az,den=vx*vx+vy*vy+vz*vz,t=den?Math.max(0,Math.min(1,(wx*vx+wy*vy+wz*vz)/den)):0;
  const dx=px-(ax+vx*t),dy=py-(ay+vy*t),dz=pz-(az+vz*t);return dx*dx+dy*dy+dz*dz;
 }
+function caveNodeV7(ix,iy,iz,seed){
+ const h=n=>hash3(ix,iy,iz,seed+n);
+ return {x:ix*44+8+h(1)*28,y:12+iy*28+(h(2)-.5)*8,z:iz*44+8+h(3)*28};
+}
+// Each chamber links to eastern and southern neighbours; occasional vertical links connect cave levels.
+function tunnelAtV7(x,y,z,seed){
+ const ix=Math.floor(x/44),iy=Math.floor((y-12)/28),iz=Math.floor(z/44);
+ for(let dz=-1;dz<=1;dz++)for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+  const gx=ix+dx,gy=iy+dy,gz=iz+dz,a=caveNodeV7(gx,gy,gz,seed),rx=x-a.x,ry=y-a.y,rz=z-a.z;
+  const large=hash3(gx,gy,gz,seed+80)<.075,room=large?8.2+hash3(gx,gy,gz,seed+81)*2:4.0+hash3(gx,gy,gz,seed+80)*1.6;
+  if(rx*rx+ry*ry+rz*rz<room*room)return true;
+  for(const [ex,ey,ez,kind] of [[1,0,0,1],[0,0,1,2],[0,1,0,3]]){
+   if(kind===3&&hash3(gx,gy,gz,seed+90)>.34)continue;
+   const b=caveNodeV7(gx+ex,gy+ey,gz+ez,seed),h=n=>hash3(gx,gy,gz,seed+n+kind*101);
+   const mx=(a.x+b.x)/2+(h(4)-.5)*7,my=(a.y+b.y)/2+(h(5)-.5)*4,mz=(a.z+b.z)/2+(h(6)-.5)*7,r=2.0+h(7)*.9,r2=r*r;
+   if(segmentDistanceSq(x,y,z,a.x,a.y,a.z,mx,my,mz)<r2||segmentDistanceSq(x,y,z,mx,my,mz,b.x,b.y,b.z)<r2)return true;
+  }
+ }
+ return false;
+}
+
 function caveNode(ix,iy,iz,seed){
  const h=n=>hash3(ix,iy,iz,seed+n);
  return {x:ix*44+2+h(1)*40,y:10+iy*28+(h(2)-.5)*14,z:iz*44+2+h(3)*40};
@@ -274,6 +295,19 @@ function hash(x,z,s){let h=(x*374761393+z*668265263+s*982451653)|0;h=(h^(h>>>13)
 const sm=t=>t*t*(3-2*t);
 function vnoise(x,z,s){const xi=Math.floor(x),zi=Math.floor(z),fx=sm(x-xi),fz=sm(z-zi);const a=hash(xi,zi,s),b=hash(xi+1,zi,s),c=hash(xi,zi+1,s),d=hash(xi+1,zi+1,s);return a+(b-a)*fx+(c-a)*fz+(a-b-c+d)*fx*fz}
 function fbm(x,z,s){return vnoise(x,z,s)*.55+vnoise(x*2,z*2,s+1)*.28+vnoise(x*4,z*4,s+2)*.17}
+function caveEntranceAtV7(x,y,z,seed,surface){
+ const cell=144,gx=Math.floor(x/cell),gz=Math.floor(z/cell);
+ for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){
+  const ax=gx+dx,az=gz+dz,h=n=>hash3(ax,0,az,seed+n);
+  if(h(7711)>.18)continue;
+  const ex=ax*cell+28+h(7712)*88,ez=az*cell+28+h(7713)*88,large=h(7714)<.075,d=Math.hypot(x-ex,z-ez);
+  if(y>=surface-2&&y<=surface&&d<(large?2.25:1.25))return true;
+  if(y>=surface-15&&y<surface-2&&d<(large?2.65:1.55))return true;
+  if(y>=surface-20&&y<surface-15&&d<(large?5.5:3.7))return true;
+ }
+ return false;
+}
+
 function caveEntranceAt(x,y,z,seed,surface){
  const cell=144,gx=Math.floor(x/cell),gz=Math.floor(z/cell);
  for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){
@@ -316,19 +350,19 @@ class World{
  carve(d,c,cx,cz,x,z,h){const sea=this.sea,wx=cx*S+x,wz=cz*S+z,at=(dx,dz)=>c.hs[(z+dz+1)*18+x+dx+1];
   let lim=this.genVersion>=7?h-12:(h>sea+4?h:h-4);for(const [dx,dz] of N4){const hn=at(dx,dz);if(hn<=sea)lim=Math.min(lim,hn-3)}   // never open into lakes/rivers: keep rock between caves and surface water
   const I=y=>(y*S+z)*S+x,pm=c.P(wx,0,wz)>PT;let wall=false;if(!pm)for(const [dx,dz] of N4)if(c.P(wx+dx,0,wz+dz)>PT)wall=true;
-  for(let y=this.genVersion>=7?10:this.genVersion>=5?2:4;y<=lim;y++){let open;if(this.genVersion>=7){open=tunnelAt(wx,y,wz,this.seed)}else if(this.genVersion>=5){const a=c.A(wx,y,wz),b=c.Bf(wx,y,wz),wide=c.C(wx,y,wz),detail=c.D(wx,y,wz);const caveDensity=a*.36+b*.27+wide*.13+(detail-.5)*.48;open=caveDensity>=.565}else if(this.genVersion>=4){const a=c.A(wx,y,wz),b=c.Bf(wx,y,wz),wide=c.C(wx,y,wz),detail=c.D(wx,y,wz);const caveDensity=a*.42+b*.28+wide*.20+(detail-.5)*.18;open=caveDensity>=.535}else{const a=c.A(wx,y,wz)-.5,b=c.Bf(wx,y,wz)-.5;open=a*a+b*b<TUBE||c.C(wx,y,wz)>CAV}if(!open)continue;
+  for(let y=this.genVersion>=7?10:this.genVersion>=5?2:4;y<=lim;y++){let open;if(this.genVersion>=7){open=this.genVersion>=8?tunnelAt(wx,y,wz,this.seed):tunnelAtV7(wx,y,wz,this.seed)}else if(this.genVersion>=5){const a=c.A(wx,y,wz),b=c.Bf(wx,y,wz),wide=c.C(wx,y,wz),detail=c.D(wx,y,wz);const caveDensity=a*.36+b*.27+wide*.13+(detail-.5)*.48;open=caveDensity>=.565}else if(this.genVersion>=4){const a=c.A(wx,y,wz),b=c.Bf(wx,y,wz),wide=c.C(wx,y,wz),detail=c.D(wx,y,wz);const caveDensity=a*.42+b*.28+wide*.20+(detail-.5)*.18;open=caveDensity>=.535}else{const a=c.A(wx,y,wz)-.5,b=c.Bf(wx,y,wz)-.5;open=a*a+b*b<TUBE||c.C(wx,y,wz)>CAV}if(!open)continue;
    if(y<=POOLY){if(pm){d[I(y)]=B.WATER;continue}if(wall)continue}   // pools are walled in so water never touches open air sideways
    d[I(y)]=0}
-  if(this.genVersion>=7&&h>sea+5)for(let y=Math.max(2,h-20);y<=h;y++)if(caveEntranceAt(wx,y,wz,this.seed,h))d[I(y)]=0;
+  if(this.genVersion>=7&&h>sea+5)for(let y=Math.max(2,h-(this.genVersion>=8?48:20));y<=h;y++)if((this.genVersion>=8?caveEntranceAt(wx,y,wz,this.seed,h):caveEntranceAtV7(wx,y,wz,this.seed,h)))d[I(y)]=0;
   for(let y=1,top=Math.min(h-4,145);y<=top;y++)if(d[I(y)]===B.STONE){const o=this.genVersion>=5?oreAt(wx,y,wz,this.seed):oreAtLegacy(wx,y,wz,this.seed);if(o)d[I(y)]=o}}
  gen(cx,cz){const sea=this.sea,d=new Uint8Array(S*H*S);const I=(x,y,z)=>(y*S+z)*S+x;const g3=this.genVersion>=3?this.cavesCtx(cx,cz):null;
   for(let x=0;x<S;x++)for(let z=0;z<S;z++){const wx=cx*S+x,wz=cz*S+z;
    const biome=this.genVersion>=5?biomeAt(this.seed,wx,wz,this.genVersion):'Forest';const h=heightAt(this.seed,wx,wz,this.genVersion,sea);
-   const inRiver=this.genVersion>=7&&riverAt(this.seed,wx,wz)&&h>sea+2;
+   const inRiver=this.genVersion>=7&&riverAt(this.seed,wx,wz,this.genVersion)&&h>sea+2;
    for(let y=0;y<=h;y++){let b=B.STONE;if(y===0)b=B.BEDROCK;else if(y>h-4)b=B.DIRT;
-    if(y===h){if(this.genVersion>=7&&(inRiver||biome==='Ocean'||biome==='Beach and Coast'||h<=sea+1))b=B.SAND;else if(this.genVersion>=5){if(biome==='Desert'||biome==='Beach and Coast'||biome==='Ocean')b=B.SAND;else if(biome==='Snowy Mountains'||h>46)b=B.SNOW;else if(biome==='Swamp')b=B.MUD;else b=B.GRASS}else b=h<=sea+1?B.SAND:h>46?B.SNOW:B.GRASS}d[I(x,y,z)]=b}
+    if(y===h){if(this.genVersion>=8&&(inRiver||biome==='Ocean'||biome==='Beach and Coast'||h<=sea+1))b=B.SAND;else if(this.genVersion>=5){if(biome==='Desert'||biome==='Beach and Coast'||biome==='Ocean')b=B.SAND;else if(biome==='Snowy Mountains'||h>46)b=B.SNOW;else if(biome==='Swamp')b=B.MUD;else b=B.GRASS}else b=h<=sea+1?B.SAND:h>46?B.SNOW:B.GRASS}d[I(x,y,z)]=b}
    // The channel is cut about five blocks below the surrounding terrain; fill it back to bank height.
-   const waterTop=inRiver?Math.min(sea,h+4):sea;for(let y=h+1;y<=waterTop;y++)d[I(x,y,z)]=B.WATER;
+   const waterTop=this.genVersion>=8&&inRiver?Math.min(sea,h+4):this.genVersion===7&&riverAt(this.seed,wx,wz,7)?h+1:sea;for(let y=h+1;y<=waterTop;y++)d[I(x,y,z)]=B.WATER;
    if(g3)this.carve(d,g3,cx,cz,x,z,h);
    if(this.genVersion>=5){
     const r=hash(wx,wz,this.seed+509);
