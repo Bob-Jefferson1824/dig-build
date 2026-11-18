@@ -33,7 +33,7 @@ function biomeHeightLegacy(seed,x,z,sea=25,maxHeight=52,gen=5){if(gen>=7){
 
 export function biomeHeight(seed,x,z,sea=25,maxHeight=52,gen=5){
  if(gen>=8){
- const continent=fbm(x/900,z/900,seed+91),m=Math.max(0,fbm(x/220,z/220,seed+7)-.5)*2,broad=fbm(x/145,z/145,seed),detail=fbm(x/38,z/38,seed+611),temperature=fbm(x/520,z/520,seed+1701),moisture=fbm(x/390,z/390,seed+2701);
+ const continent=fbm(x/900,z/900,seed+91),m=Math.max(0,fbm(x/220,z/220,seed+7)-.5)*2,broad=fbm(x/145,z/145,seed),detail=fbm(x/38,z/38,seed+611),temperature=fbm(x/910,z/910,seed+1701),moisture=fbm(x/682,z/682,seed+2701);
  const band=(v,lo,hi,fade=.10)=>smooth(Math.max(0,Math.min(1,(v-lo)/fade)))*smooth(Math.max(0,Math.min(1,(hi-v)/fade)));
  if(continent<.20)return Math.max(10,sea-18+smooth(continent/.20)*17+Math.floor(fbm(x/150,z/150,seed+123)*1.5));
  const mountain=1-smooth(Math.max(0,Math.min(1,(temperature-.17)/.31))),desert=band(temperature,.66,1,.16)*(1-smooth(Math.max(0,Math.min(1,(moisture-.30)/.25)))),jungle=band(temperature,.56,1,.19)*smooth(Math.max(0,Math.min(1,(moisture-.48)/.28))),swamp=band(temperature,.30,.82,.18)*smooth(Math.max(0,Math.min(1,(moisture-.64)/.24))),taiga=smooth(Math.max(0,Math.min(1,(.49-temperature)/.18)))*smooth(Math.max(0,Math.min(1,(moisture-.34)/.22))),mushroom=band(temperature,.36,.76,.18)*band(moisture,.56,.90,.15)*smooth(Math.max(0,Math.min(1,(fbm(x/700,z/700,seed+3701)-.78)/.12)));
