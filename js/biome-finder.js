@@ -8,7 +8,7 @@ const COLORS={
 };
 const names=Object.values(BIOME);
 
-export function createBiomeFinder({getWorld,getPlayer,getMode,getWorldKey,toast}){
+export function createBiomeFinder({getWorld,getPlayer,getMode,getWorldKey,toast,onOpen=()=>{},onClose=()=>{}}){
   const style=document.createElement('style');
   style.textContent=`
   #biomeToggle{position:fixed;top:43px;right:8px;z-index:8;background:#18271f;color:#fff;border:1px solid #9aaa9d;border-radius:4px;padding:7px 10px;font:12px monospace;cursor:pointer;display:none}
@@ -97,8 +97,8 @@ export function createBiomeFinder({getWorld,getPlayer,getMode,getWorldKey,toast}
     if(opened&&now-lastMap>1100){drawMap(w,p);lastMap=now}
     if(target&&target.biome===current){$('bfDirection').textContent='You have reached '+target.biome+'!';target=null}
   }
-  function open(){opened=true;panel.style.display='block';drawList();lastMap=0;update()}
-  function close(){opened=false;panel.style.display='none'}
+  function open(){opened=true;panel.style.display='block';onOpen();drawList();lastMap=0;update()}
+  function close(){if(!opened)return;opened=false;panel.style.display='none';onClose()}
   function togglePanel(){if(opened)close();else open()}
   toggle.addEventListener('click',togglePanel);
   panel.querySelector('.bfClose').addEventListener('click',close);
