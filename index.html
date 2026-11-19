@@ -794,8 +794,7 @@ function finishMine(){mine=null;crack.visible=false;$('mineUI').style.display='n
 function showMine(p){$('mineUI').style.display='block';$('mineName').textContent=INFO[mine.block][0];$('mineFill').style.width=(p*100).toFixed(0)+'%'}
 function camInWater(){return isWater(world.get(Math.floor(cam.position.x),Math.floor(cam.position.y),Math.floor(cam.position.z)))}
 function setUnder(on){const el=$('uw');el.classList.toggle('on',on);el.classList.add('pulse');setTimeout(()=>el.classList.remove('pulse'),220);const c=on?0x2f86c8:0x9bc9e8;scene.fog.color.set(c);scene.fog.near=on?1:75;scene.fog.far=on?70:180;scene.background.set(c)}
-addEventListener('mousedown',e=>{if(e.button===0&&!uiOpen&&caps().mine){if(damageAnimal()){holding=false;finishMine();return}holding=true;beginMine()}if(e.button===2&&playing&&!uiOpen&&caps().interact&&document.pointerLockElement){const r=ray();if(!r)return;const [hx,hy,hz]=r.hit,hitBlock=world.get(hx,hy,hz),sl=IS.inv[slot];if(hitBlock===B.WORKBENCH){invUI.open('bench');return}if(hitBlock===B.FURNACE){invUI.open('furnace',r.hit.join(','));return}
- if(mode==='survival'&&sl&&FOOD[sl.id]&&eatSelectedFood())return;
+addEventListener('mousedown',e=>{if(e.button===0&&!uiOpen&&caps().mine){if(damageAnimal()){holding=false;finishMine();return}holding=true;beginMine()}if(e.button===2&&playing&&!uiOpen&&caps().interact&&document.pointerLockElement){const sl=IS.inv[slot];if(mode==='survival'&&sl&&FOOD[sl.id]&&eatSelectedFood())return;const r=ray();if(!r)return;const [hx,hy,hz]=r.hit,hitBlock=world.get(hx,hy,hz),sl=IS.inv[slot];if(hitBlock===B.WORKBENCH){invUI.open('bench');return}if(hitBlock===B.FURNACE){invUI.open('furnace',r.hit.join(','));return}
  if((hitBlock===B.RAIL||hitBlock===B.POWERED_RAIL)&&sl&&sl.id===MAT.MINECART&&!cart){
   cart={x:hx+.5,y:hy+1,z:hz+.5,railY:hy,yaw:P.yaw,speed:0,mesh:makeMinecart(hx+.5,hy+1,hz+.5)};
   P.x=cart.x;P.y=cart.y;P.z=cart.z;if(mode==='survival'&&--sl.n<=0)IS.inv[slot]=null;dirty=true;ui();toast('Minecart mounted · W/S move · A/D steer · Space exit');return
@@ -1107,6 +1106,6 @@ let last=performance.now(),fps=60;
   if(mine){const current=ray(),same=current&&current.hit.join(',')===mine.pos;if(!same||world.get(...mine.hit)!==mine.block)finishMine();else{mine.elapsed+=dt;mine.snd=(mine.snd||0)+dt;if(mine.snd>.22){mine.snd=0;sfx('hit')}const progress=Math.min(1,mine.elapsed/mine.required);crack.visible=true;crack.position.set(mine.hit[0]+.5,mine.hit[1]+.5,mine.hit[2]+.5);crack.material.map=crackTex[Math.min(9,Math.floor(progress*10))];showMine(progress);if(progress>=1){const [x,y,z]=mine.hit,b=mine.block;breakBlock(x,y,z,b)}}}
   if(!mine&&holding)beginMine();if(mode!=='spectator')world.stepWater(10);
   $('hud').textContent=`DIG BUILD · ${curRec?curRec.name+' · ':''}${mode==='spectator'?'SPECTATOR · X-RAY '+(xray?'ON':'OFF'):mode} · seed ${world.seed} · ${P.x|0},${P.y|0},${P.z|0} · ${fps|0}fps · wildlife: ${wildlife.animals.length} · ${mpConnected?'players: '+(mpPlayers.size+1)+' · ':'T chat · '}save: ${status}${fly&&mode==='creative'?' · FLIGHT ON (F off)':''}${uwOn?' · UNDERWATER':inW?' · SWIMMING':''}${cart?' · MINECART (W/S move · A/D steer · Space exit)':''}`}
- renderer.render(scene,cam)})(last);
+ renderSurvivalHud();renderer.render(scene,cam)})(last);
 
 </script></body></html>
