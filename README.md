@@ -34,3 +34,9 @@ Existing Stage 4 cloud rows get their `world_id` automatically the next time tha
 `node tests/mode.test.mjs` - runs the real `main.js` against a stubbed browser: create/switch/rename/duplicate/delete worlds, legacy migration, modes.
 (`PREV=old_world.js ORIG=older_world.js node tests/logic.test.mjs` also checks that old terrain generation is unchanged.)
 These do not render pixels and do not talk to a real Supabase server.
+
+## Survival mode
+* Survival HUD displays 10 hearts, 10 hunger icons and an oxygen countdown while underwater.
+* Health is affected by falls, drowning, cactus contact and starvation. Well-fed players gradually regenerate health.
+* Eat food from the hotbar with right-click. Respawn returns you to your saved spawn point; inventory is retained.
+* Health and hunger are saved independently for each world. Creative and Spectator modes do not show the Survival HUD.
