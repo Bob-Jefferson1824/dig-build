@@ -39,7 +39,7 @@ assert.ok(liveHtml.includes('this.genVersion===9?caveEntranceAtV9(wx,y,wz,this.s
 assert.ok(liveHtml.includes('function caveEntranceAtV9('),'generation 9 entrance helper must remain available');
 assert.ok(liveHtml.includes("(inRiver||biome==='Ocean'||biome==='Beach and Coast'||h<=sea+1)"),'riverbeds and ocean floors must use sand');
 assert.ok(biomeSource.includes('riverField>=.016')&&biomeSource.includes('<=.48')&&biomeSource.includes('>.90'),'generation 8 rivers must be narrower and less frequent');
-assert.ok(biomeSource.includes('if(gen===7)return biomeHeightLegacy')&&biomeSource.includes('const oceanLimit=gen>=8?.20:gen>=7?.23:.30'),'generation 7 biome terrain must remain compatible');
+assert.ok(biomeSource.includes('if(gen===7)return biomeHeightLegacy')&&biomeSource.includes('const oceanLimit=gen>=13?.12:gen>=8?.20:gen>=7?.23:.30'),'generation 7 biome terrain must remain compatible');
 assert.ok(liveHtml.includes("document.addEventListener('keydown',e=>{if(e.code!=='KeyE'||!playing||e.repeat)return;")&&liveHtml.includes("invUI.open('inv')"),'E must open the inventory through the capture-phase keyboard handler');
 assert.ok(liveHtml.includes("biome!=='Ocean'&&!inRiver"),'trees must not spawn in oceans or rivers');
 
